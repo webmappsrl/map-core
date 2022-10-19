@@ -1,0 +1,25 @@
+wm-map-controls {
+  .layer-button {
+    color: black;
+    background-color: rgba($color: white, $alpha: 0.8);
+    position: fixed;
+    font-size: 20px;
+    top: 2%;
+    right: 2%;
+    height: 40px;
+    display: block;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .layer-content {
+    position: fixed;
+    background-color: rgba($color: white, $alpha: 0.8);
+    top: calc(2% + 50px);
+    right: 2%;
+    height: 100px;
+  }
+
+  ion-item {
+    --background: rgba($color: white, $alpha: 0.8) !important;
+  }
+}

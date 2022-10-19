@@ -1,0 +1,18 @@
+<div id="ol-map" class="map-container" #mapContainer>
+  <canvas id="canvas" width="100" height="100"></canvas>
+  <div #scaleLineContainer id="webmapp-map-scale-line-container"></div>
+  <div id="webmapp-map-attribution-container">
+    <div class="webmapp-map-attribution">
+      <a class="wm-clickable webmapp-map-attribution-link" href="http://webmapp.it" target="blank">
+        © Webmapp
+      </a>
+      <a
+        class="wm-clickable webmapp-map-attribution-link"
+        href="https://www.openstreetmap.org/about/"
+        target="blank"
+        >© OpenStreetMap
+      </a>
+    </div>
+  </div>
+</div>
+<wm-map-controls [tileLayers]="tileLayers"></wm-map-controls>

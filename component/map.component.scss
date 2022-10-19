@@ -1,0 +1,47 @@
+wm-map {
+  display: flex;
+
+  .map-container {
+    flex-grow: 1;
+    height: 100%;
+
+    .ol-zoom {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      width: 58px;
+      height: 58px;
+    }
+    #webmapp-map-scale-line-container {
+      position: absolute;
+      bottom: 20px;
+      right: 234px;
+      padding: 5px 10px;
+    }
+    #webmapp-map-attribution-container {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5px 10px;
+      border-top-left-radius: 5px;
+      transition: bottom 500ms;
+      z-index: 999;
+      background: rgba(var(--wm-color-light-rgb), 0.75);
+      box-shadow: -1px -1px 5px -3px var(--wm-color-dark);
+      .webmapp-map-attribution {
+        display: inline-block;
+        font-size: var(--font-sm);
+        .webmapp-map-attribution-link {
+          color: var(--wm-color-dark);
+          text-decoration: none;
+        }
+      }
+    }
+  }
+  canvas {
+    position: absolute;
+  }
+}
