@@ -1,0 +1,13 @@
+{
+  "name": "map-core",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Webmapp",
+  "license": "ISC",
+  "dependencies": {
+    "graphhopper-js-api-client": "^5.0.2"
+  }
+}
