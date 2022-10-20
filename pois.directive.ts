@@ -89,7 +89,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       changes.map.currentValue != null &&
       changes.map.previousValue == null
     ) {
-      this.map.on('click', event => {
+      this.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
+        console.log('click');
         try {
           if (this._isCluster(this._poisClusterLayer, event)) {
             this._deactivateInteractions();
