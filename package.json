@@ -12,5 +12,8 @@
     "ol": "6.5.1-module.2",
     "ol-ext": "^4.0.2",
     "@types/ol": "^6.5.3"
+  },
+  "devDependencies": {
+    "generate-changelog": "^1.8.0"
   }
 }
