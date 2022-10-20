@@ -1,13 +1,5 @@
 import {BehaviorSubject, Observable, Subject, of, timer} from 'rxjs';
-import {
-  Directive,
-  ElementRef,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
+import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 import {skip, switchMap, takeWhile} from 'rxjs/operators';
 
 import {Coordinate} from 'ol/coordinate';
@@ -21,11 +13,9 @@ import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import { coordsFromLonLat } from './utils';
-import {transform} from 'ol/proj';
+import {coordsFromLonLat} from './utils';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
-export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
@@ -97,7 +87,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     this._customPoiLayer.getSource().clear();
     this._points = [];
   }
-
 
   private _getLineStyle(color?: string): Array<Style> {
     const style: Array<Style> = [],
@@ -204,24 +193,5 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
       this.map.addLayer(this._customPoiLayer);
       this.map.getRenderer();
     }
-  }
-
-  private _redrawPoints() {
-    this._customTrackLayer.getSource().forEachFeature((feature: Feature) => {
-      if (feature.getGeometry().getType() === 'Point')
-        this._customTrackLayer.getSource().removeFeature(feature);
-    });
-
-    let id: number = 0;
-    for (let point of this._points) {
-      let newPoi: Feature = new Feature(new Point(coordsFromLonLat(point)));
-      newPoi.setId(id + '');
-      this._customTrackLayer.getSource().addFeature(newPoi);
-      newPoi.changed();
-      id++;
-    }
-
-    this._customTrackLayer.changed();
-    this.map.render();
   }
 }

@@ -1,6 +1,6 @@
 import {DEF_LINE_COLOR, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from './constants';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import { IGeojsonFeature, PoiMarker } from './types/model';
+import {IGeojsonFeature, PoiMarker} from './types/model';
 
 import {Coordinate} from 'ol/coordinate';
 import {FLAG_TRACK_ZINDEX} from './zIndex';
@@ -17,7 +17,7 @@ import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
 import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
-import {logoBase64} from 'src/assets/logoBase64';
+import {logoBase64} from './icons';
 
 @Directive({
   selector: '[wmMapRelatedPois]',

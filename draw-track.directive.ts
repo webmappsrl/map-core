@@ -1,7 +1,6 @@
 import {BehaviorSubject, Observable, Subject, of, timer} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 import {skip, switchMap, takeWhile} from 'rxjs/operators';
-import {toLonLat, transform} from 'ol/proj';
 
 import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
@@ -20,8 +19,9 @@ import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import { coordsFromLonLat } from './utils';
+import {coordsFromLonLat} from './utils';
 import {stopPropagation} from 'ol/events/Event';
+import {toLonLat} from 'ol/proj';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
@@ -82,10 +82,8 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
         this._graphHopperRoutingObj.defaults.profile = 'hike';
       }
       this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
-        console.log('click');
         if (this._enabled$.value) {
           const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
-
           if (oldCoordinates != null && oldCoordinates.length > 0) {
             const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
             this._customPoiSource.removeFeature(oldCoordinate);
@@ -209,7 +207,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     this._points = [];
   }
 
-
   private _getLineStyle(color?: string): Array<Style> {
     const style: Array<Style> = [],
       selected: boolean = false;
@@ -223,15 +220,12 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
         ', ' +
         parseInt(color.substring(5, 7), 16);
     }
-    const strokeWidth: number = 3, // this._featuresService.strokeWidth(id),
-      strokeOpacity: number = 1, // this._featuresService.strokeOpacity(id),
-      lineDash: Array<number> = [], // this._featuresService.lineDash(id),
-      lineCap: CanvasLineCap = 'round', // this._featuresService.lineCap(id),
-      currentZoom: number = this.map.getView().getZoom();
-
+    const strokeWidth: number = 3,
+      strokeOpacity: number = 1,
+      lineDash: Array<number> = [],
+      lineCap: CanvasLineCap = 'round',
+      zIndex: number = 50;
     color = 'rgba(' + color + ',' + strokeOpacity + ')';
-
-    const zIndex: number = 50; //this._getZIndex(id, "line", selected);
 
     if (selected) {
       style.push(
@@ -274,7 +268,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     const customTrack = localStorage.getItem('custom-tracks');
     if (customTrack != null) {
       this._customTracks = JSON.parse(customTrack);
-      console.log(this._customTracks);
     }
   }
 
@@ -303,7 +296,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     }
   }
 
-  private _redrawPoints() {
+  private _redrawPoints(): void {
     this._customTrackLayer.getSource().forEachFeature((feature: Feature) => {
       if (feature.getGeometry().getType() === 'Point')
         this._customTrackLayer.getSource().removeFeature(feature);
@@ -322,7 +315,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     this.map.render();
   }
 
-  private _updateTrack() {
+  private _updateTrack(): void {
     let feature: Feature = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(this._customTrack)[0];

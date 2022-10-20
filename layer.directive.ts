@@ -10,11 +10,11 @@ import {
   Renderer2,
   SimpleChanges,
 } from '@angular/core';
+import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from './constants';
 import {Interaction, defaults as defaultInteractions} from 'ol/interaction.js';
 import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
 
 import {Collection} from 'ol';
-import {DEF_LINE_COLOR} from './constants';
 import {FeatureLike} from 'ol/Feature';
 import {IDATALAYER} from './types/layer';
 import Layer from 'ol/layer/Layer';
@@ -26,8 +26,6 @@ import {TRACK_ZINDEX} from './zIndex';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorTileSource from 'ol/source/VectorTile';
 import {WmMapBaseDirective} from './base.directive';
-
-const SWITCH_RESOLUTION_ZOOM_LEVEL = 10;
 
 @Directive({
   selector: '[wmMapLayer]',

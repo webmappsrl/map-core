@@ -11,3 +11,4 @@ export const ICN_PATH: string = 'assets/icons/pois';
 export const CLUSTER_DISTANCE: number = 30;
 export const scaleUnits = 'metric';
 export const scaleMinWidth = 50;
+export const SWITCH_RESOLUTION_ZOOM_LEVEL = 10;

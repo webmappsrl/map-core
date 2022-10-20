@@ -4,7 +4,7 @@ import Geometry from 'ol/geom/Geometry';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import {fromLonLat, transform} from 'ol/proj';
+import {fromLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import Icon from 'ol/style/Icon';
 import FillStyle from 'ol/style/Fill';
@@ -14,11 +14,9 @@ import StrokeStyle from 'ol/style/Stroke';
 import {endIconHtml, startIconHtml} from './icons';
 import LineString from 'ol/geom/LineString';
 import CircleStyle from 'ol/style/Circle';
-import {Coordinate} from 'ol/coordinate';
 import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
 import {WmMapBaseDirective} from './base.directive';
 import FlowLine from 'ol-ext/style/FlowLine';
-import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import {ILineString} from './types/model';
 import {ILocation} from './types/location';
 import {coordsFromLonLat} from './utils';
@@ -43,7 +41,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   @Input() trackElevationChartElements: any;
 
   drawTrack(trackgeojson: any): void {
-    console.log(this.conf.flow_line_quote_show);
     const isFlowLine = this.conf.flow_line_quote_show || false;
     const orangeTreshold = this.conf.flow_line_quote_orange || 800;
     const redTreshold = this.conf.flow_line_quote_red || 1500;

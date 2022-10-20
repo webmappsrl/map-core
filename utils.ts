@@ -2,7 +2,10 @@ import {transform, transformExtent} from 'ol/proj';
 
 import {Coordinate} from 'ol/coordinate';
 import {Extent} from 'ol/extent';
+import {Feature} from 'ol';
+import Geometry from 'ol/geom/Geometry';
 import {ILocation} from './types/location';
+import Point from 'ol/geom/Point';
 
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
@@ -175,4 +178,32 @@ export function getDistanceBetweenPoints(point1: ILocation, point2: ILocation): 
   const c: number = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return earthRadius * c;
+}
+
+export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
+  return Math.sqrt(Math.pow(c1[0] - c2[0], 2) + Math.pow(c1[1] - c2[1], 2));
+}
+
+export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
+  var setA = new Set(a);
+  var setB = new Set(b);
+  var intersection = new Set([...setA].filter(x => setB.has(x)));
+  return Array.from(intersection);
+}
+
+export function getNearestFeatureByCooridinate(
+  features: Feature<Geometry>[],
+  coordinate: Coordinate,
+): Feature<Geometry> {
+  let ret: Feature<Geometry> = features[0];
+  let minDistance = Number.MAX_VALUE;
+  features.forEach(feature => {
+    const geom = feature.getGeometry() as Point;
+    const distance = distanceBetweenCoordinates(geom.getFlatCoordinates(), coordinate);
+    if (distance < minDistance) {
+      minDistance = distance;
+      ret = feature;
+    }
+  });
+  return ret;
 }
