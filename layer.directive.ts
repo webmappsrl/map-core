@@ -107,7 +107,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   @Input() set dataLayerUrls(urls: IDATALAYER) {
-    console.log(urls);
     this._dataLayerUrls = urls;
   }
 

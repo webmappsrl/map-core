@@ -54,7 +54,8 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
       changes['map'].currentValue != null &&
       changes['map'].previousValue == null
     ) {
-      this.map.on('click', event => {
+      this.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
+        console.log('related click');
         try {
           const poiFeature = this._getNearestFeatureOfLayer(this._poisLayer, event);
           if (poiFeature) {

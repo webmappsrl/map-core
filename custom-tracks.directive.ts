@@ -50,24 +50,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
       skip(2),
       switchMap(_ => of(true)),
     );
-    this.isStable$.subscribe(v => {
-      this._initializeCustomTrackLayer();
-      this._customTrack = {
-        type: 'Feature',
-        geometry: {
-          type: 'LineString',
-          coordinates: [],
-        },
-        properties: {
-          id: 'wm-current_record_track',
-          name: 'prova',
-          locale: 'it',
-          taxonomy: {},
-          image: '',
-          color: 'rgba(226, 249, 0, 0.6)',
-        },
-      };
-    });
   }
 
   @Input() set reloadCustomTracks(val) {
@@ -78,8 +60,32 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     }
   }
 
-  ngOnChanges(_: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
     this.reset$.next(void 0);
+    if (
+      changes.map != null &&
+      changes.map.previousValue == null &&
+      changes.map.currentValue !== null
+    ) {
+      this.isStable$.subscribe(v => {
+        this._initializeCustomTrackLayer();
+        this._customTrack = {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: [],
+          },
+          properties: {
+            id: 'wm-current_record_track',
+            name: 'prova',
+            locale: 'it',
+            taxonomy: {},
+            image: '',
+            color: 'rgba(226, 249, 0, 0.6)',
+          },
+        };
+      });
+    }
   }
 
   private _clear(): void {
