@@ -18,10 +18,10 @@ import {Coordinate} from 'ol/coordinate';
 import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
 import {WmMapBaseDirective} from './base.directive';
 import FlowLine from 'ol-ext/style/FlowLine';
-import { ITrackElevationChartHoverElements } from './types/track-elevation-charts';
-import { ILineString } from './types/model';
-import { ILocation } from './types/location';
-import { coordsFromLonLat } from './utils';
+import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
+import {ILineString} from './types/model';
+import {ILocation} from './types/location';
+import {coordsFromLonLat} from './utils';
 @Directive({
   selector: '[wmMapTrack]',
 })
@@ -121,8 +121,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-
-
   private _createFeature(iconHtml: string, position: [number, number]): Feature {
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -155,10 +153,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     return feature;
   }
 
-  private _drawTemporaryLocationFeature(
-    location?: ILocation,
-    track?: any,
-  ): void {
+  private _drawTemporaryLocationFeature(location?: ILocation, track?: any): void {
     if (location) {
       if (!this._elevationChartSource) {
         this._elevationChartSource = new VectorSource({
@@ -210,7 +205,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
         if (track) {
           const trackGeometry: LineString = new LineString(
-            (track.geometry.coordinates as ILineString).map(value => this._coordsFromLonLat(value)),
+            (track.geometry.coordinates as ILineString).map(value => coordsFromLonLat(value)),
           );
           const trackColor: string = track?.properties?.color;
 
