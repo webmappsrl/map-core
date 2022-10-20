@@ -8,6 +8,9 @@
   "author": "Webmapp",
   "license": "ISC",
   "dependencies": {
-    "graphhopper-js-api-client": "^5.0.2"
+    "graphhopper-js-api-client": "^5.0.2",
+    "ol": "6.5.1-module.2",
+    "ol-ext": "^4.0.2",
+    "@types/ol": "^6.5.3"
   }
 }

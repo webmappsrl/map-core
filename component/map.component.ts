@@ -17,13 +17,13 @@ import Collection from 'ol/Collection';
 import {Extent} from 'ol/extent';
 import {Interaction} from 'ol/interaction';
 import Map from 'ol/Map';
-import {MapService} from 'src/app/services/map.service';
 import ScaleLineControl from 'ol/control/ScaleLine';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import {defaults as defaultControls} from 'ol/control';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
+import {extentFromLonLat} from '../utils';
 
 @Component({
   selector: 'wm-map',
@@ -45,7 +45,7 @@ export class WmMapComponent implements OnChanges {
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map | null>(null);
   tileLayers: TileLayer[] = [];
 
-  constructor(private _mapSvc: MapService, private _cdr: ChangeDetectorRef) {}
+  constructor(private _cdr: ChangeDetectorRef) {}
 
   @Input() set reset(_) {
     this._reset();
@@ -102,7 +102,7 @@ export class WmMapComponent implements OnChanges {
   }
 
   private _initMap(conf: IMAP): void {
-    this._centerExtent = this._mapSvc.extentFromLonLat(conf.bbox ?? initExtent);
+    this._centerExtent = extentFromLonLat(conf.bbox ?? initExtent);
     this._view = new View({
       maxZoom: conf.maxZoom,
       zoom: conf.defZoom || 10,
@@ -145,15 +145,9 @@ export class WmMapComponent implements OnChanges {
    */
   private _initializeBaseSource(tile: string) {
     return new XYZ({
-      maxZoom: 20,
-      minZoom: 0,
-      opaque: true,
-      imageSmoothing: true,
-      cacheSize: 50000,
       url: tile,
-      wrapX: true,
       projection: 'EPSG:3857',
-      tileSize: [512, 512],
+      tileSize: [256, 256],
     });
   }
 

@@ -1,19 +1,17 @@
 import {Directive, Input} from '@angular/core';
-import View, {FitOptions} from 'ol/View';
 
 import {Extent} from 'ol/extent';
+import {FitOptions} from 'ol/View';
 import Map from 'ol/Map';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
-import {transformExtent} from 'ol/proj';
+import { extentFromLonLat } from './utils';
 
 @Directive()
 export abstract class WmMapBaseDirective {
   @Input() map: Map;
   @Input() padding: number[];
 
-  extentFromLonLat(extent: Extent): Extent {
-    return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
-  }
+
 
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     const view = this.map.getView();
@@ -24,7 +22,7 @@ export abstract class WmMapBaseDirective {
           padding: this.padding ?? undefined,
         };
       }
-      view.fit(this.extentFromLonLat(geometryOrExtent as any), optOptions);
+      view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
     }
   }
 }

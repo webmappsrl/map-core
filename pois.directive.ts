@@ -4,7 +4,6 @@ import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
 import {
   CLUSTER_DISTANCE,
-  DEF_LINE_COLOR,
   DEF_MAP_CLUSTER_CLICK_TOLERANCE,
   ICN_PATH,
 } from './constants';
@@ -13,7 +12,6 @@ import Feature from 'ol/Feature';
 import Fill from 'ol/style/Fill';
 import {FitOptions} from 'ol/View';
 import Geometry from 'ol/geom/Geometry';
-import {IGeojsonFeature} from 'src/app/types/model';
 import Icon from 'ol/style/Icon';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import Point from 'ol/geom/Point';
@@ -25,6 +23,7 @@ import {WmMapBaseDirective} from './base.directive';
 import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
 import {stopPropagation} from 'ol/events/Event';
+import { IGeojsonFeature } from './types/model';
 @Directive({
   selector: '[wmMapPois]',
 })

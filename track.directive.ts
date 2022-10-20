@@ -12,16 +12,16 @@ import Style from 'ol/style/Style';
 import Stroke from 'ol/style/Stroke';
 import StrokeStyle from 'ol/style/Stroke';
 import {endIconHtml, startIconHtml} from './icons';
-import {ITrackElevationChartHoverElements} from 'src/app/types/track-elevation-chart';
-import {ILocation} from 'src/app/types/location';
-import {CGeojsonLineStringFeature} from 'src/app/classes/features/cgeojson-line-string-feature';
 import LineString from 'ol/geom/LineString';
 import CircleStyle from 'ol/style/Circle';
-import {ILineString} from 'src/app/types/model';
 import {Coordinate} from 'ol/coordinate';
 import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
 import {WmMapBaseDirective} from './base.directive';
 import FlowLine from 'ol-ext/style/FlowLine';
+import { ITrackElevationChartHoverElements } from './types/track-elevation-charts';
+import { ILineString } from './types/model';
+import { ILocation } from './types/location';
+import { coordsFromLonLat } from './utils';
 @Directive({
   selector: '[wmMapTrack]',
 })
@@ -40,7 +40,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   @Input() conf: IMAP;
   @Input() layer;
   @Input() track;
-  @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
+  @Input() trackElevationChartElements: any;
 
   drawTrack(trackgeojson: any): void {
     console.log(this.conf.flow_line_quote_show);
@@ -121,16 +121,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-  /**
-   * Transform a set of [lon, lat](EPSG:4326) coordinates in EPSG:3857
-   *
-   * @param coordinates the [lon, lat](EPSG:4326) coordinates
-   *
-   * @returns the coordinates [lon, lat](EPSG:4326)
-   */
-  private _coordsFromLonLat(coordinates: Coordinate): Coordinate {
-    return transform(coordinates, 'EPSG:4326', 'EPSG:3857');
-  }
+
 
   private _createFeature(iconHtml: string, position: [number, number]): Feature {
     const canvas = <HTMLCanvasElement>document.getElementById('canvas');
@@ -166,7 +157,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   private _drawTemporaryLocationFeature(
     location?: ILocation,
-    track?: CGeojsonLineStringFeature,
+    track?: any,
   ): void {
     if (location) {
       if (!this._elevationChartSource) {
@@ -207,7 +198,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
       if (location) {
         const pointGeometry: Point = new Point(
-          this._coordsFromLonLat([location.longitude, location.latitude]),
+          coordsFromLonLat([location.longitude, location.latitude]),
         );
 
         if (this._elevationChartPoint) {

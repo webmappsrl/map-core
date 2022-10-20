@@ -1,16 +1,15 @@
 import {DEF_LINE_COLOR, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from './constants';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import { IGeojsonFeature, PoiMarker } from './types/model';
 
 import {Coordinate} from 'ol/coordinate';
 import {FLAG_TRACK_ZINDEX} from './zIndex';
 import Feature from 'ol/Feature';
 import {FitOptions} from 'ol/View';
 import Geometry from 'ol/geom/Geometry';
-import {IGeojsonFeature} from 'src/app/types/model';
 import Icon from 'ol/style/Icon';
 import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
-import {PoiMarker} from 'src/app/classes/features/cgeojson-feature';
 import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';

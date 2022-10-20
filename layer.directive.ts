@@ -14,9 +14,9 @@ import {Interaction, defaults as defaultInteractions} from 'ol/interaction.js';
 import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
 
 import {Collection} from 'ol';
-import {ConfService} from 'src/app/store/conf/conf.service';
 import {DEF_LINE_COLOR} from './constants';
 import {FeatureLike} from 'ol/Feature';
+import {IDATALAYER} from './types/layer';
 import Layer from 'ol/layer/Layer';
 import MVT from 'ol/format/MVT';
 import Map from 'ol/Map';
@@ -34,6 +34,7 @@ const SWITCH_RESOLUTION_ZOOM_LEVEL = 10;
 })
 export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges, OnInit {
   private _currentLayer: ILAYER;
+  private _dataLayerUrls: IDATALAYER;
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _highVectorTileLayer: VectorTileLayer;
   private _ionProgress: any;
@@ -101,11 +102,15 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   constructor(
     private _elRef: ElementRef,
-    private _confSvc: ConfService,
     private _renderer: Renderer2,
     private _cdr: ChangeDetectorRef,
   ) {
     super();
+  }
+
+  @Input() set dataLayerUrls(urls: IDATALAYER) {
+    console.log(urls);
+    this._dataLayerUrls = urls;
   }
 
   @Input() set disableLayers(disable: boolean) {
@@ -215,14 +220,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @returns the array of created layers
    */
   private _initializeDataLayers(map: IMAP): void {
-    this._lowVectorTileLayer = this._initializeLowDataLayer(
-      `https://jidotile.webmapp.it/?x={x}&y={y}&z={z}&index=geohub_app_low_${this._confSvc.geohubAppId}`,
-      map,
-    );
-    this._highVectorTileLayer = this._initializeHighDataLayer(
-      `https://jidotile.webmapp.it/?x={x}&y={y}&z={z}&index=geohub_app_high_${this._confSvc.geohubAppId}`,
-      map,
-    );
+    this._lowVectorTileLayer = this._initializeLowDataLayer(this._dataLayerUrls.low, map);
+    this._highVectorTileLayer = this._initializeHighDataLayer(this._dataLayerUrls.high, map);
 
     this.map.addLayer(this._lowVectorTileLayer);
     this.map.addLayer(this._highVectorTileLayer);

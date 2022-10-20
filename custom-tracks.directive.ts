@@ -14,13 +14,14 @@ import {Coordinate} from 'ol/coordinate';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
-import {ITrackElevationChartHoverElements} from 'src/app/types/track-elevation-chart';
+import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import Point from 'ol/geom/Point';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
+import { coordsFromLonLat } from './utils';
 import {transform} from 'ol/proj';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
@@ -97,9 +98,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     this._points = [];
   }
 
-  private _fromLonLat(coordinates: Coordinate): Coordinate {
-    return transform(coordinates, 'EPSG:4326', 'EPSG:3857');
-  }
 
   private _getLineStyle(color?: string): Array<Style> {
     const style: Array<Style> = [],
@@ -216,7 +214,7 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
 
     let id: number = 0;
     for (let point of this._points) {
-      let newPoi: Feature = new Feature(new Point(this._fromLonLat(point)));
+      let newPoi: Feature = new Feature(new Point(coordsFromLonLat(point)));
       newPoi.setId(id + '');
       this._customTrackLayer.getSource().addFeature(newPoi);
       newPoi.changed();
