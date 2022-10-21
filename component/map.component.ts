@@ -4,8 +4,10 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
   Input,
   OnChanges,
+  Output,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation,
@@ -17,6 +19,7 @@ import Collection from 'ol/Collection';
 import {Extent} from 'ol/extent';
 import {Interaction} from 'ol/interaction';
 import Map from 'ol/Map';
+import {MapBrowserEvent} from 'ol';
 import ScaleLineControl from 'ol/control/ScaleLine';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import TileLayer from 'ol/layer/Tile';
@@ -38,6 +41,9 @@ export class WmMapComponent implements OnChanges {
 
   @Input() conf: IMAP;
   @Input() padding: number[];
+  @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
+    MapBrowserEvent<UIEvent>
+  >();
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
   customTrackEnabled$: Observable<boolean>;
@@ -134,6 +140,10 @@ export class WmMapComponent implements OnChanges {
       layers: this.tileLayers,
       moveTolerance: 3,
       target: 'ol-map',
+    });
+
+    this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
+      this.clickEVT$.emit(evt);
     });
     this.map$.next(this.map);
   }

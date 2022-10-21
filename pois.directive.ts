@@ -1,5 +1,13 @@
 import {Cluster, Vector as VectorSource} from 'ol/source';
-import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {
+  Directive,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import CircleStyle from 'ol/style/Circle';
 import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from './constants';
 import {FLAG_TRACK_ZINDEX} from './zIndex';
@@ -17,15 +25,17 @@ import VectorLayer from 'ol/layer/Vector';
 import {WmMapBaseDirective} from './base.directive';
 import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
-import {stopPropagation} from 'ol/events/Event';
 import {IGeojsonFeature} from './types/model';
 import {getNearestFeatureByCooridinate, intersectionBetweenArrays} from './utils';
+import {Subscription} from 'rxjs';
+import {stopPropagation} from 'ol/events/Event';
 @Directive({
   selector: '[wmMapPois]',
 })
-export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {
+export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _poisClusterLayer: VectorLayer;
   private _selectedPoiLayer: VectorLayer;
+  private _onClickSub: Subscription = Subscription.EMPTY;
 
   @Input() conf: IMAP;
   @Input() filters: any[] = [];
@@ -82,41 +92,37 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }
     }
   }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes.map != null &&
-      changes.map.currentValue != null &&
-      changes.map.previousValue == null
-    ) {
-      this.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
-        console.log('click');
-        try {
-          if (this._isCluster(this._poisClusterLayer, event)) {
+  @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
+    this._onClickSub = clickEVT$.subscribe(event => {
+      try {
+        if (this._isCluster(this._poisClusterLayer, event)) {
+          this._deactivateInteractions();
+          const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
+          this._fitView(geometry as any, {
+            maxZoom: this.map.getView().getZoom() + 1,
+            duration: 500,
+          });
+          stopPropagation(event);
+        } else {
+          const poiFeature = this._getNearestFeatureOfCluster(this._poisClusterLayer, event);
+          if (poiFeature) {
             this._deactivateInteractions();
-            const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
-            this._fitView(geometry as any, {
-              maxZoom: this.map.getView().getZoom() + 1,
-              duration: 500,
-            });
-            console.log(event);
-            stopPropagation(event);
-          } else {
-            const poiFeature = this._getNearestFeatureOfCluster(this._poisClusterLayer, event);
-            if (poiFeature) {
-              this._deactivateInteractions();
-              const currentID = +poiFeature.getId() || -1;
-              this.poiClick.emit(currentID);
-            }
+            const currentID = +poiFeature.getId() || -1;
+            this.poiClick.emit(currentID);
           }
-          setTimeout(() => {
-            this._activateInteractions();
-          }, 1200);
-        } catch (e) {
-          console.log(e);
         }
-      });
-    }
+        setTimeout(() => {
+          this._activateInteractions();
+        }, 1200);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
+  ngOnDestroy(): void {
+    this._onClickSub.unsubscribe();
+  }
+  ngOnChanges(_: SimpleChanges): void {
     if (this.map != null && this.pois != null) {
       if (this.filters.length > 0) {
         this._poisClusterLayer.getSource().clear();
@@ -269,6 +275,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
+    console.log('fit');
     if (optOptions == null) {
       optOptions = {
         maxZoom: this.map.getView().getZoom(),

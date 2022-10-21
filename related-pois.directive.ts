@@ -1,5 +1,13 @@
 import {DEF_LINE_COLOR, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from './constants';
-import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {
+  Directive,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import {IGeojsonFeature, PoiMarker} from './types/model';
 
 import {Coordinate} from 'ol/coordinate';
@@ -12,6 +20,7 @@ import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
+import {Subscription} from 'rxjs';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
@@ -22,17 +31,37 @@ import {logoBase64} from './icons';
 @Directive({
   selector: '[wmMapRelatedPois]',
 })
-export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnChanges {
+export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
   private _poiMarkers: PoiMarker[] = [];
   private _poisLayer: VectorLayer;
   private _selectedPoiLayer: VectorLayer;
   private _selectedPoiMarker: PoiMarker;
+  private _onClickSub: Subscription = Subscription.EMPTY;
 
   @Input() conf: IMAP;
   @Input() map: Map;
   @Input() track;
+
+  @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
+    this._onClickSub = clickEVT$.subscribe(event => {
+      try {
+        this._deselectCurrentPoi();
+        const poiFeature = this._getNearestFeatureOfLayer(this._poisLayer, event);
+        if (poiFeature) {
+          this.map.getInteractions().forEach(i => i.setActive(false));
+          const currentID = +poiFeature.getId() || -1;
+          this.poiClick.emit(currentID);
+          setTimeout(() => {
+            this.map.getInteractions().forEach(i => i.setActive(true));
+          }, 1200);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
   @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
 
   @Input('poi') set setPoi(id: number) {
@@ -47,30 +76,10 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
       }
     }
   }
-
+  ngOnDestroy(): void {
+    this._onClickSub.unsubscribe();
+  }
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes['map'] != null &&
-      changes['map'].currentValue != null &&
-      changes['map'].previousValue == null
-    ) {
-      this.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
-        console.log('related click');
-        try {
-          const poiFeature = this._getNearestFeatureOfLayer(this._poisLayer, event);
-          if (poiFeature) {
-            this.map.getInteractions().forEach(i => i.setActive(false));
-            const currentID = +poiFeature.getId() || -1;
-            this.poiClick.emit(currentID);
-            setTimeout(() => {
-              this.map.getInteractions().forEach(i => i.setActive(true));
-            }, 1200);
-          }
-        } catch (e) {
-          console.log(e);
-        }
-      });
-    }
     const resetCondition =
       (changes['track'] &&
         changes['track'].previousValue != null &&
@@ -360,13 +369,16 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
   }
 
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
-    if (this._selectedPoiMarker != null) {
-      this.map.removeLayer(this._selectedPoiLayer);
-      this._selectedPoiLayer = undefined;
-    }
+    this._deselectCurrentPoi();
     this._selectedPoiLayer = this._createLayer(this._selectedPoiLayer, 999999999999999);
     this._selectedPoiMarker = poiMarker;
     const {marker} = await this._createPoiCanvasIcon(poiMarker.poi, null, true);
     this._addIconToLayer(this._selectedPoiLayer, marker.icon);
+  }
+  private _deselectCurrentPoi(): void {
+    if (this._selectedPoiMarker != null) {
+      this.map.removeLayer(this._selectedPoiLayer);
+      this._selectedPoiLayer = undefined;
+    }
   }
 }
