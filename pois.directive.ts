@@ -2,6 +2,7 @@ import {Cluster, Vector as VectorSource} from 'ol/source';
 import {
   Directive,
   EventEmitter,
+  Host,
   Input,
   OnChanges,
   OnDestroy,
@@ -29,6 +30,7 @@ import {IGeojsonFeature} from './types/model';
 import {getNearestFeatureByCooridinate, intersectionBetweenArrays} from './utils';
 import {Subscription} from 'rxjs';
 import {stopPropagation} from 'ol/events/Event';
+import {WmMapComponent} from './component/map.component';
 @Directive({
   selector: '[wmMapPois]',
 })
@@ -118,6 +120,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         console.log(e);
       }
     });
+  }
+
+  constructor(@Host() private _mapCmp: WmMapComponent) {
+    super();
   }
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
@@ -276,13 +282,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     console.log('fit');
+    console.log(this._mapCmp);
     if (optOptions == null) {
       optOptions = {
         maxZoom: this.map.getView().getZoom(),
         duration: 1000,
       };
     }
-    this.map.getView().fit(geometryOrExtent, optOptions);
+    this._mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
   private _getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {

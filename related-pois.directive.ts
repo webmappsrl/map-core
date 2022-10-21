@@ -2,6 +2,7 @@ import {DEF_LINE_COLOR, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from './constants';
 import {
   Directive,
   EventEmitter,
+  Host,
   Input,
   OnChanges,
   OnDestroy,
@@ -27,6 +28,7 @@ import {WmMapBaseDirective} from './base.directive';
 import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
 import {logoBase64} from './icons';
+import {WmMapComponent} from './component/map.component';
 
 @Directive({
   selector: '[wmMapRelatedPois]',
@@ -75,6 +77,9 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
         this._selectCurrentPoi(currentPoi);
       }
     }
+  }
+  constructor(@Host() private _mapCmp: WmMapComponent) {
+    super();
   }
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
@@ -294,14 +299,13 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
       const size = this.map.getSize();
-      const height = size != null && size.length > 0 ? size[1] : 0;
       optOptions = {
         maxZoom: this.map.getView().getZoom(),
         duration: 500,
         size,
       };
     }
-    this.map.getView().fit(geometryOrExtent, optOptions);
+    this._mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
   private _getNearest(features: Feature<Geometry>[], coordinate: Coordinate) {

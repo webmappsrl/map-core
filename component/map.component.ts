@@ -38,6 +38,7 @@ import {extentFromLonLat} from '../utils';
 export class WmMapComponent implements OnChanges {
   private _centerExtent: Extent;
   private _view: View;
+  private _debounceFitTimer = null;
 
   @Input() conf: IMAP;
   @Input() padding: number[];
@@ -88,13 +89,19 @@ export class WmMapComponent implements OnChanges {
     );
   }
 
-  private _fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
+  fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (optOptions == null) {
       optOptions = {
         duration: 500,
       };
     }
-    this._view.fit(geometryOrExtent, optOptions);
+    if (this._debounceFitTimer !== null) {
+      clearTimeout(this._debounceFitTimer);
+    }
+    this._debounceFitTimer = setTimeout(() => {
+      this._view.fit(geometryOrExtent, optOptions);
+      this._debounceFitTimer = null;
+    }, 200);
   }
 
   private _initDefaultInteractions(): Collection<Interaction> {
@@ -119,7 +126,7 @@ export class WmMapComponent implements OnChanges {
     });
 
     if (conf.bbox) {
-      this._fitView(this._centerExtent);
+      this.fitView(this._centerExtent);
     }
 
     this.tileLayers = this._buildTileLayers(conf.tiles);
