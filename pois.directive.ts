@@ -66,7 +66,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             image: new Icon({
               anchor: [0.5, 0.5],
               scale: 0.5,
-              src: `${ICN_PATH}/${icn}.png`,
+              src: `${ICN_PATH}/${icn}_selected.png`,
             }),
           });
           if (
