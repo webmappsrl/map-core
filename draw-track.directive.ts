@@ -36,7 +36,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   });
   private _customTrack: any;
   private _customTrackLayer: VectorLayer;
-  private _customTracks: any[] = [];
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _graphHopperRoutingObj: GraphHopperRouting;
   private _points: Coordinate[] = [];
@@ -73,7 +72,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     this.reset$.next(void 0);
     if (changes.map != null && changes.previousValue == null && changes.map.currentValue != null) {
       this.isStable$.subscribe(v => {
-        this._initDB();
         this._initializeCustomTrackLayer();
         this._customTrack = {
           type: 'Feature',
@@ -264,13 +262,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     );
 
     return style;
-  }
-
-  private _initDB(): void {
-    const customTrack = localStorage.getItem('custom-tracks');
-    if (customTrack != null) {
-      this._customTracks = JSON.parse(customTrack);
-    }
   }
 
   private _initializeCustomTrackLayer(): void {
