@@ -35,14 +35,46 @@ import {WmMapComponent} from './component/map.component';
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
+  private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer;
   private _selectedPoiLayer: VectorLayer;
-  private _onClickSub: Subscription = Subscription.EMPTY;
 
   @Input() conf: IMAP;
   @Input() filters: any[] = [];
   @Input() pois: any;
   @Output('poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+
+  constructor(@Host() private _mapCmp: WmMapComponent) {
+    super();
+  }
+
+  @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
+    this._onClickSub = clickEVT$.subscribe(event => {
+      try {
+        if (this._isCluster(this._poisClusterLayer, event)) {
+          this._deactivateInteractions();
+          const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
+          this._fitView(geometry as any, {
+            maxZoom: this.map.getView().getZoom() + 1,
+            duration: 500,
+          });
+          stopPropagation(event);
+        } else {
+          const poiFeature = this._getNearestFeatureOfCluster(this._poisClusterLayer, event);
+          if (poiFeature) {
+            this._deactivateInteractions();
+            const currentID = +poiFeature.getId() || -1;
+            this.poiClick.emit(currentID);
+          }
+        }
+        setTimeout(() => {
+          this._activateInteractions();
+        }, 1200);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+  }
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
@@ -94,40 +126,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       }
     }
   }
-  @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
-    this._onClickSub = clickEVT$.subscribe(event => {
-      try {
-        if (this._isCluster(this._poisClusterLayer, event)) {
-          this._deactivateInteractions();
-          const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
-          this._fitView(geometry as any, {
-            maxZoom: this.map.getView().getZoom() + 1,
-            duration: 500,
-          });
-          stopPropagation(event);
-        } else {
-          const poiFeature = this._getNearestFeatureOfCluster(this._poisClusterLayer, event);
-          if (poiFeature) {
-            this._deactivateInteractions();
-            const currentID = +poiFeature.getId() || -1;
-            this.poiClick.emit(currentID);
-          }
-        }
-        setTimeout(() => {
-          this._activateInteractions();
-        }, 1200);
-      } catch (e) {
-        console.log(e);
-      }
-    });
-  }
 
-  constructor(@Host() private _mapCmp: WmMapComponent) {
-    super();
-  }
-  ngOnDestroy(): void {
-    this._onClickSub.unsubscribe();
-  }
   ngOnChanges(_: SimpleChanges): void {
     if (this.map != null && this.pois != null) {
       if (this.filters.length > 0) {
@@ -141,6 +140,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         this._addPoisFeature(this.pois.features);
       }
     }
+  }
+
+  ngOnDestroy(): void {
+    this._onClickSub.unsubscribe();
   }
 
   private _activateInteractions(): void {
