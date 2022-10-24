@@ -15,10 +15,10 @@ import LineString from 'ol/geom/LineString';
 import CircleStyle from 'ol/style/Circle';
 import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
 import {WmMapBaseDirective} from './base.directive';
-import FlowLine from 'ol-ext/style/FlowLine';
 import {ILineString} from './types/model';
 import {ILocation} from './types/location';
-import {coordsFromLonLat, getLineStyle} from './utils/utils';
+import {coordsFromLonLat} from './utils/ol';
+import {getFlowStyle, getLineStyle} from './utils/styles';
 @Directive({
   selector: '[wmMapTrack]',
 })
@@ -43,27 +43,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const isFlowLine = this.conf.flow_line_quote_show || false;
     const orangeTreshold = this.conf.flow_line_quote_orange || 800;
     const redTreshold = this.conf.flow_line_quote_red || 1500;
-    const flowStyle = new FlowLine({
-      lineCap: 'butt',
-      color: function (f, step) {
-        const geometry = f.getGeometry().getCoordinates();
-        const position = +(geometry.length * step).toFixed();
-        const currentLocation = geometry[position];
-        let currentAltitude = 100;
-        try {
-          currentAltitude = currentLocation[2];
-        } catch (_) {}
-
-        if (currentAltitude >= orangeTreshold && currentAltitude < redTreshold) {
-          return 'orange';
-        }
-        if (currentAltitude >= redTreshold) {
-          return 'red';
-        }
-        return 'green';
-      },
-      width: 10,
-    });
     const geojson: any = this.getGeoJson(trackgeojson);
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
@@ -73,9 +52,8 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         format: new GeoJSON(),
         features: this._trackFeatures,
       }),
-      style: () => {
-        return isFlowLine ? flowStyle : getLineStyle('#caaf15');
-      },
+      style: () =>
+        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle('#caaf15'),
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: SELECTED_TRACK_ZINDEX,

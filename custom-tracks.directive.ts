@@ -8,7 +8,7 @@ import {ITrackElevationChartHoverElements} from './types/track-elevation-charts'
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {getLineStyle} from './utils/utils';
+import {getLineStyle} from './utils/styles';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 

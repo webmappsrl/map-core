@@ -1,6 +1,5 @@
 import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {coordsFromLonLat, getLineStyle} from './utils/utils';
 
 import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
@@ -19,6 +18,8 @@ import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
+import {coordsFromLonLat} from './utils/ol';
+import {getLineStyle} from './utils/styles';
 import {stopPropagation} from 'ol/events/Event';
 import {toLonLat} from 'ol/proj';
 
