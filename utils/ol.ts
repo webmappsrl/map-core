@@ -17,7 +17,7 @@ import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
 import Icon from 'ol/style/Icon';
-
+import {Options as CircleOptions} from 'ol/style/Circle';
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
 }
@@ -28,21 +28,24 @@ export function addFeatureToLayer(layer: VectorLayer, feature: Feature<Geometry>
   }
 }
 
-export function createCircleFeature(lonLat: Coordinate): Feature {
+export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions): Feature {
+  if (options == null) {
+    options = {
+      radius: 15,
+      stroke: new Stroke({
+        color: '#fff',
+      }),
+      fill: new Fill({
+        color: '#3399CC',
+      }),
+    };
+  }
   const circleFeature = new Feature({
     geometry: new Point(coordsFromLonLat(lonLat)),
   });
   circleFeature.setStyle(
     new Style({
-      image: new CircleStyle({
-        radius: 15,
-        stroke: new Stroke({
-          color: '#fff',
-        }),
-        fill: new Fill({
-          color: '#3399CC',
-        }),
-      }),
+      image: new CircleStyle(options),
     }),
   );
 
