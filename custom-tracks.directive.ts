@@ -58,8 +58,12 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
   }
 
   private _clear(): void {
-    this._customTrackLayer.getSource().clear();
-    this._customPoiLayer.getSource().clear();
+    if (this._customTrackLayer != null) {
+      this._customTrackLayer.getSource().clear();
+    }
+    if (this._customPoiLayer != null) {
+      this._customPoiLayer.getSource().clear();
+    }
   }
 
   private _getLineStyle(color?: string): Array<Style> {
