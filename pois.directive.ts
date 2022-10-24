@@ -1,4 +1,3 @@
-import {Cluster, Vector as VectorSource} from 'ol/source';
 import {
   Directive,
   EventEmitter,
@@ -9,25 +8,27 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import CircleStyle from 'ol/style/Circle';
-import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from './constants';
+import {ICN_PATH} from './constants';
 import {FLAG_TRACK_ZINDEX} from './zIndex';
 import Feature from 'ol/Feature';
-import Fill from 'ol/style/Fill';
 import {FitOptions} from 'ol/View';
-import Geometry from 'ol/geom/Geometry';
 import Icon from 'ol/style/Icon';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import Point from 'ol/geom/Point';
-import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
-import Text from 'ol/style/Text';
 import VectorLayer from 'ol/layer/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
 import {IGeojsonFeature} from './types/model';
-import {getNearestFeatureByCooridinate, intersectionBetweenArrays} from './utils/ol';
+import {
+  activateInteractions,
+  createCluster,
+  createLayer,
+  deactivateInteractions,
+  nearestFeatureOfCluster,
+  intersectionBetweenArrays,
+  isCluster,
+} from './utils/ol';
 import {Subscription} from 'rxjs';
 import {stopPropagation} from 'ol/events/Event';
 import {WmMapComponent} from './component/map.component';
@@ -51,8 +52,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
-        if (this._isCluster(this._poisClusterLayer, event)) {
-          this._deactivateInteractions();
+        if (isCluster(this._poisClusterLayer, event)) {
+          deactivateInteractions(this.map);
           const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
           this._fitView(geometry as any, {
             maxZoom: this.map.getView().getZoom() + 1,
@@ -60,16 +61,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           });
           stopPropagation(event);
         } else {
-          const poiFeature = this._getNearestFeatureOfCluster(this._poisClusterLayer, event);
+          const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {
-            this._deactivateInteractions();
+            deactivateInteractions(this.map);
             const currentID = +poiFeature.getId() || -1;
             this.poiClick.emit(currentID);
           }
         }
-        setTimeout(() => {
-          this._activateInteractions();
-        }, 1200);
+        setTimeout(() => activateInteractions(this.map), 1200);
       } catch (e) {
         console.log(e);
       }
@@ -78,7 +77,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
-      this._selectedPoiLayer = this._createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
+      this._selectedPoiLayer = createLayer(
+        this._selectedPoiLayer,
+        FLAG_TRACK_ZINDEX + 100,
+        this.map,
+      );
       this._selectedPoiLayer.getSource().clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
@@ -146,12 +149,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     this._onClickSub.unsubscribe();
   }
 
-  private _activateInteractions(): void {
-    this.map.getInteractions().forEach(i => i.setActive(true));
-  }
-
   private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
-    this._poisClusterLayer = this._createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
+    this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX, this.map);
     const clusterSource: any = this._poisClusterLayer.getSource() as any;
     const featureSource = clusterSource.getSource();
 
@@ -207,85 +206,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     });
   }
 
-  private _createCluster(clusterLayer: VectorLayer, zIndex: number) {
-    if (!clusterLayer) {
-      clusterLayer = new VectorLayer({
-        source: new Cluster({
-          distance: CLUSTER_DISTANCE,
-          source: new VectorSource({
-            features: [],
-          }),
-          geometryFunction: (feature: Feature): Point | null => {
-            return feature.getGeometry().getType() === 'Point'
-              ? <Point>feature.getGeometry()
-              : null;
-          },
-        }),
-        style: function (feature) {
-          const size = feature.get('features').length;
-          let style = styleCache[size];
-          if (size === 1) {
-            const icon = feature.getProperties().features[0];
-            return icon.getStyle() || null;
-          }
-          if (!style) {
-            style = new Style({
-              image: new CircleStyle({
-                radius: 15,
-                stroke: new Stroke({
-                  color: '#fff',
-                }),
-                fill: new Fill({
-                  color: '#3399CC',
-                }),
-              }),
-              text: new Text({
-                text: `${size}`,
-                scale: 1.5,
-                fill: new Fill({
-                  color: '#fff',
-                }),
-                font: '30px ',
-              }),
-            });
-            styleCache[size] = style;
-          }
-          return style;
-        },
-        updateWhileAnimating: true,
-        updateWhileInteracting: true,
-        zIndex,
-      });
-
-      this.map.addLayer(clusterLayer);
-
-      const styleCache = {};
-    }
-    return clusterLayer;
-  }
-
-  private _createLayer(layer: VectorLayer, zIndex: number) {
-    if (!layer) {
-      layer = new VectorLayer({
-        source: new VectorSource({
-          features: [],
-        }),
-        updateWhileAnimating: true,
-        updateWhileInteracting: true,
-        zIndex,
-      });
-      this.map.addLayer(layer);
-    }
-    return layer;
-  }
-
-  private _deactivateInteractions(): void {
-    this.map.getInteractions().forEach(i => i.setActive(false));
-  }
-
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
-    console.log('fit');
-    console.log(this._mapCmp);
     if (optOptions == null) {
       optOptions = {
         maxZoom: this.map.getView().getZoom(),
@@ -301,55 +222,5 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
     );
     return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
-  }
-
-  private _getNearestFeatureOfCluster(
-    layer: VectorLayer,
-    evt: MapBrowserEvent<UIEvent>,
-  ): Feature<Geometry> {
-    const precision = this.map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
-    let nearestFeature = null;
-    const features: Feature<Geometry>[] = [];
-    const clusterSource = layer?.getSource() ?? (null as any);
-    const layerSource = clusterSource?.getSource();
-
-    if (layer && layerSource) {
-      layerSource.forEachFeatureInExtent(
-        buffer(
-          [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
-          precision,
-        ),
-        feature => {
-          features.push(feature);
-        },
-      );
-    }
-
-    if (features.length) {
-      nearestFeature = getNearestFeatureByCooridinate(features, evt.coordinate);
-    }
-
-    return nearestFeature;
-  }
-
-  private _isCluster(layer: VectorLayer, evt: MapBrowserEvent<UIEvent>): boolean {
-    const precision = this.map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
-    const features: Feature<Geometry>[] = [];
-    const clusterSource = layer?.getSource() ?? (null as any);
-    const layerSource = clusterSource?.getSource();
-
-    if (layer && layerSource) {
-      layerSource.forEachFeatureInExtent(
-        buffer(
-          [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
-          precision,
-        ),
-        feature => {
-          features.push(feature);
-        },
-      );
-    }
-
-    return features.length > 1;
   }
 }
