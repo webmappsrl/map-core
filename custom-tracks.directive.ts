@@ -113,7 +113,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
           return feature;
         },
       );
-      const icons = [];
       localSavedTracks.forEach((f: Feature<LineString>) => {
         const coords = f.getGeometry().getCoordinates();
         const startCoordinate = coords[0];
