@@ -1,6 +1,6 @@
 import {Extent, buffer} from 'ol/extent';
 import {Feature, MapBrowserEvent} from 'ol';
-import {transform, transformExtent} from 'ol/proj';
+import {fromLonLat, transform, transformExtent} from 'ol/proj';
 
 import {Coordinate} from 'ol/coordinate';
 import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../constants';
@@ -16,6 +16,7 @@ import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
+import Icon from 'ol/style/Icon';
 
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
@@ -117,6 +118,38 @@ export function createLayer(layer: VectorLayer, zIndex: number, map: Map) {
     }
   }
   return layer;
+}
+
+export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature {
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const DOMURL = window.URL;
+  const img = new Image();
+  const svg = new Blob([html], {
+    type: 'image/svg+xml',
+  });
+  const url = DOMURL.createObjectURL(svg);
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0);
+    DOMURL.revokeObjectURL(url);
+  };
+  img.src = url;
+  img.crossOrigin == 'Anonymous';
+  const feature = new Feature({
+    geometry: new Point(fromLonLat(position)),
+  });
+  const style = new Style({
+    image: new Icon({
+      anchor: [0.5, 0.5],
+      img: img,
+      imgSize: [32, 32],
+      opacity: 1,
+    }),
+    zIndex: 999999999,
+  });
+  feature.setStyle(style);
+
+  return feature;
 }
 
 /**

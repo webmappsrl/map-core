@@ -1,24 +1,26 @@
 import {Directive, Input, OnChanges, SimpleChanges} from '@angular/core';
-import Feature from 'ol/Feature';
-import Geometry from 'ol/geom/Geometry';
-import Point from 'ol/geom/Point';
-import VectorLayer from 'ol/layer/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
-import {fromLonLat} from 'ol/proj';
-import VectorSource from 'ol/source/Vector';
-import Icon from 'ol/style/Icon';
-import FillStyle from 'ol/style/Fill';
-import Style from 'ol/style/Style';
-import StrokeStyle from 'ol/style/Stroke';
-import {endIconHtml, startIconHtml} from './icons';
-import LineString from 'ol/geom/LineString';
-import CircleStyle from 'ol/style/Circle';
 import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
-import {WmMapBaseDirective} from './base.directive';
+import {coordsFromLonLat, createIconFeatureFromHtml} from './utils/ol';
+import {endIconHtml, startIconHtml} from './icons';
+import {getFlowStyle, getLineStyle} from './utils/styles';
+
+import CircleStyle from 'ol/style/Circle';
+import Feature from 'ol/Feature';
+import FillStyle from 'ol/style/Fill';
+import GeoJSON from 'ol/format/GeoJSON';
+import Geometry from 'ol/geom/Geometry';
 import {ILineString} from './types/model';
 import {ILocation} from './types/location';
-import {coordsFromLonLat} from './utils/ol';
-import {getFlowStyle, getLineStyle} from './utils/styles';
+import Icon from 'ol/style/Icon';
+import LineString from 'ol/geom/LineString';
+import Point from 'ol/geom/Point';
+import StrokeStyle from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import {WmMapBaseDirective} from './base.directive';
+import {fromLonLat} from 'ol/proj';
+
 @Directive({
   selector: '[wmMapTrack]',
 })
@@ -93,38 +95,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this.map.getView().fit(ext, optOptions);
       }
     }
-  }
-
-  private _createFeature(iconHtml: string, position: [number, number]): Feature {
-    const canvas = <HTMLCanvasElement>document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const DOMURL = window.URL;
-    const img = new Image();
-    const svg = new Blob([iconHtml], {
-      type: 'image/svg+xml',
-    });
-    const url = DOMURL.createObjectURL(svg);
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-      DOMURL.revokeObjectURL(url);
-    };
-    img.src = url;
-    img.crossOrigin == 'Anonymous';
-    const feature = new Feature({
-      geometry: new Point(fromLonLat(position)),
-    });
-    const style = new Style({
-      image: new Icon({
-        anchor: [0.5, 0.5],
-        img: img,
-        imgSize: [32, 32],
-        opacity: 1,
-      }),
-      zIndex: 999999999,
-    });
-    feature.setStyle(style);
-
-    return feature;
   }
 
   private _drawTemporaryLocationFeature(location?: ILocation, track?: any): void {
@@ -210,8 +180,8 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _init(): void {
     const startPosition = this.track.geometry.coordinates[0];
     const endPosition = this.track.geometry.coordinates[this.track.geometry.coordinates.length - 1];
-    this._startFeature = this._createFeature(startIconHtml, [startPosition[0], startPosition[1]]);
-    this._endFeature = this._createFeature(endIconHtml, [endPosition[0], endPosition[1]]);
+    this._startFeature = createIconFeatureFromHtml(startIconHtml, startPosition);
+    this._endFeature = createIconFeatureFromHtml(endIconHtml, endPosition);
     this._startEndLayer = new VectorLayer({
       zIndex: FLAG_TRACK_ZINDEX,
       source: new VectorSource({
