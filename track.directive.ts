@@ -9,7 +9,6 @@ import VectorSource from 'ol/source/Vector';
 import Icon from 'ol/style/Icon';
 import FillStyle from 'ol/style/Fill';
 import Style from 'ol/style/Style';
-import Stroke from 'ol/style/Stroke';
 import StrokeStyle from 'ol/style/Stroke';
 import {endIconHtml, startIconHtml} from './icons';
 import LineString from 'ol/geom/LineString';
@@ -19,7 +18,7 @@ import {WmMapBaseDirective} from './base.directive';
 import FlowLine from 'ol-ext/style/FlowLine';
 import {ILineString} from './types/model';
 import {ILocation} from './types/location';
-import {coordsFromLonLat} from './utils';
+import {coordsFromLonLat, getLineStyle} from './utils';
 @Directive({
   selector: '[wmMapTrack]',
 })
@@ -75,7 +74,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         features: this._trackFeatures,
       }),
       style: () => {
-        return isFlowLine ? flowStyle : this._getLineStyle('#caaf15');
+        return isFlowLine ? flowStyle : getLineStyle('#caaf15');
       },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
@@ -178,7 +177,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
                 }),
               ];
             } else {
-              return this._getLineStyle(this._elevationChartTrack.get('color'));
+              return getLineStyle(this._elevationChartTrack.get('color'));
             }
           },
           updateWhileAnimating: false,
@@ -228,64 +227,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       this._elevationChartSource.clear();
       this.map.render();
     }
-  }
-
-  private _getLineStyle(color?: string): Array<Style> {
-    const style: Array<Style> = [],
-      selected: boolean = false;
-
-    if (!color) color = '255, 177, 0'; // this._featuresService.color(id),
-    if (color[0] === '#') {
-      color =
-        parseInt(color.substring(1, 3), 16) +
-        ', ' +
-        parseInt(color.substring(3, 5), 16) +
-        ', ' +
-        parseInt(color.substring(5, 7), 16);
-    }
-    const strokeWidth: number = 6, // this._featuresService.strokeWidth(id),
-      strokeOpacity: number = 1, // this._featuresService.strokeOpacity(id),
-      lineDash: Array<number> = [], // this._featuresService.lineDash(id),
-      lineCap: CanvasLineCap = 'round', // this._featuresService.lineCap(id),
-      currentZoom: number = this.map.getView().getZoom();
-
-    color = 'rgba(' + color + ',' + strokeOpacity + ')';
-
-    if (selected) {
-      style.push(
-        new Style({
-          stroke: new Stroke({
-            color: 'rgba(226, 249, 0, 0.6)',
-            width: 10,
-          }),
-          zIndex: SELECTED_TRACK_ZINDEX + 5,
-        }),
-      );
-    }
-
-    style.push(
-      new Style({
-        stroke: new Stroke({
-          color: 'rgba(255, 255, 255, 0.9)',
-          width: strokeWidth * 2,
-        }),
-        zIndex: SELECTED_TRACK_ZINDEX + 1,
-      }),
-    );
-
-    style.push(
-      new Style({
-        stroke: new Stroke({
-          color,
-          width: strokeWidth,
-          lineDash,
-          lineCap,
-        }),
-        zIndex: SELECTED_TRACK_ZINDEX + 2,
-      }),
-    );
-
-    return style;
   }
 
   private _init(): void {
