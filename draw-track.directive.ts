@@ -1,6 +1,6 @@
 import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {coordsFromLonLat, getLineStyle} from './utils';
+import {coordsFromLonLat, getLineStyle} from './utils/utils';
 
 import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
@@ -42,6 +42,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
+  @Input() wmMapDrawTrackHost: string;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
   reset$ = new Subject();
@@ -83,6 +84,9 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
           elevation: true,
           instructions: false,
         });
+        if (this.wmMapDrawTrackHost) {
+          this._graphHopperRoutingObj.host = this.wmMapDrawTrackHost;
+        }
         this._graphHopperRoutingObj.defaults.profile = 'hike';
       }
       this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {

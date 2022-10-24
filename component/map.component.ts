@@ -26,7 +26,7 @@ import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import {defaults as defaultControls} from 'ol/control';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
-import {extentFromLonLat} from '../utils';
+import {extentFromLonLat} from '../utils/utils';
 
 @Component({
   selector: 'wm-map',

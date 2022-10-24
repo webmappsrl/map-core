@@ -4,7 +4,7 @@ import {Coordinate} from 'ol/coordinate';
 import {Extent} from 'ol/extent';
 import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
-import {ILocation} from './types/location';
+import {ILocation} from '../types/location';
 import Point from 'ol/geom/Point';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';

@@ -18,7 +18,7 @@ import {WmMapBaseDirective} from './base.directive';
 import FlowLine from 'ol-ext/style/FlowLine';
 import {ILineString} from './types/model';
 import {ILocation} from './types/location';
-import {coordsFromLonLat, getLineStyle} from './utils';
+import {coordsFromLonLat, getLineStyle} from './utils/utils';
 @Directive({
   selector: '[wmMapTrack]',
 })

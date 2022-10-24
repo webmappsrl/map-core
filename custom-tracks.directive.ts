@@ -8,7 +8,7 @@ import {ITrackElevationChartHoverElements} from './types/track-elevation-charts'
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {getLineStyle} from './utils';
+import {getLineStyle} from './utils/utils';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 
@@ -16,10 +16,6 @@ export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective implements OnChanges {
-  private _customPoiLayer: VectorLayer;
-  private _customPoiSource: VectorSource = new VectorSource({
-    features: [],
-  });
   private _customTrackLayer: VectorLayer;
   private _savedTracks$: BehaviorSubject<Feature<Geometry>[]> = new BehaviorSubject<
     Feature<Geometry>[]
@@ -62,9 +58,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     if (this._customTrackLayer != null) {
       this._customTrackLayer.getSource().clear();
     }
-    if (this._customPoiLayer != null) {
-      this._customPoiLayer.getSource().clear();
-    }
   }
 
   private _initLayer(): void {
@@ -82,11 +75,7 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
       if (this.map != null) {
         this.map.addLayer(this._customTrackLayer);
       }
-      this._customPoiLayer = new VectorLayer({
-        zIndex: 400,
-        source: this._customPoiSource,
-      });
-      this.map.addLayer(this._customPoiLayer);
+
       this.map.getRenderer();
     }
   }

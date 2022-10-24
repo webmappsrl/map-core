@@ -27,7 +27,7 @@ import {WmMapBaseDirective} from './base.directive';
 import {buffer} from 'ol/extent';
 import {fromLonLat} from 'ol/proj';
 import {IGeojsonFeature} from './types/model';
-import {getNearestFeatureByCooridinate, intersectionBetweenArrays} from './utils';
+import {getNearestFeatureByCooridinate, intersectionBetweenArrays} from './utils/utils';
 import {Subscription} from 'rxjs';
 import {stopPropagation} from 'ol/events/Event';
 import {WmMapComponent} from './component/map.component';
