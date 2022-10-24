@@ -1,19 +1,15 @@
-import {BehaviorSubject, Observable, Subject, of, timer} from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {skip, switchMap, takeWhile} from 'rxjs/operators';
 
-import {Coordinate} from 'ol/coordinate';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
 import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
-import Point from 'ol/geom/Point';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {coordsFromLonLat} from './utils';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 
@@ -25,10 +21,7 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });
-  private _customTrack: any;
   private _customTrackLayer: VectorLayer;
-  private _customTracks: any[] = [];
-  private _points: Coordinate[] = [];
   private _savedTracks$: BehaviorSubject<Feature<Geometry>[]> = new BehaviorSubject<
     Feature<Geometry>[]
   >([]);
@@ -38,18 +31,11 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
-  isStable$: Observable<boolean>;
   reset$ = new Subject();
 
   constructor() {
     super();
     this._initSavedTracks();
-    this.isStable$ = this.reset$.pipe(
-      switchMap(() => timer(500, 500)),
-      takeWhile(v => v <= 2),
-      skip(2),
-      switchMap(_ => of(true)),
-    );
   }
 
   @Input() set reloadCustomTracks(val) {
@@ -67,31 +53,13 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
       changes.map.previousValue == null &&
       changes.map.currentValue !== null
     ) {
-      this.isStable$.subscribe(v => {
-        this._initializeCustomTrackLayer();
-        this._customTrack = {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: [],
-          },
-          properties: {
-            id: 'wm-current_record_track',
-            name: 'prova',
-            locale: 'it',
-            taxonomy: {},
-            image: '',
-            color: 'rgba(226, 249, 0, 0.6)',
-          },
-        };
-      });
+      this._initializeCustomTrackLayer();
     }
   }
 
   private _clear(): void {
     this._customTrackLayer.getSource().clear();
     this._customPoiLayer.getSource().clear();
-    this._points = [];
   }
 
   private _getLineStyle(color?: string): Array<Style> {

@@ -1,6 +1,5 @@
-import {BehaviorSubject, Observable, Subject, of, timer} from 'rxjs';
+import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {skip, switchMap, takeWhile} from 'rxjs/operators';
 
 import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
@@ -45,17 +44,10 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
-  isStable$: Observable<boolean>;
   reset$ = new Subject();
 
   constructor() {
     super();
-    this.isStable$ = this.reset$.pipe(
-      switchMap(() => timer(700, 700)),
-      takeWhile(v => v <= 2),
-      skip(2),
-      switchMap(_ => of(true)),
-    );
   }
 
   @Input('wmMapDrawTrack') set enabled(val: boolean) {
@@ -71,132 +63,130 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   ngOnChanges(changes: SimpleChanges): void {
     this.reset$.next(void 0);
     if (changes.map != null && changes.previousValue == null && changes.map.currentValue != null) {
-      this.isStable$.subscribe(v => {
-        this._initializeCustomTrackLayer();
-        this._customTrack = {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: [],
-          },
-          properties: {
-            id: 'wm-current_record_track',
-            name: '',
-            color: 'rgba(226, 249, 0, 0.6)',
-          },
-        };
-        if (!this._graphHopperRoutingObj) {
-          this._graphHopperRoutingObj = new GraphHopperRouting({
-            vehicle: 'foot',
-            key: GRAPH_HOPPER_API_KEY,
-            elevation: true,
-            instructions: false,
-          });
-          this._graphHopperRoutingObj.defaults.profile = 'hike';
-        }
-        this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
-          if (this._enabled$.value) {
-            const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
-            if (oldCoordinates != null && oldCoordinates.length > 0) {
-              const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
-              this._customPoiSource.removeFeature(oldCoordinate);
-              const coords = toLonLat(
-                (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
-              );
-              this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
-            } else {
-              const circleFeature = new Feature({
-                geometry: new Point(evt.coordinate),
-              });
-              circleFeature.setStyle(
-                new Style({
-                  image: new CircleStyle({
-                    radius: 15,
-                    stroke: new Stroke({
-                      color: '#fff',
-                    }),
-                    fill: new Fill({
-                      color: '#3399CC',
-                    }),
+      this._initializeCustomTrackLayer();
+      this._customTrack = {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: [],
+        },
+        properties: {
+          id: 'wm-current_record_track',
+          name: '',
+          color: 'rgba(226, 249, 0, 0.6)',
+        },
+      };
+      if (!this._graphHopperRoutingObj) {
+        this._graphHopperRoutingObj = new GraphHopperRouting({
+          vehicle: 'foot',
+          key: GRAPH_HOPPER_API_KEY,
+          elevation: true,
+          instructions: false,
+        });
+        this._graphHopperRoutingObj.defaults.profile = 'hike';
+      }
+      this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
+        if (this._enabled$.value) {
+          const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
+          if (oldCoordinates != null && oldCoordinates.length > 0) {
+            const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
+            this._customPoiSource.removeFeature(oldCoordinate);
+            const coords = toLonLat(
+              (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
+            );
+            this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
+          } else {
+            const circleFeature = new Feature({
+              geometry: new Point(evt.coordinate),
+            });
+            circleFeature.setStyle(
+              new Style({
+                image: new CircleStyle({
+                  radius: 15,
+                  stroke: new Stroke({
+                    color: '#fff',
+                  }),
+                  fill: new Fill({
+                    color: '#3399CC',
                   }),
                 }),
-              );
-              this._customPoiSource.addFeature(circleFeature);
-              const lonLat = toLonLat(evt.coordinate);
-              this._points.push([lonLat[0], lonLat[1]]);
-            }
-            this._customPoiSource.changed();
-            this._customPoiLayer.changed();
-            if (this._points.length > 1) {
-              this._graphHopperRoutingObj.doRequest({points: this._points}).then(
-                (res: GraphHopperResponse) => {
-                  this._customTrack.geometry = res.paths[0].points;
-                  this._customTrack.properties.ascent = res.paths[0].ascend
-                    ? Math.round(res.paths[0].ascend)
-                    : this._customTrack.properties.ascent;
-                  this._customTrack.properties.descent = res.paths[0].descend
-                    ? Math.round(res.paths[0].descend)
-                    : this._customTrack.properties.descent;
-                  this._customTrack.properties.distance = res.paths[0].distance
-                    ? res.paths[0].distance / 1000
-                    : this._customTrack.properties.distance;
-                  let time: number =
-                    res.paths[0].distance && res.paths[0].ascend
-                      ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
-                      : res.paths[0].time
-                      ? res.paths[0].time / (1000 * 60 * 60)
-                      : undefined;
+              }),
+            );
+            this._customPoiSource.addFeature(circleFeature);
+            const lonLat = toLonLat(evt.coordinate);
+            this._points.push([lonLat[0], lonLat[1]]);
+          }
+          this._customPoiSource.changed();
+          this._customPoiLayer.changed();
+          if (this._points.length > 1) {
+            this._graphHopperRoutingObj.doRequest({points: this._points}).then(
+              (res: GraphHopperResponse) => {
+                this._customTrack.geometry = res.paths[0].points;
+                this._customTrack.properties.ascent = res.paths[0].ascend
+                  ? Math.round(res.paths[0].ascend)
+                  : this._customTrack.properties.ascent;
+                this._customTrack.properties.descent = res.paths[0].descend
+                  ? Math.round(res.paths[0].descend)
+                  : this._customTrack.properties.descent;
+                this._customTrack.properties.distance = res.paths[0].distance
+                  ? res.paths[0].distance / 1000
+                  : this._customTrack.properties.distance;
+                let time: number =
+                  res.paths[0].distance && res.paths[0].ascend
+                    ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
+                    : res.paths[0].time
+                    ? res.paths[0].time / (1000 * 60 * 60)
+                    : undefined;
 
-                  if (time !== undefined)
-                    this._customTrack.properties['duration:forward'] =
-                      Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
+                if (time !== undefined)
+                  this._customTrack.properties['duration:forward'] =
+                    Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
 
+                this._updateTrack();
+                this._redrawPoints();
+                this.currentCustomTrack.emit(this._customTrack);
+              },
+              (err: Error) => {
+                console.warn(err);
+                if (err.message.indexOf('Specify at least 2 points') !== -1) {
+                  this._customTrack.geometry.coordinates = [];
+                  this._customTrack.properties.ascent = undefined;
+                  this._customTrack.properties.descent = undefined;
+                  this._customTrack.properties.distance = undefined;
+                  this._customTrack.properties['duration:forward'] = undefined;
                   this._updateTrack();
-                  this._redrawPoints();
-                  this.currentCustomTrack.emit(this._customTrack);
-                },
-                (err: Error) => {
-                  console.warn(err);
-                  if (err.message.indexOf('Specify at least 2 points') !== -1) {
-                    this._customTrack.geometry.coordinates = [];
-                    this._customTrack.properties.ascent = undefined;
-                    this._customTrack.properties.descent = undefined;
-                    this._customTrack.properties.distance = undefined;
-                    this._customTrack.properties['duration:forward'] = undefined;
-                    this._updateTrack();
-                  } else if (err.message.indexOf('Cannot find point') !== -1) {
-                    let pointIndex: number = 0,
-                      split: Array<string> = err.message.split(' ');
+                } else if (err.message.indexOf('Cannot find point') !== -1) {
+                  let pointIndex: number = 0,
+                    split: Array<string> = err.message.split(' ');
 
-                    if (
-                      split.length > 3 &&
-                      split[3] !== '' &&
-                      !Number.isNaN(parseInt(split[3])) &&
-                      parseInt(split[3]) >= 0
-                    ) {
-                      pointIndex = parseInt(split[3]);
-                      this._points.splice(pointIndex, 1);
-                      this._redrawPoints();
-                    }
-                  } else if (err.message.indexOf('Too many points for Routing API') !== -1) {
-                    this._graphHopperRoutingObj.points.pop();
+                  if (
+                    split.length > 3 &&
+                    split[3] !== '' &&
+                    !Number.isNaN(parseInt(split[3])) &&
+                    parseInt(split[3]) >= 0
+                  ) {
+                    pointIndex = parseInt(split[3]);
+                    this._points.splice(pointIndex, 1);
                     this._redrawPoints();
-                  } else {
                   }
-                },
-              );
-            } else {
-              this._customTrackLayer.getSource().clear();
-            }
-            stopPropagation(evt);
+                } else if (err.message.indexOf('Too many points for Routing API') !== -1) {
+                  this._graphHopperRoutingObj.points.pop();
+                  this._redrawPoints();
+                } else {
+                }
+              },
+            );
+          } else {
+            this._customTrackLayer.getSource().clear();
           }
-        });
+          stopPropagation(evt);
+        }
+      });
 
-        this._enabled$.subscribe(v => {
-          if (v === false) {
-            this._clear();
-          }
-        });
+      this._enabled$.subscribe(v => {
+        if (v === false) {
+          this._clear();
+        }
       });
     }
   }
@@ -208,8 +198,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   }
 
   private _getLineStyle(color?: string): Array<Style> {
-    const style: Array<Style> = [],
-      selected: boolean = false;
+    const style: Array<Style> = [];
 
     if (!color) color = '255, 177, 0'; // this._featuresService.color(id),
     if (color[0] === '#') {
@@ -226,18 +215,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
       lineCap: CanvasLineCap = 'round',
       zIndex: number = 50;
     color = 'rgba(' + color + ',' + strokeOpacity + ')';
-
-    if (selected) {
-      style.push(
-        new Style({
-          stroke: new Stroke({
-            color: 'rgba(226, 249, 0, 0.6)',
-            width: 10,
-          }),
-          zIndex: zIndex + 5,
-        }),
-      );
-    }
 
     style.push(
       new Style({
