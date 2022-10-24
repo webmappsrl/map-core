@@ -52,7 +52,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
-        if (isCluster(this._poisClusterLayer, event)) {
+        if (isCluster(this._poisClusterLayer, event, this.map)) {
           deactivateInteractions(this.map);
           const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
           this._fitView(geometry as any, {

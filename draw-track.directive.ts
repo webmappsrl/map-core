@@ -1,24 +1,20 @@
 import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
 
-import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
 import Feature from 'ol/Feature';
-import Fill from 'ol/style/Fill';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
 import GraphHopperResponse from 'graphhopper-js-api-client';
 import GraphHopperRouting from 'graphhopper-js-api-client/src/GraphHopperRouting';
 import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import {MapBrowserEvent} from 'ol';
-import Point from 'ol/geom/Point';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
-import Stroke from 'ol/style/Stroke';
-import Style from 'ol/style/Style';
+import {ToastController} from '@ionic/angular';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {coordsFromLonLat} from './utils/ol';
+import {createCircleFeature} from './utils/ol';
 import {getLineStyle} from './utils/styles';
 import {stopPropagation} from 'ol/events/Event';
 import {toLonLat} from 'ol/proj';
@@ -48,7 +44,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
 
   reset$ = new Subject();
 
-  constructor() {
+  constructor(private _toastCtrl: ToastController) {
     super();
   }
 
@@ -88,7 +84,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
         if (this.wmMapDrawTrackHost) {
           this._graphHopperRoutingObj.host = this.wmMapDrawTrackHost;
         }
-        this._graphHopperRoutingObj.defaults.profile = 'hike';
+        this._graphHopperRoutingObj.defaults.profile = 'foot';
       }
       this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
         if (this._enabled$.value) {
@@ -101,25 +97,9 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
             );
             this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
           } else {
-            const circleFeature = new Feature({
-              geometry: new Point(evt.coordinate),
-            });
-            circleFeature.setStyle(
-              new Style({
-                image: new CircleStyle({
-                  radius: 15,
-                  stroke: new Stroke({
-                    color: '#fff',
-                  }),
-                  fill: new Fill({
-                    color: '#3399CC',
-                  }),
-                }),
-              }),
-            );
-            this._customPoiSource.addFeature(circleFeature);
             const lonLat = toLonLat(evt.coordinate);
-            this._points.push([lonLat[0], lonLat[1]]);
+            this._customPoiSource.addFeature(createCircleFeature(lonLat));
+            this._points.push(lonLat);
           }
           this._customPoiSource.changed();
           this._customPoiLayer.changed();
@@ -161,23 +141,9 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
                   this._customTrack.properties['duration:forward'] = undefined;
                   this._updateTrack();
                 } else if (err.message.indexOf('Cannot find point') !== -1) {
-                  let pointIndex: number = 0,
-                    split: Array<string> = err.message.split(' ');
-
-                  if (
-                    split.length > 3 &&
-                    split[3] !== '' &&
-                    !Number.isNaN(parseInt(split[3])) &&
-                    parseInt(split[3]) >= 0
-                  ) {
-                    pointIndex = parseInt(split[3]);
-                    this._points.splice(pointIndex, 1);
-                    this._redrawPoints();
-                  }
-                } else if (err.message.indexOf('Too many points for Routing API') !== -1) {
-                  this._graphHopperRoutingObj.points.pop();
+                  this._message(err.message);
+                  this._points.pop();
                   this._redrawPoints();
-                } else {
                 }
               },
             );
@@ -225,23 +191,26 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     }
   }
 
+  private async _message(msg: string) {
+    const toast = await this._toastCtrl.create({
+      message: msg,
+      duration: 1000,
+    });
+    await toast.present();
+  }
+
   private _redrawPoints(): void {
     let id: number = 0;
-
-    this._customTrackLayer.getSource().forEachFeature((feature: Feature) => {
-      if (feature.getGeometry().getType() === 'Point')
-        this._customTrackLayer.getSource().removeFeature(feature);
-    });
-
+    this._customPoiSource.clear();
     for (let point of this._points) {
-      let newPoi: Feature = new Feature(new Point(coordsFromLonLat(point)));
-      newPoi.setId(id + '');
-      this._customTrackLayer.getSource().addFeature(newPoi);
-      newPoi.changed();
+      const circleFeature = createCircleFeature(point);
+      circleFeature.setId(id + '');
+      this._customPoiSource.addFeature(circleFeature);
+      circleFeature.changed();
       id++;
     }
 
-    this._customTrackLayer.changed();
+    this._customPoiLayer.changed();
     this.map.render();
   }
 

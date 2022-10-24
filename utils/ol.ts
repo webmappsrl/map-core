@@ -27,6 +27,27 @@ export function addFeatureToLayer(layer: VectorLayer, feature: Feature<Geometry>
   }
 }
 
+export function createCircleFeature(lonLat: Coordinate): Feature {
+  const circleFeature = new Feature({
+    geometry: new Point(coordsFromLonLat(lonLat)),
+  });
+  circleFeature.setStyle(
+    new Style({
+      image: new CircleStyle({
+        radius: 15,
+        stroke: new Stroke({
+          color: '#fff',
+        }),
+        fill: new Fill({
+          color: '#3399CC',
+        }),
+      }),
+    }),
+  );
+
+  return circleFeature;
+}
+
 export function createCluster(clusterLayer: VectorLayer, zIndex: number, map: Map): VectorLayer {
   if (!clusterLayer) {
     clusterLayer = new VectorLayer({
@@ -63,7 +84,7 @@ export function createCluster(clusterLayer: VectorLayer, zIndex: number, map: Ma
               fill: new Fill({
                 color: '#fff',
               }),
-              font: '30px ',
+              font: '30px',
             }),
           });
           styleCache[size] = style;
@@ -173,8 +194,8 @@ export function extentFromLonLat(extent: Extent): Extent {
   return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
 }
 
-export function isCluster(layer: VectorLayer, evt: MapBrowserEvent<UIEvent>): boolean {
-  const precision = this.map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
+export function isCluster(layer: VectorLayer, evt: MapBrowserEvent<UIEvent>, map: Map): boolean {
+  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
   const features: Feature<Geometry>[] = [];
   const clusterSource = layer?.getSource() ?? (null as any);
   const layerSource = clusterSource?.getSource();
