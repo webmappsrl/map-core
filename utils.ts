@@ -6,6 +6,8 @@ import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
 import {ILocation} from './types/location';
 import Point from 'ol/geom/Point';
+import Stroke from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
 
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
@@ -206,4 +208,48 @@ export function getNearestFeatureByCooridinate(
     }
   });
   return ret;
+}
+
+export function getLineStyle(color?: string): Style[] {
+  const style: Style[] = [];
+  const strokeWidth: number = 3;
+  const strokeOpacity: number = 1;
+  const lineDash: Array<number> = [];
+  const lineCap: CanvasLineCap = 'round';
+  const zIndex: number = 50;
+
+  if (!color) color = '255, 177, 0';
+  if (color[0] === '#') {
+    color =
+      parseInt(color.substring(1, 3), 16) +
+      ', ' +
+      parseInt(color.substring(3, 5), 16) +
+      ', ' +
+      parseInt(color.substring(5, 7), 16);
+  }
+  color = 'rgba(' + color + ',' + strokeOpacity + ')';
+
+  style.push(
+    new Style({
+      stroke: new Stroke({
+        color: 'rgba(255, 255, 255, 0.9)',
+        width: strokeWidth * 2,
+      }),
+      zIndex: zIndex + 1,
+    }),
+  );
+
+  style.push(
+    new Style({
+      stroke: new Stroke({
+        color,
+        width: strokeWidth,
+        lineDash,
+        lineCap,
+      }),
+      zIndex: zIndex + 2,
+    }),
+  );
+
+  return style;
 }

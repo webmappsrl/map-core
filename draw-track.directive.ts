@@ -1,5 +1,6 @@
 import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {coordsFromLonLat, getLineStyle} from './utils';
 
 import CircleStyle from 'ol/style/Circle';
 import {Coordinate} from 'ol/coordinate';
@@ -18,7 +19,6 @@ import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
-import {coordsFromLonLat} from './utils';
 import {stopPropagation} from 'ol/events/Event';
 import {toLonLat} from 'ol/proj';
 
@@ -197,59 +197,13 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     this._points = [];
   }
 
-  private _getLineStyle(color?: string): Array<Style> {
-    const style: Array<Style> = [];
-
-    if (!color) color = '255, 177, 0'; // this._featuresService.color(id),
-    if (color[0] === '#') {
-      color =
-        parseInt(color.substring(1, 3), 16) +
-        ', ' +
-        parseInt(color.substring(3, 5), 16) +
-        ', ' +
-        parseInt(color.substring(5, 7), 16);
-    }
-    const strokeWidth: number = 3,
-      strokeOpacity: number = 1,
-      lineDash: Array<number> = [],
-      lineCap: CanvasLineCap = 'round',
-      zIndex: number = 50;
-    color = 'rgba(' + color + ',' + strokeOpacity + ')';
-
-    style.push(
-      new Style({
-        stroke: new Stroke({
-          color: 'rgba(255, 255, 255, 0.9)',
-          width: strokeWidth * 2,
-        }),
-        zIndex: zIndex + 1,
-      }),
-    );
-
-    style.push(
-      new Style({
-        stroke: new Stroke({
-          color,
-          width: strokeWidth,
-          lineDash,
-          lineCap,
-        }),
-        zIndex: zIndex + 2,
-      }),
-    );
-
-    return style;
-  }
-
   private _initializeCustomTrackLayer(): void {
     if (!this._customTrackLayer) {
       this._customTrackLayer = new VectorLayer({
         source: new VectorSource({
           format: new GeoJSON(),
         }),
-        style: () => {
-          return this._getLineStyle('#CA1551');
-        },
+        style: () => getLineStyle('#CA1551'),
         updateWhileAnimating: true,
         updateWhileInteracting: true,
         zIndex: 1000,
@@ -267,12 +221,13 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   }
 
   private _redrawPoints(): void {
+    let id: number = 0;
+
     this._customTrackLayer.getSource().forEachFeature((feature: Feature) => {
       if (feature.getGeometry().getType() === 'Point')
         this._customTrackLayer.getSource().removeFeature(feature);
     });
 
-    let id: number = 0;
     for (let point of this._points) {
       let newPoi: Feature = new Feature(new Point(coordsFromLonLat(point)));
       newPoi.setId(id + '');
