@@ -1,4 +1,3 @@
-import {BehaviorSubject, Observable} from 'rxjs';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -12,20 +11,22 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../constants';
 import View, {FitOptions} from 'ol/View';
+import {BehaviorSubject, Observable} from 'rxjs';
 
-import Collection from 'ol/Collection';
-import {Extent} from 'ol/extent';
-import {Interaction} from 'ol/interaction';
-import Map from 'ol/Map';
 import {MapBrowserEvent} from 'ol';
-import ScaleLineControl from 'ol/control/ScaleLine';
-import SimpleGeometry from 'ol/geom/SimpleGeometry';
-import TileLayer from 'ol/layer/Tile';
-import XYZ from 'ol/source/XYZ';
+import Collection from 'ol/Collection';
 import {defaults as defaultControls} from 'ol/control';
+import ScaleLineControl from 'ol/control/ScaleLine';
+import {Extent} from 'ol/extent';
+import SimpleGeometry from 'ol/geom/SimpleGeometry';
+import {Interaction} from 'ol/interaction';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
+import TileLayer from 'ol/layer/Tile';
+import Map from 'ol/Map';
+import XYZ from 'ol/source/XYZ';
+
+import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../constants';
 import {extentFromLonLat} from '../utils/ol';
 
 @Component({
@@ -37,8 +38,12 @@ import {extentFromLonLat} from '../utils/ol';
 })
 export class WmMapComponent implements OnChanges {
   private _centerExtent: Extent;
-  private _view: View;
   private _debounceFitTimer = null;
+  private _view: View;
+
+  @Input() set reset(_) {
+    this._reset();
+  }
 
   @Input() conf: IMAP;
   @Input() padding: number[];
@@ -54,8 +59,19 @@ export class WmMapComponent implements OnChanges {
 
   constructor(private _cdr: ChangeDetectorRef) {}
 
-  @Input() set reset(_) {
-    this._reset();
+  fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
+    if (optOptions == null) {
+      optOptions = {
+        duration: 500,
+      };
+    }
+    if (this._debounceFitTimer !== null) {
+      clearTimeout(this._debounceFitTimer);
+    }
+    this._debounceFitTimer = setTimeout(() => {
+      this._view.fit(geometryOrExtent, optOptions);
+      this._debounceFitTimer = null;
+    }, 200);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -72,7 +88,7 @@ export class WmMapComponent implements OnChanges {
     return (
       tiles.map((tile, index) => {
         return new TileLayer({
-          source: this._initializeBaseSource(Object.values(tile)[0]),
+          source: this._initBaseSource(Object.values(tile)[0]),
           visible: index === 0,
           zIndex: index,
           useInterimTilesOnError: true,
@@ -80,7 +96,7 @@ export class WmMapComponent implements OnChanges {
         });
       }) ?? [
         new TileLayer({
-          source: this._initializeBaseSource(DEF_XYZ_URL),
+          source: this._initBaseSource(DEF_XYZ_URL),
           visible: true,
           zIndex: 0,
           className: 'webmapp',
@@ -89,19 +105,17 @@ export class WmMapComponent implements OnChanges {
     );
   }
 
-  fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    if (optOptions == null) {
-      optOptions = {
-        duration: 500,
-      };
-    }
-    if (this._debounceFitTimer !== null) {
-      clearTimeout(this._debounceFitTimer);
-    }
-    this._debounceFitTimer = setTimeout(() => {
-      this._view.fit(geometryOrExtent, optOptions);
-      this._debounceFitTimer = null;
-    }, 200);
+  /**
+   * Initialize the base source of the map
+   *
+   * @returns the XYZ source to use
+   */
+  private _initBaseSource(tile: string) {
+    return new XYZ({
+      url: tile,
+      projection: 'EPSG:3857',
+      tileSize: [256, 256],
+    });
   }
 
   private _initDefaultInteractions(): Collection<Interaction> {
@@ -153,19 +167,6 @@ export class WmMapComponent implements OnChanges {
       this.clickEVT$.emit(evt);
     });
     this.map$.next(this.map);
-  }
-
-  /**
-   * Initialize the base source of the map
-   *
-   * @returns the XYZ source to use
-   */
-  private _initializeBaseSource(tile: string) {
-    return new XYZ({
-      url: tile,
-      projection: 'EPSG:3857',
-      tileSize: [256, 256],
-    });
   }
 
   private _reset(): void {

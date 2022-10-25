@@ -1,20 +1,21 @@
-import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {BehaviorSubject, Subject} from 'rxjs';
 
 import {Coordinate} from 'ol/coordinate';
 import Feature from 'ol/Feature';
-import Fill from 'ol/style/Fill';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
-import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import LineString from 'ol/geom/LineString';
-import Stroke from 'ol/style/Stroke';
 import VectorLayer from 'ol/layer/Vector';
+import {toLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
+
 import {WmMapBaseDirective} from './base.directive';
+import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import {createCircleFeature} from './utils/ol';
 import {getLineStyle} from './utils/styles';
-import {toLonLat} from 'ol/proj';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 
@@ -31,6 +32,16 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     Feature<Geometry>[]
   >([]);
 
+  @Input() set reloadCustomTracks(val) {
+    if (val != null) {
+      this._clear();
+      this._loadSavedTracks();
+      if (this._customTrackLayer != null) {
+        this._customTrackLayer.getSource().addFeatures(this._savedTracks$.value);
+      }
+    }
+  }
+
   @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
@@ -40,16 +51,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
 
   constructor() {
     super();
-  }
-
-  @Input() set reloadCustomTracks(val) {
-    if (val != null) {
-      this._clear();
-      this._loadSavedTracks();
-      if (this._customTrackLayer != null) {
-        this._customTrackLayer.getSource().addFeatures(this._savedTracks$.value);
-      }
-    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

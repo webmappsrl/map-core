@@ -1,23 +1,26 @@
-import {BehaviorSubject, Subject} from 'rxjs';
 import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {BehaviorSubject, Subject} from 'rxjs';
 
+import {ToastController} from '@ionic/angular';
+
+import GraphHopperResponse from 'graphhopper-js-api-client';
+import GraphHopperRouting from 'graphhopper-js-api-client/src/GraphHopperRouting';
+
+import {MapBrowserEvent} from 'ol';
 import {Coordinate} from 'ol/coordinate';
+import {stopPropagation} from 'ol/events/Event';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
-import GraphHopperResponse from 'graphhopper-js-api-client';
-import GraphHopperRouting from 'graphhopper-js-api-client/src/GraphHopperRouting';
-import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
-import {MapBrowserEvent} from 'ol';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
-import {ToastController} from '@ionic/angular';
 import VectorLayer from 'ol/layer/Vector';
+import {toLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
+
 import {WmMapBaseDirective} from './base.directive';
+import {ITrackElevationChartHoverElements} from './types/track-elevation-charts';
 import {createCircleFeature} from './utils/ol';
 import {getLineStyle} from './utils/styles';
-import {stopPropagation} from 'ol/events/Event';
-import {toLonLat} from 'ol/proj';
 
 export const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
@@ -36,6 +39,14 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   private _graphHopperRoutingObj: GraphHopperRouting;
   private _points: Coordinate[] = [];
 
+  @Input('wmMapDrawTrack') set enabled(val: boolean) {
+    this._enabled$.next(val);
+  }
+
+  @Input() set reloadCustomTracks(val) {
+    if (val != null) this._clear();
+  }
+
   @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
@@ -46,16 +57,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
 
   constructor(private _toastCtrl: ToastController) {
     super();
-  }
-
-  @Input('wmMapDrawTrack') set enabled(val: boolean) {
-    this._enabled$.next(val);
-  }
-
-  @Input() set reloadCustomTracks(val) {
-    if (val != null) {
-      this._clear();
-    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -191,7 +192,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
     }
   }
 
-  private async _message(msg: string) {
+  private async _message(msg: string): Promise<void> {
     const toast = await this._toastCtrl.create({
       message: msg,
       duration: 1000,

@@ -1,25 +1,24 @@
 import {Directive, Input, OnChanges, SimpleChanges} from '@angular/core';
-import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
-import {coordsFromLonLat, createIconFeatureFromHtml} from './utils/ol';
-import {endIconHtml, startIconHtml} from './icons';
-import {getFlowStyle, getLineStyle} from './utils/styles';
 
-import CircleStyle from 'ol/style/Circle';
 import Feature from 'ol/Feature';
-import FillStyle from 'ol/style/Fill';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
-import {ILineString} from './types/model';
-import {ILocation} from './types/location';
-import Icon from 'ol/style/Icon';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
-import StrokeStyle from 'ol/style/Stroke';
-import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
+import CircleStyle from 'ol/style/Circle';
+import FillStyle from 'ol/style/Fill';
+import StrokeStyle from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
+
 import {WmMapBaseDirective} from './base.directive';
-import {fromLonLat} from 'ol/proj';
+import {endIconHtml, startIconHtml} from './icons';
+import {ILocation} from './types/location';
+import {ILineString} from './types/model';
+import {coordsFromLonLat, createIconFeatureFromHtml} from './utils/ol';
+import {getFlowStyle, getLineStyle} from './utils/styles';
+import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from './zIndex';
 
 @Directive({
   selector: '[wmMapTrack]',
@@ -45,7 +44,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const isFlowLine = this.conf.flow_line_quote_show || false;
     const orangeTreshold = this.conf.flow_line_quote_orange || 800;
     const redTreshold = this.conf.flow_line_quote_red || 1500;
-    const geojson: any = this.getGeoJson(trackgeojson);
+    const geojson: any = this._getGeoJson(trackgeojson);
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
@@ -177,6 +176,19 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  private _getGeoJson(trackgeojson: any): any {
+    if (trackgeojson?.geoJson) {
+      return trackgeojson.geoJson;
+    }
+    if (trackgeojson?.geometry) {
+      return trackgeojson.geometry;
+    }
+    if (trackgeojson?._geometry) {
+      return trackgeojson._geometry;
+    }
+    return trackgeojson;
+  }
+
   private _init(): void {
     const startPosition = this.track.geometry.coordinates[0];
     const endPosition = this.track.geometry.coordinates[this.track.geometry.coordinates.length - 1];
@@ -211,18 +223,5 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       this.map.removeLayer(this._trackLayer);
       this._trackLayer = undefined;
     }
-  }
-
-  private getGeoJson(trackgeojson: any): any {
-    if (trackgeojson?.geoJson) {
-      return trackgeojson.geoJson;
-    }
-    if (trackgeojson?.geometry) {
-      return trackgeojson.geometry;
-    }
-    if (trackgeojson?._geometry) {
-      return trackgeojson._geometry;
-    }
-    return trackgeojson;
   }
 }

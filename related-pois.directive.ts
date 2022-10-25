@@ -1,4 +1,3 @@
-import {DEF_LINE_COLOR} from './constants';
 import {
   Directive,
   EventEmitter,
@@ -9,30 +8,32 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {IGeojsonFeature, PoiMarker} from './types/model';
+import {Subscription} from 'rxjs';
 
-import {FLAG_TRACK_ZINDEX} from './zIndex';
 import Feature from 'ol/Feature';
-import {FitOptions} from 'ol/View';
 import Geometry from 'ol/geom/Geometry';
-import Icon from 'ol/style/Icon';
+import Point from 'ol/geom/Point';
+import VectorLayer from 'ol/layer/Vector';
 import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
-import Point from 'ol/geom/Point';
-import Style from 'ol/style/Style';
-import {Subscription} from 'rxjs';
-import VectorLayer from 'ol/layer/Vector';
-import {WmMapBaseDirective} from './base.directive';
 import {fromLonLat} from 'ol/proj';
-import {logoBase64} from './icons';
+import Icon from 'ol/style/Icon';
+import Style from 'ol/style/Style';
+import {FitOptions} from 'ol/View';
+
+import {WmMapBaseDirective} from './base.directive';
 import {WmMapComponent} from './component/map.component';
+import {DEF_LINE_COLOR} from './constants';
+import {logoBase64} from './icons';
+import {IGeojsonFeature, PoiMarker} from './types/model';
+import {createCanvasForHtml, downloadBase64Img} from './utils/img';
 import {
   addFeatureToLayer,
   createLayer,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
 } from './utils/ol';
-import {createCanvasForHtml, downloadBase64Img} from './utils/img';
+import {FLAG_TRACK_ZINDEX} from './zIndex';
 
 @Directive({
   selector: '[wmMapRelatedPois]',
@@ -45,15 +46,6 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
   private _poisLayer: VectorLayer;
   private _selectedPoiLayer: VectorLayer;
   private _selectedPoiMarker: PoiMarker;
-
-  @Input() conf: IMAP;
-  @Input() map: Map;
-  @Input() track;
-  @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
-
-  constructor(@Host() private _mapCmp: WmMapComponent) {
-    super();
-  }
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -85,6 +77,15 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
         this._selectCurrentPoi(currentPoi);
       }
     }
+  }
+
+  @Input() conf: IMAP;
+  @Input() map: Map;
+  @Input() track;
+  @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+
+  constructor(@Host() private _mapCmp: WmMapComponent) {
+    super();
   }
 
   ngOnChanges(changes: SimpleChanges): void {

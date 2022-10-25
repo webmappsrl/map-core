@@ -6,8 +6,8 @@ import {
   SimpleChanges,
   ViewEncapsulation,
 } from '@angular/core';
-
 import {BehaviorSubject} from 'rxjs';
+
 import TileLayer from 'ol/layer/Tile';
 
 @Component({

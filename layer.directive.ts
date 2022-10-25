@@ -10,22 +10,23 @@ import {
   Renderer2,
   SimpleChanges,
 } from '@angular/core';
-import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from './constants';
-import {Interaction, defaults as defaultInteractions} from 'ol/interaction.js';
-import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
 
+import {defaults as defaultInteractions, Interaction} from 'ol/interaction.js';
+import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
+import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from './constants';
 import {Collection} from 'ol';
 import {FeatureLike} from 'ol/Feature';
-import {IDATALAYER} from './types/layer';
-import Layer from 'ol/layer/Layer';
 import MVT from 'ol/format/MVT';
+import Layer from 'ol/layer/Layer';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
+import VectorTileSource from 'ol/source/VectorTile';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
-import {TRACK_ZINDEX} from './zIndex';
-import VectorTileLayer from 'ol/layer/VectorTile';
-import VectorTileSource from 'ol/source/VectorTile';
+
 import {WmMapBaseDirective} from './base.directive';
+import {IDATALAYER} from './types/layer';
+import {TRACK_ZINDEX} from './zIndex';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -94,18 +95,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     return style;
   };
 
-  @Input() conf: IMAP;
-  @Input() map: Map;
-  @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
-
-  constructor(
-    private _elRef: ElementRef,
-    private _renderer: Renderer2,
-    private _cdr: ChangeDetectorRef,
-  ) {
-    super();
-  }
-
   @Input() set dataLayerUrls(urls: IDATALAYER) {
     this._dataLayerUrls = urls;
   }
@@ -124,6 +113,18 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     if (l != null && l.bbox != null) {
       this.fitView(l.bbox);
     }
+  }
+
+  @Input() conf: IMAP;
+  @Input() map: Map;
+  @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
+
+  constructor(
+    private _elRef: ElementRef,
+    private _renderer: Renderer2,
+    private _cdr: ChangeDetectorRef,
+  ) {
+    super();
   }
 
   ngOnChanges(_: SimpleChanges): void {
@@ -315,7 +316,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     return interactions;
   }
 
-  private _loadFeaturesXhr(url, format, extent, resolution, projection, success, failure) {
+  private _loadFeaturesXhr(url, format, extent, resolution, projection, success, failure): void {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', typeof url === 'function' ? url(extent, resolution, projection) : url, true);
     if (format.getType() == 'arraybuffer') {

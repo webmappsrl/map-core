@@ -8,30 +8,32 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {ICN_PATH} from './constants';
-import {FLAG_TRACK_ZINDEX} from './zIndex';
+import {Subscription} from 'rxjs';
+
+import {stopPropagation} from 'ol/events/Event';
 import Feature from 'ol/Feature';
-import {FitOptions} from 'ol/View';
-import Icon from 'ol/style/Icon';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
 import Point from 'ol/geom/Point';
-import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
-import {WmMapBaseDirective} from './base.directive';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
+import Icon from 'ol/style/Icon';
+import Style from 'ol/style/Style';
+import {FitOptions} from 'ol/View';
+
+import {WmMapBaseDirective} from './base.directive';
+import {WmMapComponent} from './component/map.component';
+import {ICN_PATH} from './constants';
 import {IGeojsonFeature} from './types/model';
 import {
   activateInteractions,
   createCluster,
   createLayer,
   deactivateInteractions,
-  nearestFeatureOfCluster,
   intersectionBetweenArrays,
   isCluster,
+  nearestFeatureOfCluster,
 } from './utils/ol';
-import {Subscription} from 'rxjs';
-import {stopPropagation} from 'ol/events/Event';
-import {WmMapComponent} from './component/map.component';
+import {FLAG_TRACK_ZINDEX} from './zIndex';
 @Directive({
   selector: '[wmMapPois]',
 })
@@ -39,15 +41,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer;
   private _selectedPoiLayer: VectorLayer;
-
-  @Input() conf: IMAP;
-  @Input() filters: any[] = [];
-  @Input() pois: any;
-  @Output('poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
-
-  constructor(@Host() private _mapCmp: WmMapComponent) {
-    super();
-  }
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -128,6 +121,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         }
       }
     }
+  }
+
+  @Input() conf: IMAP;
+  @Input() filters: any[] = [];
+  @Input() pois: any;
+  @Output('poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+
+  constructor(@Host() private _mapCmp: WmMapComponent) {
+    super();
   }
 
   ngOnChanges(_: SimpleChanges): void {
