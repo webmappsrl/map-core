@@ -11,12 +11,11 @@ import {
   SimpleChanges,
 } from '@angular/core';
 
-import {defaults as defaultInteractions, Interaction} from 'ol/interaction.js';
-import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
-import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly/constants';
 import {Collection} from 'ol';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
+import {defaults as defaultInteractions, Interaction} from 'ol/interaction.js';
+import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
 import Layer from 'ol/layer/Layer';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
@@ -24,9 +23,9 @@ import VectorTileSource from 'ol/source/VectorTile';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
-import {WmMapBaseDirective} from './base.directive';
+import {WmMapBaseDirective} from '.';
+import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
 import {IDATALAYER} from '../types/layer';
-import {TRACK_ZINDEX} from '../readonly/zIndex';
 
 @Directive({
   selector: '[wmMapLayer]',

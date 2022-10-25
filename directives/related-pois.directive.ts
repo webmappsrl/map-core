@@ -21,19 +21,18 @@ import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
 
-import {WmMapBaseDirective} from './base.directive';
-import {WmMapComponent} from '../components/map/map.component';
-import {DEF_LINE_COLOR} from '../readonly/constants';
-import {logoBase64} from '../readonly/icons';
+import {WmMapBaseDirective} from '.';
+import {WmMapComponent} from '../components';
+import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
-import {createCanvasForHtml, downloadBase64Img} from '../utils/img';
 import {
   addFeatureToLayer,
+  createCanvasForHtml,
   createLayer,
+  downloadBase64Img,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
-} from '../utils/ol';
-import {FLAG_TRACK_ZINDEX} from '../readonly/zIndex';
+} from '../utils';
 
 @Directive({
   selector: '[wmMapRelatedPois]',

@@ -20,9 +20,9 @@ import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
 
-import {WmMapBaseDirective} from './base.directive';
-import {WmMapComponent} from '../components/map/map.component';
-import {ICN_PATH} from '../readonly/constants';
+import {WmMapBaseDirective} from '.';
+import {WmMapComponent} from '../components';
+import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature} from '../types/model';
 import {
   activateInteractions,
@@ -32,8 +32,7 @@ import {
   intersectionBetweenArrays,
   isCluster,
   nearestFeatureOfCluster,
-} from '../utils/ol';
-import {FLAG_TRACK_ZINDEX} from '../readonly/zIndex';
+} from '../utils';
 @Directive({
   selector: '[wmMapPois]',
 })

@@ -1,10 +1,11 @@
 import {Directive, Input} from '@angular/core';
 
 import {Extent} from 'ol/extent';
-import {FitOptions} from 'ol/View';
-import Map from 'ol/Map';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
-import {extentFromLonLat} from '../utils/ol';
+import Map from 'ol/Map';
+import {FitOptions} from 'ol/View';
+
+import {extentFromLonLat} from '../utils';
 
 @Directive()
 export abstract class WmMapBaseDirective {

@@ -6,12 +6,15 @@ import {IonicModule} from '@ionic/angular';
 import {WmMapControls} from './components/controls/controls.map';
 import {WmMapComponent} from './components/map/map.component';
 import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-custom-track.map';
-import {WmMapCustomTracksDirective} from './directives/custom-tracks.directive';
-import {WmMapDrawTrackDirective} from './directives/draw-track.directive';
-import {WmMapLayerDirective} from './directives/layer.directive';
-import {WmMapPoisDirective} from './directives/pois.directive';
-import {WmMapRelatedPoisDirective} from './directives/related-pois.directive';
-import {WmMapTrackDirective} from './directives/track.directive';
+import {
+  WmMapCustomTracksDirective,
+  WmMapDrawTrackDirective,
+  WmMapLayerDirective,
+  WmMapPoisDirective,
+  WmMapTrackDirective,
+  WmMapRelatedPoisDirective,
+} from './directives';
+
 const directives = [
   WmMapTrackDirective,
   WmMapLayerDirective,

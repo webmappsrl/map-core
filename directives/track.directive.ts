@@ -12,13 +12,17 @@ import FillStyle from 'ol/style/Fill';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
-import {WmMapBaseDirective} from './base.directive';
-import {endIconHtml, startIconHtml} from '../readonly/icons';
+import {WmMapBaseDirective} from '.';
+import {
+  endIconHtml,
+  FLAG_TRACK_ZINDEX,
+  POINTER_TRACK_ZINDEX,
+  SELECTED_TRACK_ZINDEX,
+  startIconHtml,
+} from '../readonly';
 import {ILocation} from '../types/location';
 import {ILineString} from '../types/model';
-import {coordsFromLonLat, createIconFeatureFromHtml} from '../utils/ol';
-import {getFlowStyle, getLineStyle} from '../utils/styles';
-import {FLAG_TRACK_ZINDEX, POINTER_TRACK_ZINDEX, SELECTED_TRACK_ZINDEX} from '../readonly/zIndex';
+import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
 
 @Directive({
   selector: '[wmMapTrack]',
