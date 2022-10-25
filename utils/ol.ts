@@ -3,7 +3,7 @@ import {Feature, MapBrowserEvent} from 'ol';
 import {fromLonLat, transform, transformExtent} from 'ol/proj';
 
 import {Coordinate} from 'ol/coordinate';
-import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../constants';
+import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/constants';
 import Geometry from 'ol/geom/Geometry';
 import {ILocation} from '../types/location';
 import Map from 'ol/Map';

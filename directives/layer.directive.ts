@@ -13,7 +13,7 @@ import {
 
 import {defaults as defaultInteractions, Interaction} from 'ol/interaction.js';
 import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
-import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from './constants';
+import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly/constants';
 import {Collection} from 'ol';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
@@ -25,8 +25,8 @@ import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
 import {WmMapBaseDirective} from './base.directive';
-import {IDATALAYER} from './types/layer';
-import {TRACK_ZINDEX} from './zIndex';
+import {IDATALAYER} from '../types/layer';
+import {TRACK_ZINDEX} from '../readonly/zIndex';
 
 @Directive({
   selector: '[wmMapLayer]',

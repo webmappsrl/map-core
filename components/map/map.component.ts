@@ -26,8 +26,8 @@ import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
-import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../constants';
-import {extentFromLonLat} from '../utils/ol';
+import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../../readonly/constants';
+import {extentFromLonLat} from '../../utils/ol';
 
 @Component({
   selector: 'wm-map',

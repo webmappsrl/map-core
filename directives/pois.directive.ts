@@ -21,9 +21,9 @@ import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
 
 import {WmMapBaseDirective} from './base.directive';
-import {WmMapComponent} from './component/map.component';
-import {ICN_PATH} from './constants';
-import {IGeojsonFeature} from './types/model';
+import {WmMapComponent} from '../components/map/map.component';
+import {ICN_PATH} from '../readonly/constants';
+import {IGeojsonFeature} from '../types/model';
 import {
   activateInteractions,
   createCluster,
@@ -32,8 +32,8 @@ import {
   intersectionBetweenArrays,
   isCluster,
   nearestFeatureOfCluster,
-} from './utils/ol';
-import {FLAG_TRACK_ZINDEX} from './zIndex';
+} from '../utils/ol';
+import {FLAG_TRACK_ZINDEX} from '../readonly/zIndex';
 @Directive({
   selector: '[wmMapPois]',
 })

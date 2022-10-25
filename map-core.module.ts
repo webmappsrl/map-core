@@ -3,15 +3,15 @@ import {NgModule} from '@angular/core';
 
 import {IonicModule} from '@ionic/angular';
 
-import {WmMapControls} from './component/controls.map';
-import {WmMapComponent} from './component/map.component';
-import {WmMapSaveCustomTrackControls} from './component/save-custom-track.map';
-import {WmMapCustomTracksDirective} from './custom-tracks.directive';
-import {WmMapDrawTrackDirective} from './draw-track.directive';
-import {WmMapLayerDirective} from './layer.directive';
-import {WmMapPoisDirective} from './pois.directive';
-import {WmMapRelatedPoisDirective} from './related-pois.directive';
-import {WmMapTrackDirective} from './track.directive';
+import {WmMapControls} from './components/controls/controls.map';
+import {WmMapComponent} from './components/map/map.component';
+import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-custom-track.map';
+import {WmMapCustomTracksDirective} from './directives/custom-tracks.directive';
+import {WmMapDrawTrackDirective} from './directives/draw-track.directive';
+import {WmMapLayerDirective} from './directives/layer.directive';
+import {WmMapPoisDirective} from './directives/pois.directive';
+import {WmMapRelatedPoisDirective} from './directives/related-pois.directive';
+import {WmMapTrackDirective} from './directives/track.directive';
 const directives = [
   WmMapTrackDirective,
   WmMapLayerDirective,
