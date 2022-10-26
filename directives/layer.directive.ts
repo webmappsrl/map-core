@@ -10,7 +10,6 @@ import {
   Renderer2,
   SimpleChanges,
 } from '@angular/core';
-
 import {Collection} from 'ol';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
@@ -26,6 +25,7 @@ import Style from 'ol/style/Style';
 import {WmMapBaseDirective} from '.';
 import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
 import {IDATALAYER} from '../types/layer';
+import {bufferToString, stringToUint8Array, clearStorage, prefix} from '../utils';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -104,6 +104,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
     if (this._lowVectorTileLayer != null) {
       this._lowVectorTileLayer.setVisible(!disable);
+    }
+  }
+
+  @Input() set jidoUpdateTime(time: number) {
+    const storedJidoVersion = localStorage.getItem(`${prefix}_UPDATE_TIME`);
+    if (time != undefined && time != +storedJidoVersion) {
+      clearStorage();
+      localStorage.setItem(`${prefix}_UPDATE_TIME`, `${time}`);
     }
   }
 
@@ -237,11 +245,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     const layer = new VectorTileLayer({
       zIndex: TRACK_ZINDEX,
       renderBuffer: 5000,
+      declutter: true,
+      updateWhileAnimating: true,
+      updateWhileInteracting: true,
       source: new VectorTileSource({
         format: new MVT(),
         url: url,
         overlaps: true,
-        tileSize: 512,
+        tileSize: 256,
         tileLoadFunction: (tile: any, url: string) => {
           tile.setLoader(
             this._loadFeaturesXhr(
@@ -274,7 +285,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       useInterimTilesOnError: true,
       source: new VectorTileSource({
         format: new MVT(),
-        tileSize: 128,
+        tileSize: 256,
         url: url,
         overlaps: true,
         tileLoadFunction: (tile: any, url: string) => {
@@ -340,6 +351,20 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           }
         } else if (type == 'arraybuffer') {
           source = xhr.response;
+          let resp = null;
+          try {
+            resp = bufferToString(xhr.response);
+          } catch (e) {
+            console.log(e);
+          }
+          if (resp != null) {
+            try {
+              localStorage.setItem(`${prefix}_${url}`, resp);
+            } catch (e) {
+              console.warn(e);
+              resp = null;
+            }
+          }
         }
         if (source) {
           success(
@@ -360,23 +385,36 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
      * @private
      */
     xhr.onerror = failure;
-    const body = `{
-      "query": {"term" : { "layers" : 133 }}
-     
-  }`;
-    // const body = `{"query": {"term" : { "layers" : 133 }}}`;
-    xhr.send(body);
+    let cached = null;
+    const storageUrl = `${prefix}_${url}`;
+    try {
+      cached =
+        localStorage.getItem(storageUrl) != null
+          ? stringToUint8Array(localStorage.getItem(storageUrl))
+          : null;
+    } catch (e) {
+      console.log(e);
+    }
+    if (cached != null) {
+      success(
+        format.readFeatures(cached, {
+          extent: extent,
+          featureProjection: projection,
+        }),
+        format.readProjection(cached),
+      );
+    } else {
+      const body = `{
+        "query": {"term" : { "layers" : 133 }}
+    }`;
+      xhr.send(body);
+    }
   }
 
   private _resolutionLayerSwitcher(): void {
     if (this._highVectorTileLayer != null && this._lowVectorTileLayer != null) {
       const currentZoom = this.map.getView().getZoom();
-      if (
-        currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL - 2 &&
-        this._highVectorTileLayer.getVisible() == false
-      ) {
-        this._highVectorTileLayer.setVisible(true);
-      }
+
       if (currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL) {
         this._highVectorTileLayer.setOpacity(1);
         this._lowVectorTileLayer.setOpacity(0);
