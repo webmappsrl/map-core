@@ -116,7 +116,8 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
   }
 
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
-    this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX, this.map);
+    this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX);
+    this.map.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
       if (!poiCollection?.find(x => x.properties.id + '' === ov.id)) {
@@ -267,7 +268,8 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
 
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
     this._deselectCurrentPoi();
-    this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999, this.map);
+    this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);
+    this.map.addLayer(this._selectedPoiLayer);
     this._selectedPoiMarker = poiMarker;
     const {marker} = await this._createPoiCanvasIcon(poiMarker.poi, null, true);
     addFeatureToLayer(this._selectedPoiLayer, marker.icon);

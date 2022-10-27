@@ -72,11 +72,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
-      this._selectedPoiLayer = createLayer(
-        this._selectedPoiLayer,
-        FLAG_TRACK_ZINDEX + 100,
-        this.map,
-      );
+      this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
+      this.map.addLayer(this._selectedPoiLayer);
       this._selectedPoiLayer.getSource().clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
@@ -154,7 +151,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
-    this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX, this.map);
+    this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
+    this.map.addLayer(this._poisClusterLayer);
     const clusterSource: any = this._poisClusterLayer.getSource() as any;
     const featureSource = clusterSource.getSource();
 

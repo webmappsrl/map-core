@@ -22,7 +22,7 @@ import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {Interaction} from 'ol/interaction';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
-import TileLayer from 'ol/layer/Tile';
+import TileLayer from 'ol/layer/WebGLTile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
@@ -56,7 +56,7 @@ export class WmMapComponent implements OnChanges {
   customTrackEnabled$: Observable<boolean>;
   map: Map;
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map | null>(null);
-  tileLayers: TileLayer<any>[] = [];
+  tileLayers: TileLayer[] = [];
 
   constructor(private _cdr: ChangeDetectorRef) {}
 
@@ -85,7 +85,7 @@ export class WmMapComponent implements OnChanges {
     }
   }
 
-  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
+  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer[] {
     return (
       tiles.map((tile, index) => {
         return new TileLayer({

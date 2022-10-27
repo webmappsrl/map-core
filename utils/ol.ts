@@ -35,7 +35,7 @@ export function addFeatureToLayer(
   }
 }
 
-export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions): Feature {
+export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions): Feature<Point> {
   if (options == null) {
     options = {
       radius: 15,
@@ -49,22 +49,18 @@ export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions)
   }
   const circleFeature = new Feature({
     geometry: new Point(coordsFromLonLat(lonLat)),
-  });
-  circleFeature.setStyle(
-    new Style({
+    style: new Style({
       image: new CircleStyle(options),
     }),
-  );
-
+  });
   return circleFeature;
 }
 
 export function createCluster(
-  clusterLayer: VectorLayer<Cluster>,
+  clusterLayer: VectorLayer<Cluster> | null,
   zIndex: number,
-  map: Map,
 ): VectorLayer<Cluster> {
-  if (!clusterLayer) {
+  if (clusterLayer == null) {
     clusterLayer = new VectorLayer({
       source: new Cluster({
         distance: CLUSTER_DISTANCE,
@@ -111,13 +107,13 @@ export function createCluster(
       zIndex,
     });
 
-    map.addLayer(clusterLayer);
     const styleCache = {};
   }
+
   return clusterLayer;
 }
 
-export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number, map: Map) {
+export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
   if (!layer) {
     layer = new VectorLayer({
       source: new VectorSource({
@@ -127,9 +123,6 @@ export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number, ma
       updateWhileInteracting: true,
       zIndex,
     });
-    if (map != null) {
-      map.addLayer(layer);
-    }
   }
   return layer;
 }
