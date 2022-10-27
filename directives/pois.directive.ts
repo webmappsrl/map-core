@@ -33,17 +33,21 @@ import {
   isCluster,
   nearestFeatureOfCluster,
 } from '../utils';
+import {Cluster} from 'ol/source';
+import VectorSource from 'ol/source/Vector';
 @Directive({
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _onClickSub: Subscription = Subscription.EMPTY;
-  private _poisClusterLayer: VectorLayer;
-  private _selectedPoiLayer: VectorLayer;
+  private _poisClusterLayer: VectorLayer<Cluster>;
+  private _selectedPoiLayer: VectorLayer<VectorSource>;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
+        stopPropagation(event);
+        console.log('stop propagation');
         if (isCluster(this._poisClusterLayer, event, this.map)) {
           deactivateInteractions(this.map);
           const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
@@ -51,7 +55,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             maxZoom: this.map.getView().getZoom() + 1,
             duration: 500,
           });
-          stopPropagation(event);
         } else {
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {

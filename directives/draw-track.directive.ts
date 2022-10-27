@@ -29,12 +29,12 @@ export const RECORD_TRACK_ID: string = 'wm-current_record_track';
   selector: '[wmMapDrawTrack]',
 })
 export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnChanges {
-  private _customPoiLayer: VectorLayer;
+  private _customPoiLayer: VectorLayer<VectorSource>;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });
   private _customTrack: any;
-  private _customTrackLayer: VectorLayer;
+  private _customTrackLayer: VectorLayer<VectorSource>;
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _graphHopperRoutingObj: GraphHopperRouting;
   private _points: Coordinate[] = [];
@@ -89,6 +89,8 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
       }
       this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
         if (this._enabled$.value) {
+          stopPropagation(evt);
+          console.log('stop propagation');
           const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
           if (oldCoordinates != null && oldCoordinates.length > 0) {
             const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
@@ -151,7 +153,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
           } else {
             this._customTrackLayer.getSource().clear();
           }
-          stopPropagation(evt);
         }
       });
 

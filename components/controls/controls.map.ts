@@ -30,7 +30,7 @@ import TileLayer from 'ol/layer/Tile';
   encapsulation: ViewEncapsulation.None,
 })
 export class WmMapControls implements OnChanges {
-  @Input() tileLayers: TileLayer[];
+  @Input() tileLayers: TileLayer<any>[];
 
   currentTileLayerIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   showButton$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);

@@ -28,16 +28,16 @@ import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle}
   selector: '[wmMapTrack]',
 })
 export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges {
-  private _elevationChartLayer: VectorLayer;
+  private _elevationChartLayer: VectorLayer<VectorSource>;
   private _elevationChartPoint: Feature<Point>;
   private _elevationChartSource: VectorSource;
   private _elevationChartTrack: Feature<LineString>;
   private _endFeature: Feature<Geometry>;
   private _initTrack = false;
-  private _startEndLayer: VectorLayer;
+  private _startEndLayer: VectorLayer<VectorSource>;
   private _startFeature: Feature<Geometry>;
   private _trackFeatures: Feature<Geometry>[];
-  private _trackLayer: VectorLayer;
+  private _trackLayer: VectorLayer<VectorSource>;
 
   @Input() conf: IMAP;
   @Input() layer;

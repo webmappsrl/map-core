@@ -20,11 +20,11 @@ import {createCircleFeature, getLineStyle} from '../utils';
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective implements OnChanges {
-  private _customPoiLayer: VectorLayer;
+  private _customPoiLayer: VectorLayer<VectorSource>;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });
-  private _customTrackLayer: VectorLayer;
+  private _customTrackLayer: VectorLayer<VectorSource>;
   private _savedTracks$: BehaviorSubject<Feature<Geometry>[]> = new BehaviorSubject<
     Feature<Geometry>[]
   >([]);

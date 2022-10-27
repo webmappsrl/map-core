@@ -33,6 +33,7 @@ import {
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
 } from '../utils';
+import VectorSource from 'ol/source/Vector';
 
 @Directive({
   selector: '[wmMapRelatedPois]',
@@ -42,8 +43,8 @@ export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnC
   private _initPois;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poiMarkers: PoiMarker[] = [];
-  private _poisLayer: VectorLayer;
-  private _selectedPoiLayer: VectorLayer;
+  private _poisLayer: VectorLayer<VectorSource>;
+  private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {

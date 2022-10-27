@@ -10,22 +10,25 @@ import {
   Renderer2,
   SimpleChanges,
 } from '@angular/core';
-import {Collection} from 'ol';
 import {FeatureLike} from 'ol/Feature';
-import MVT from 'ol/format/MVT';
-import {defaults as defaultInteractions, Interaction} from 'ol/interaction.js';
-import SelectInteraction, {SelectEvent} from 'ol/interaction/Select';
-import Layer from 'ol/layer/Layer';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
-import VectorTileSource from 'ol/source/VectorTile';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
 import {WmMapBaseDirective} from '.';
 import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
 import {IDATALAYER} from '../types/layer';
-import {bufferToString, stringToUint8Array, clearStorage, prefix} from '../utils';
+import {
+  clearStorage,
+  prefix,
+  handlingStrokeStyleWidthOptions,
+  handlingStrokeStyleWidth,
+  getColorFromLayer,
+  initInteractions,
+  initVectorTileLayer,
+} from '../utils';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -42,9 +45,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowLoading = 0;
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
-  private _selectInteraction: SelectInteraction;
   private _styleFn = (feature: FeatureLike) => {
-    const map = this.conf;
     const properties = feature.getProperties();
     const layers: number[] = JSON.parse(properties.layers);
     let strokeStyle: StrokeStyle = new StrokeStyle();
@@ -58,9 +59,17 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       }
     } else {
       const layerId = +layers[0];
-      strokeStyle.setColor(this._getColorFromLayer(layerId));
+      strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
     }
-    this._handlingStrokeStyleWidth(strokeStyle, map, 2);
+    const opt: handlingStrokeStyleWidthOptions = {
+      strokeStyle,
+      minZoom: this.conf.minZoom,
+      maxZoom: this.conf.maxZoom,
+      minWidth: 2,
+      maxWidth: 5,
+      currentZoom: this.map.getView().getZoom(),
+    };
+    handlingStrokeStyleWidth(opt);
 
     let style = new Style({
       stroke: strokeStyle,
@@ -69,7 +78,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     return style;
   };
   private _styleLowFn = (feature: FeatureLike) => {
-    const map = this.conf;
     const properties = feature.getProperties();
     const layers: number[] = JSON.parse(properties.layers);
     let strokeStyle: StrokeStyle = new StrokeStyle();
@@ -83,9 +91,17 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       }
     } else {
       const layerId = +layers[0];
-      strokeStyle.setColor(this._getColorFromLayer(layerId));
+      strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
     }
-    this._handlingStrokeStyleWidth(strokeStyle, map, 3, 6);
+    const opt: handlingStrokeStyleWidthOptions = {
+      strokeStyle,
+      minZoom: this.conf.minZoom,
+      maxZoom: this.conf.maxZoom,
+      minWidth: 3,
+      maxWidth: 6,
+      currentZoom: this.map.getView().getZoom(),
+    };
+    handlingStrokeStyleWidth(opt);
 
     let style = new Style({
       stroke: strokeStyle,
@@ -146,6 +162,25 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           this._resolutionLayerSwitcher();
         }, 500);
       });
+      this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+        console.log(evt);
+        try {
+          this.map.forEachFeatureAtPixel(
+            evt.pixel,
+            function (clickedFeature) {
+              const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+              console.log(clickedFeatureId);
+              if (clickedFeatureId > -1 && this._highVectorTileLayer.getOpacity() === 1) {
+                this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+              }
+              return true;
+            }.bind(this),
+            {
+              hitTolerance: 100,
+            },
+          );
+        } catch (_) {}
+      });
 
       this._highVectorTileLayer.getSource().on('tileloadstart', () => {
         ++this._loading;
@@ -176,45 +211,12 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._renderer.appendChild(this._elRef.nativeElement.parentNode, this._ionProgress);
   }
 
-  private _getColorFromLayer(id: number): string {
-    const layers = this.conf.layers || [];
-    const layer = layers.filter(l => +l.id === +id);
-    return layer[0] && layer[0].style && layer[0].style.color
-      ? layer[0].style.color
-      : this._defaultFeatureColor;
-  }
-
-  private _handlingStrokeStyleWidth(
-    strokeStyle: StrokeStyle,
-    conf: IMAP,
-    minW = 0.1,
-    maxW = 5,
-  ): void {
-    const currentZoom: number = this.map.getView().getZoom();
-
-    const delta = (currentZoom - conf.minZoom) / (conf.maxZoom - conf.minZoom);
-    const newWidth = minW + (maxW - minW) * delta;
-    strokeStyle.setWidth(newWidth);
-  }
-
   private _initLayer(map: IMAP) {
     this._initializeDataLayers(map);
-    this._resolutionLayerSwitcher();
-
-    const interactions: Collection<Interaction> = this._initializeMapInteractions([
-      this._lowVectorTileLayer,
-      this._highVectorTileLayer,
-    ]);
-    interactions.forEach(interaction => {
+    initInteractions().forEach(interaction => {
       this.map.addInteraction(interaction);
     });
-    this._selectInteraction.on('select', async (event: SelectEvent) => {
-      const clickedFeature = event?.selected?.[0] ?? undefined;
-      const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-      if (clickedFeatureId > -1 && this._highVectorTileLayer.getOpacity() === 1) {
-        this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-      }
-    });
+    this._resolutionLayerSwitcher();
 
     this.map.updateSize();
   }
@@ -225,190 +227,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @returns the array of created layers
    */
   private _initializeDataLayers(map: IMAP): void {
-    this._lowVectorTileLayer = this._initializeLowDataLayer(this._dataLayerUrls.low, map);
-    this._highVectorTileLayer = this._initializeHighDataLayer(this._dataLayerUrls.high, map);
+    this._lowVectorTileLayer = initVectorTileLayer(this._dataLayerUrls.low, this._styleLowFn);
+    this._highVectorTileLayer = initVectorTileLayer(this._dataLayerUrls.high, this._styleFn);
 
     this.map.addLayer(this._lowVectorTileLayer);
     this.map.addLayer(this._highVectorTileLayer);
-  }
-
-  /**
-   * Initialize a specific layer with interactive data
-   *
-   * @returns the created layer
-   */
-  private _initializeHighDataLayer(url: any, map: IMAP): VectorTileLayer {
-    if (!url) {
-      return;
-    }
-
-    const layer = new VectorTileLayer({
-      zIndex: TRACK_ZINDEX,
-      renderBuffer: 5000,
-      declutter: true,
-      updateWhileAnimating: true,
-      updateWhileInteracting: true,
-      source: new VectorTileSource({
-        format: new MVT(),
-        url: url,
-        overlaps: true,
-        tileSize: 256,
-        tileLoadFunction: (tile: any, url: string) => {
-          tile.setLoader(
-            this._loadFeaturesXhr(
-              url,
-              tile.getFormat(),
-              tile.extent,
-              tile.resolution,
-              tile.projection,
-              tile.onLoad.bind(tile),
-              tile.onError.bind(tile),
-            ),
-          );
-        },
-      }),
-      style: this._styleFn,
-    });
-    return layer;
-  }
-
-  private _initializeLowDataLayer(url: any, map: IMAP): VectorTileLayer {
-    if (!url) {
-      return;
-    }
-    const layer = new VectorTileLayer({
-      zIndex: TRACK_ZINDEX,
-      renderBuffer: 5000,
-      declutter: true,
-      updateWhileAnimating: true,
-      updateWhileInteracting: true,
-      useInterimTilesOnError: true,
-      source: new VectorTileSource({
-        format: new MVT(),
-        tileSize: 256,
-        url: url,
-        overlaps: true,
-        tileLoadFunction: (tile: any, url: string) => {
-          tile.setLoader(
-            this._loadFeaturesXhr(
-              url,
-              tile.getFormat(),
-              tile.extent,
-              tile.resolution,
-              tile.projection,
-              tile.onLoad.bind(tile),
-              tile.onError.bind(tile),
-            ),
-          );
-        },
-      }),
-      style: this._styleLowFn,
-    });
-    return layer;
-  }
-
-  private _initializeMapInteractions(selectLayers: Array<Layer>): Collection<Interaction> {
-    const interactions = defaultInteractions({
-      doubleClickZoom: false,
-      dragPan: true,
-      mouseWheelZoom: true,
-      pinchRotate: false,
-      altShiftDragRotate: false,
-    });
-    this._selectInteraction = new SelectInteraction({
-      layers: selectLayers,
-      hitTolerance: 100,
-      style: null,
-    });
-
-    interactions.push(this._selectInteraction);
-
-    return interactions;
-  }
-
-  private _loadFeaturesXhr(url, format, extent, resolution, projection, success, failure): void {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', typeof url === 'function' ? url(extent, resolution, projection) : url, true);
-    if (format.getType() == 'arraybuffer') {
-      xhr.responseType = 'arraybuffer';
-    }
-    /**
-     * @param {Event} event Event.
-     * @private
-     */
-    xhr.onload = function (event) {
-      // status will be 0 for file:// urls
-      if (!xhr.status || (xhr.status >= 200 && xhr.status < 300)) {
-        var type = format.getType();
-        /** @type {Document|Node|Object|string|undefined} */
-        var source = void 0;
-        if (type == 'json' || type == 'text') {
-          source = xhr.responseText;
-        } else if (type == 'xml') {
-          source = xhr.responseXML;
-          if (!source) {
-            source = new DOMParser().parseFromString(xhr.responseText, 'application/xml');
-          }
-        } else if (type == 'arraybuffer') {
-          source = xhr.response;
-          let resp = null;
-          try {
-            resp = bufferToString(xhr.response);
-          } catch (e) {
-            console.log(e);
-          }
-          if (resp != null) {
-            try {
-              localStorage.setItem(`${prefix}_${url}`, resp);
-            } catch (e) {
-              console.warn(e);
-              resp = null;
-            }
-          }
-        }
-        if (source) {
-          success(
-            format.readFeatures(source, {
-              extent: extent,
-              featureProjection: projection,
-            }),
-            format.readProjection(source),
-          );
-        } else {
-          failure();
-        }
-      } else {
-        failure();
-      }
-    };
-    /**
-     * @private
-     */
-    xhr.onerror = failure;
-    let cached = null;
-    const storageUrl = `${prefix}_${url}`;
-    try {
-      cached =
-        localStorage.getItem(storageUrl) != null
-          ? stringToUint8Array(localStorage.getItem(storageUrl))
-          : null;
-    } catch (e) {
-      console.log(e);
-    }
-    if (cached != null) {
-      success(
-        format.readFeatures(cached, {
-          extent: extent,
-          featureProjection: projection,
-        }),
-        format.readProjection(cached),
-      );
-    } else {
-      const body = `{
-        "query": {"term" : { "layers" : 133 }}
-    }`;
-      xhr.send(body);
-    }
   }
 
   private _resolutionLayerSwitcher(): void {

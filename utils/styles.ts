@@ -1,7 +1,9 @@
 import FlowLine from 'ol-ext/style/FlowLine';
 import Stroke from 'ol/style/Stroke';
-import Style from 'ol/style/Style';
-
+import Style, {StyleLike} from 'ol/style/Style';
+import StrokeStyle from 'ol/style/Stroke';
+import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
+import {FeatureLike} from 'ol/Feature';
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
     version: 8,
@@ -174,4 +176,61 @@ export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
     },
     width: 10,
   });
+}
+
+export interface handlingStrokeStyleWidthOptions {
+  currentZoom: number;
+  maxWidth?: number;
+  maxZoom: number;
+  minWidth?: number;
+  minZoom: number;
+  strokeStyle: StrokeStyle;
+}
+export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
+  options = {...{minWidth: 0.1, maxWidth: 5}, ...options};
+  const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
+  const newWidth = options.minWidth + (options.maxWidth - options.minWidth) * delta;
+
+  options.strokeStyle.setWidth(newWidth);
+}
+
+export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
+  const layer = layers.filter(l => +l.id === +id);
+  return layer[0] && layer[0].style && layer[0].style.color ? layer[0].style.color : DEF_LINE_COLOR;
+}
+
+export function styleLowCoreFn(feature: FeatureLike) {
+  const properties = feature.getProperties();
+  const layers: number[] = JSON.parse(properties.layers);
+  let strokeStyle: StrokeStyle = new StrokeStyle();
+
+  if (this._currentLayer != null) {
+    const currentIDLayer = +this._currentLayer.id;
+    if (layers.indexOf(currentIDLayer) >= 0) {
+      strokeStyle.setColor(this._currentLayer.style.color ?? this._defaultFeatureColor);
+    } else {
+      strokeStyle.setColor('rgba(0,0,0,0)');
+    }
+  } else {
+    const layerId = +layers[0];
+    strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
+  }
+  const opt: handlingStrokeStyleWidthOptions = {
+    strokeStyle,
+    minZoom: this.conf.minZoom,
+    maxZoom: this.conf.maxZoom,
+    minWidth: 3,
+    maxWidth: 6,
+    currentZoom: this.map.getView().getZoom(),
+  };
+  handlingStrokeStyleWidth(opt);
+
+  let style = new Style({
+    stroke: strokeStyle,
+    zIndex: TRACK_ZINDEX,
+  });
+  return style;
+}
+export function styleLowFn(conf: IMAP, currentZoom: number) {
+  return styleLowCoreFn.bind({conf, currentZoom}) as StyleLike;
 }

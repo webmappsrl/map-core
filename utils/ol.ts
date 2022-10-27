@@ -1,28 +1,35 @@
-import {Extent, buffer} from 'ol/extent';
 import {Feature, MapBrowserEvent} from 'ol';
-import {fromLonLat, transform, transformExtent} from 'ol/proj';
-
+import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
-import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/constants';
-import Geometry from 'ol/geom/Geometry';
-import {ILocation} from '../types/location';
-import Map from 'ol/Map';
-import Point from 'ol/geom/Point';
+import {buffer, Extent} from 'ol/extent';
+import {FeatureLike} from 'ol/Feature';
+import MVT from 'ol/format/MVT';
+import {Geometry, Point} from 'ol/geom';
+import {defaults as defaultInteractions, Interaction} from 'ol/interaction';
+import {DefaultsOptions} from 'ol/interaction/defaults';
 import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
+import Map from 'ol/Map';
+import {fromLonLat, transform, transformExtent} from 'ol/proj';
 import {Cluster} from 'ol/source';
-import CircleStyle from 'ol/style/Circle';
-import Fill from 'ol/style/Fill';
-import Stroke from 'ol/style/Stroke';
-import Style from 'ol/style/Style';
-import Text from 'ol/style/Text';
-import Icon from 'ol/style/Icon';
-import {Options as CircleOptions} from 'ol/style/Circle';
+import VectorSource from 'ol/source/Vector';
+import VectorTileSource from 'ol/source/VectorTile';
+import {Fill, Icon, Stroke, Style, Text} from 'ol/style';
+import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
+
+import {TRACK_ZINDEX} from '../readonly';
+import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/constants';
+import {ILocation} from '../types/location';
+import {loadFeaturesXhr} from './httpRequest';
+
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
 }
 
-export function addFeatureToLayer(layer: VectorLayer, feature: Feature<Geometry>): void {
+export function addFeatureToLayer(
+  layer: VectorLayer<VectorSource<Geometry>>,
+  feature: Feature<Geometry>,
+): void {
   if (layer != null) {
     layer.getSource().addFeature(feature);
   }
@@ -52,7 +59,11 @@ export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions)
   return circleFeature;
 }
 
-export function createCluster(clusterLayer: VectorLayer, zIndex: number, map: Map): VectorLayer {
+export function createCluster(
+  clusterLayer: VectorLayer<Cluster>,
+  zIndex: number,
+  map: Map,
+): VectorLayer<Cluster> {
   if (!clusterLayer) {
     clusterLayer = new VectorLayer({
       source: new Cluster({
@@ -106,7 +117,7 @@ export function createCluster(clusterLayer: VectorLayer, zIndex: number, map: Ma
   return clusterLayer;
 }
 
-export function createLayer(layer: VectorLayer, zIndex: number, map: Map) {
+export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number, map: Map) {
   if (!layer) {
     layer = new VectorLayer({
       source: new VectorSource({
@@ -230,7 +241,11 @@ export function extentFromLonLat(extent: Extent): Extent {
   return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
 }
 
-export function isCluster(layer: VectorLayer, evt: MapBrowserEvent<UIEvent>, map: Map): boolean {
+export function isCluster(
+  layer: VectorLayer<Cluster>,
+  evt: MapBrowserEvent<UIEvent>,
+  map: Map,
+): boolean {
   const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
   const features: Feature<Geometry>[] = [];
   const clusterSource = layer?.getSource() ?? (null as any);
@@ -276,7 +291,7 @@ export function nearestFeatureOfCooridinate(
 }
 
 export function nearestFeatureOfLayer(
-  layer: VectorLayer,
+  layer: VectorLayer<any>,
   evt: MapBrowserEvent<UIEvent>,
   map: Map,
 ): Feature<Geometry> {
@@ -306,7 +321,7 @@ export function nearestFeatureOfLayer(
 }
 
 export function nearestFeatureOfCluster(
-  layer: VectorLayer,
+  layer: VectorLayer<any>,
   evt: MapBrowserEvent<UIEvent>,
   map: Map,
 ): Feature<Geometry> {
@@ -335,9 +350,64 @@ export function nearestFeatureOfCluster(
   return nearestFeature;
 }
 
-export function removeFeatureFromLayer(layer: VectorLayer, feature: Feature<Geometry>): void {
+export function removeFeatureFromLayer(layer: VectorLayer<any>, feature: Feature<Geometry>): void {
   const source = layer.getSource();
   if (source.hasFeature(feature)) {
     source.removeFeature(feature);
   }
+}
+export function initInteractions(opt?: DefaultsOptions): Collection<Interaction> {
+  if (opt == null) {
+    opt = {
+      doubleClickZoom: false,
+      dragPan: true,
+      mouseWheelZoom: true,
+      pinchRotate: false,
+      altShiftDragRotate: false,
+    };
+  }
+  return defaultInteractions(opt);
+}
+
+/**
+ * Initialize a specific layer with interactive data
+ *
+ * @returns the created layer
+ */
+export function initVectorTileLayer(
+  url: any,
+  styleFn: (feature: FeatureLike) => Style,
+): VectorTileLayer {
+  if (!url) {
+    return;
+  }
+
+  const layer = new VectorTileLayer({
+    zIndex: TRACK_ZINDEX,
+    renderBuffer: 5000,
+    declutter: true,
+    updateWhileAnimating: true,
+    updateWhileInteracting: true,
+    source: new VectorTileSource({
+      format: new MVT(),
+      url: url,
+      overlaps: true,
+      tileSize: 256,
+      tileLoadFunction: (tile: any, url: string) => {
+        tile.setLoader(
+          loadFeaturesXhr(
+            url,
+            tile.getFormat(),
+            tile.extent,
+            tile.resolution,
+            tile.projection,
+            tile.onLoad.bind(tile),
+            tile.onError.bind(tile),
+          ),
+        );
+      },
+    }),
+    style: styleFn,
+  });
+  return layer;
 }

@@ -157,17 +157,30 @@ export interface iMarker {
   icon: Feature<Geometry>;
   id: string;
 }
-  
-  export interface PoiMarker extends iMarker {
+
+export interface PoiMarker extends iMarker {
   poi: IGeojsonFeature;
   style?: any;
 }
 
 export enum EGeojsonGeometryTypes {
-    POINT = 'Point',
-    LINE_STRING = 'LineString',
-    MULTI_LINE_STRING = 'MultiLineString',
-    POLYGON = 'Polygon',
-    MULTI_POLYGON = 'MultiPolygon',
-  }
-  
+  POINT = 'Point',
+  LINE_STRING = 'LineString',
+  MULTI_LINE_STRING = 'MultiLineString',
+  POLYGON = 'Polygon',
+  MULTI_POLYGON = 'MultiPolygon',
+}
+
+export interface IMAP {
+  bbox: [number, number, number, number];
+  center?: [number, number];
+  defZoom: number;
+  flow_line_quote_orange: number;
+  flow_line_quote_red: number;
+  flow_line_quote_show: boolean;
+  layers?: ILAYER[];
+  maxZoom: number;
+  minZoom: number;
+  pois?: any;
+  tiles: {[name: string]: string}[];
+}

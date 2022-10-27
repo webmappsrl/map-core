@@ -28,6 +28,7 @@ import XYZ from 'ol/source/XYZ';
 
 import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../../readonly/constants';
 import {extentFromLonLat} from '../../utils/ol';
+import {IMAP} from '../../types/model';
 
 @Component({
   selector: 'wm-map',
@@ -55,7 +56,7 @@ export class WmMapComponent implements OnChanges {
   customTrackEnabled$: Observable<boolean>;
   map: Map;
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map | null>(null);
-  tileLayers: TileLayer[] = [];
+  tileLayers: TileLayer<any>[] = [];
 
   constructor(private _cdr: ChangeDetectorRef) {}
 
@@ -84,7 +85,7 @@ export class WmMapComponent implements OnChanges {
     }
   }
 
-  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer[] {
+  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
     return (
       tiles.map((tile, index) => {
         return new TileLayer({
@@ -110,7 +111,7 @@ export class WmMapComponent implements OnChanges {
    *
    * @returns the XYZ source to use
    */
-  private _initBaseSource(tile: string) {
+  private _initBaseSource(tile: string): XYZ {
     return new XYZ({
       url: tile,
       projection: 'EPSG:3857',
@@ -164,6 +165,7 @@ export class WmMapComponent implements OnChanges {
     });
 
     this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
+      'singleclick';
       this.clickEVT$.emit(evt);
     });
     this.map$.next(this.map);
