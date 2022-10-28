@@ -71,8 +71,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
-      this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-      this.map.addLayer(this._selectedPoiLayer);
+      if (this._selectedPoiLayer == null) {
+        this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
+        this.map.addLayer(this._selectedPoiLayer);
+      }
       this._selectedPoiLayer.getSource().clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
