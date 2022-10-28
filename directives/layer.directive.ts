@@ -244,6 +244,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this._dataLayerUrls.high,
       this._styleFn,
       tileLoadFn,
+      true,
     );
     this.map.addLayer(this._lowVectorTileLayer);
     this.map.addLayer(this._highVectorTileLayer);
