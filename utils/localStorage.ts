@@ -1,3 +1,5 @@
+import * as localforage from 'localforage';
+
 export const prefix = 'JIDO';
 export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
   try {
@@ -6,7 +8,7 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
     for (let i = 0; i < bytes.byteLength; i++) {
       stringedBinary += String.fromCharCode(bytes[i]);
     }
-    return stringedBinary != '' ? stringedBinary : null;
+    return stringedBinary;
   } catch (e) {
     return null;
   }
@@ -25,4 +27,5 @@ export function clearStorage(): void {
   allGeohubStorageKeys.forEach(key => {
     localStorage.removeItem(key);
   });
+  localforage.clear();
 }

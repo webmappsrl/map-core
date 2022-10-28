@@ -21,7 +21,7 @@ import {TRACK_ZINDEX} from '../readonly';
 import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/constants';
 import {ILocation} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
-
+import * as localforage from 'localforage';
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
 }
@@ -385,19 +385,22 @@ export function initVectorTileLayer(
       format: new MVT(),
       url: url,
       overlaps: true,
-      tileSize: 256,
+      tileSize: 128,
       tileLoadFunction: (tile: any, url: string) => {
-        tile.setLoader(
-          loadFeaturesXhr(
-            url,
-            tile.getFormat(),
-            tile.extent,
-            tile.resolution,
-            tile.projection,
-            tile.onLoad.bind(tile),
-            tile.onError.bind(tile),
-          ),
-        );
+        localforage.getItem(url).then((cached: string | null) => {
+          tile.setLoader(
+            loadFeaturesXhr(
+              url,
+              tile.getFormat(),
+              tile.extent,
+              tile.resolution,
+              tile.projection,
+              tile.onLoad.bind(tile),
+              tile.onError.bind(tile),
+              cached,
+            ),
+          );
+        });
       },
     }),
     style: styleFn,

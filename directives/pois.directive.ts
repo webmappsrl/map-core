@@ -23,7 +23,7 @@ import {FitOptions} from 'ol/View';
 import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
-import {IGeojsonFeature} from '../types/model';
+import {IGeojsonFeature, IMAP} from '../types/model';
 import {
   activateInteractions,
   createCluster,

@@ -12,6 +12,7 @@
   "dependencies": {
     "@types/ol": "^6.5.3",
     "graphhopper-js-api-client": "^5.0.2",
+    "localforage": "^1.10.0",
     "ol": "7.1.0",
     "ol-ext": "^4.0.2"
   },

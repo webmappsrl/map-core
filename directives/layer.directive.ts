@@ -16,10 +16,10 @@ import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
-
+import * as localforage from 'localforage';
 import {WmMapBaseDirective} from '.';
 import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
-import {IDATALAYER} from '../types/layer';
+import {IDATALAYER, ILAYER} from '../types/layer';
 import {
   clearStorage,
   prefix,
@@ -29,6 +29,7 @@ import {
   initInteractions,
   initVectorTileLayer,
 } from '../utils';
+import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -148,6 +149,13 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     private _cdr: ChangeDetectorRef,
   ) {
     super();
+    localforage.config({
+      name: 'JIDO',
+      version: 1.0,
+      size: 49807360, // Size of database, in bytes. WebSQL-only for now.
+      storeName: 'xyz', // Should be alphanumeric, with underscores.
+      description: 'tile vector tiles',
+    });
   }
 
   ngOnChanges(_: SimpleChanges): void {
@@ -163,7 +171,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         }, 500);
       });
       this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-        console.log(evt);
         try {
           this.map.forEachFeatureAtPixel(
             evt.pixel,
