@@ -47,7 +47,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
         stopPropagation(event);
-        console.log('stop propagation');
         if (isCluster(this._poisClusterLayer, event, this.map)) {
           deactivateInteractions(this.map);
           const geometry = new Point([event.coordinate[0], event.coordinate[1]]);

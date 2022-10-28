@@ -22,12 +22,13 @@ import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../rea
 import {IDATALAYER, ILAYER} from '../types/layer';
 import {
   clearStorage,
-  prefix,
   handlingStrokeStyleWidthOptions,
   handlingStrokeStyleWidth,
   getColorFromLayer,
   initInteractions,
   initVectorTileLayer,
+  tileLoadFn,
+  lowTileLoadFn,
 } from '../utils';
 import {IMAP} from '../types/model';
 
@@ -125,10 +126,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   @Input() set jidoUpdateTime(time: number) {
-    const storedJidoVersion = localStorage.getItem(`${prefix}_UPDATE_TIME`);
+    const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
     if (time != undefined && time != +storedJidoVersion) {
       clearStorage();
-      localStorage.setItem(`${prefix}_UPDATE_TIME`, `${time}`);
+      localStorage.setItem(`JIDO_UPDATE_TIME`, `${time}`);
     }
   }
 
@@ -176,7 +177,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
             evt.pixel,
             function (clickedFeature) {
               const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-              console.log(clickedFeatureId);
               if (clickedFeatureId > -1 && this._highVectorTileLayer.getOpacity() === 1) {
                 this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
               }
@@ -234,11 +234,20 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @returns the array of created layers
    */
   private _initializeDataLayers(map: IMAP): void {
-    this._lowVectorTileLayer = initVectorTileLayer(this._dataLayerUrls.low, this._styleLowFn);
-    this._highVectorTileLayer = initVectorTileLayer(this._dataLayerUrls.high, this._styleFn);
-
+    this._lowVectorTileLayer = initVectorTileLayer(
+      this._dataLayerUrls.low,
+      this._styleLowFn,
+      lowTileLoadFn,
+      true,
+    );
+    this._highVectorTileLayer = initVectorTileLayer(
+      this._dataLayerUrls.high,
+      this._styleFn,
+      tileLoadFn,
+    );
     this.map.addLayer(this._lowVectorTileLayer);
     this.map.addLayer(this._highVectorTileLayer);
+    this._resolutionLayerSwitcher();
   }
 
   private _resolutionLayerSwitcher(): void {

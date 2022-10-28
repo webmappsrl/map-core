@@ -1,4 +1,3 @@
-import {bufferToString, stringToUint8Array} from './localStorage';
 import * as localforage from 'localforage';
 export function loadFeaturesXhr(
   url,
@@ -15,7 +14,7 @@ export function loadFeaturesXhr(
     try {
       cached = cachedStringed != null ? stringToUint8Array(cachedStringed) : null;
       if (cached != null) {
-        // console.log(url, 'cached');
+        console.log('restored by cache: ', url);
         success(
           format.readFeatures(cached, {
             extent: extent,
@@ -26,22 +25,14 @@ export function loadFeaturesXhr(
       }
     } catch (e) {
       console.log(e);
-      cachedStringed = null;
+      cached = null;
     }
   }
   if (cached == null) {
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', typeof url === 'function' ? url(extent, resolution, projection) : url, true);
-    if (format.getType() == 'arraybuffer') {
-      xhr.responseType = 'arraybuffer';
-    }
-    /**
-     * @param {Event} event Event.
-     * @private
-     */
-    xhr.onload = function (event) {
-      // console.log('ON LOAD: ', url);
-      // status will be 0 for file:// urls
+    xhr.open('POST', url, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
       if (!xhr.status || (xhr.status >= 200 && xhr.status < 300)) {
         let source = xhr.response;
         let resp = null;
@@ -52,15 +43,15 @@ export function loadFeaturesXhr(
         }
         if (resp != null) {
           try {
-            localforage.setItem(url, resp);
-            // console.log('saved in cache');
+            cacheSetUrl(url, resp);
           } catch (e) {
             console.warn(e);
-            // console.log('error in cache');
             resp = null;
           }
         }
         if (source) {
+          // endTime(url, 'by http');
+
           success(
             format.readFeatures(source, {
               extent: extent,
@@ -79,8 +70,47 @@ export function loadFeaturesXhr(
      * @private
      */
     xhr.onerror = failure;
-
-    // console.log('SEND REQUEST: ', url);
     xhr.send();
   }
+}
+export function cacheSetUrl(url: string, value: string): void {
+  if (url.search('low') > -1) {
+    try {
+      localStorage.setItem(url, value);
+    } catch (e) {
+      localforage.setItem(url, value);
+      console.warn('local storage failed: ', url);
+    }
+  } else {
+    localforage.setItem(url, value);
+  }
+}
+export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
+  try {
+    let stringedBinary = '';
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      stringedBinary += String.fromCharCode(bytes[i]);
+    }
+    return stringedBinary != '' ? stringedBinary : null;
+  } catch (e) {
+    console.warn(e);
+    return null;
+  }
+}
+export function stringToUint8Array(str: string): Uint8Array {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return bufView;
+}
+
+export function clearStorage(): void {
+  const allGeohubStorageKeys = Object.keys(localStorage).filter(f => f.indexOf('geohub') >= 0);
+  allGeohubStorageKeys.forEach(key => {
+    localStorage.removeItem(key);
+  });
+  localforage.clear();
 }

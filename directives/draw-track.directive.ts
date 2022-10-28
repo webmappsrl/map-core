@@ -90,7 +90,6 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
       this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
         if (this._enabled$.value) {
           stopPropagation(evt);
-          console.log('stop propagation');
           const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
           if (oldCoordinates != null && oldCoordinates.length > 0) {
             const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;

@@ -89,6 +89,7 @@ export class WmMapComponent implements OnChanges {
     return (
       tiles.map((tile, index) => {
         return new TileLayer({
+          preload: Infinity,
           source: this._initBaseSource(Object.values(tile)[0]),
           visible: index === 0,
           zIndex: index,
@@ -97,6 +98,7 @@ export class WmMapComponent implements OnChanges {
         });
       }) ?? [
         new TileLayer({
+          preload: Infinity,
           source: this._initBaseSource(DEF_XYZ_URL),
           visible: true,
           zIndex: 0,

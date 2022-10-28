@@ -22,6 +22,8 @@ import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/con
 import {ILocation} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import * as localforage from 'localforage';
+import {LoadFunction} from 'ol/Tile';
+
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
 }
@@ -370,6 +372,8 @@ export function initInteractions(opt?: DefaultsOptions): Collection<Interaction>
 export function initVectorTileLayer(
   url: any,
   styleFn: (feature: FeatureLike) => Style,
+  tileLoadFn: LoadFunction,
+  preload = false,
 ): VectorTileLayer {
   if (!url) {
     return;
@@ -377,33 +381,62 @@ export function initVectorTileLayer(
 
   const layer = new VectorTileLayer({
     zIndex: TRACK_ZINDEX,
-    renderBuffer: 5000,
-    declutter: true,
-    updateWhileAnimating: true,
-    updateWhileInteracting: true,
+    preload: preload ? Infinity : 0,
+    renderMode: 'vector',
+    renderBuffer: 512,
     source: new VectorTileSource({
       format: new MVT(),
       url: url,
       overlaps: true,
       tileSize: 128,
-      tileLoadFunction: (tile: any, url: string) => {
-        localforage.getItem(url).then((cached: string | null) => {
-          tile.setLoader(
-            loadFeaturesXhr(
-              url,
-              tile.getFormat(),
-              tile.extent,
-              tile.resolution,
-              tile.projection,
-              tile.onLoad.bind(tile),
-              tile.onError.bind(tile),
-              cached,
-            ),
-          );
-        });
-      },
+      tileLoadFunction: tileLoadFn,
     }),
     style: styleFn,
   });
   return layer;
+}
+
+export function tileLoadFn(tile: any, url: string) {
+  // startTime(url);
+  localforage.getItem(url).then(cached => {
+    tile.setLoader(
+      loadFeaturesXhr(
+        url,
+        tile.getFormat(),
+        tile.extent,
+        tile.resolution,
+        tile.projection,
+        tile.onLoad.bind(tile),
+        tile.onError.bind(tile),
+        cached,
+      ),
+    );
+  });
+}
+
+export function lowTileLoadFn(tile: any, url: string) {
+  // startTime(url);
+  let cached = null;
+  try {
+    cached = localStorage.getItem(url);
+  } catch (e) {
+    console.warn(e);
+    cached = null;
+  }
+  if (cached != null) {
+    tile.setLoader(
+      loadFeaturesXhr(
+        url,
+        tile.getFormat(),
+        tile.extent,
+        tile.resolution,
+        tile.projection,
+        tile.onLoad.bind(tile),
+        tile.onError.bind(tile),
+        cached,
+      ),
+    );
+  } else {
+    tileLoadFn(tile, url);
+  }
 }
