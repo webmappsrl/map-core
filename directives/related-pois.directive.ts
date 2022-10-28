@@ -24,7 +24,7 @@ import {FitOptions} from 'ol/View';
 import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
-import {IGeojsonFeature, PoiMarker} from '../types/model';
+import {IGeojsonFeature, IMAP, PoiMarker} from '../types/model';
 import {
   addFeatureToLayer,
   createCanvasForHtml,

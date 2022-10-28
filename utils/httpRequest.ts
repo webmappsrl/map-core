@@ -92,7 +92,7 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
     for (let i = 0; i < bytes.byteLength; i++) {
       stringedBinary += String.fromCharCode(bytes[i]);
     }
-    return stringedBinary != '' ? stringedBinary : null;
+    return stringedBinary;
   } catch (e) {
     console.warn(e);
     return null;
