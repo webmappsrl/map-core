@@ -22,13 +22,13 @@ import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {Interaction} from 'ol/interaction';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
-import TileLayer from 'ol/layer/WebGLTile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
 import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../../readonly/constants';
 import {extentFromLonLat} from '../../utils/ol';
 import {IMAP} from '../../types/model';
+import TileLayer from 'ol/layer/Tile';
 
 @Component({
   selector: 'wm-map',
@@ -55,8 +55,8 @@ export class WmMapComponent implements OnChanges {
 
   customTrackEnabled$: Observable<boolean>;
   map: Map;
-  map$: BehaviorSubject<Map> = new BehaviorSubject<Map | null>(null);
-  tileLayers: TileLayer[] = [];
+  map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
+  tileLayers: TileLayer<XYZ>[] = [];
 
   constructor(private _cdr: ChangeDetectorRef) {}
 
@@ -85,7 +85,7 @@ export class WmMapComponent implements OnChanges {
     }
   }
 
-  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer[] {
+  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
     return (
       tiles.map((tile, index) => {
         return new TileLayer({
@@ -93,7 +93,6 @@ export class WmMapComponent implements OnChanges {
           source: this._initBaseSource(Object.values(tile)[0]),
           visible: index === 0,
           zIndex: index,
-          useInterimTilesOnError: true,
           className: Object.keys(tile)[0],
         });
       }) ?? [
