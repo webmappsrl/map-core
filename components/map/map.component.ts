@@ -115,8 +115,8 @@ export class WmMapComponent implements OnChanges {
   private _initBaseSource(tile: string): XYZ {
     return new XYZ({
       url: tile,
-      projection: 'EPSG:3857',
       tileSize: [256, 256],
+      cacheSize: 50000,
     });
   }
 
