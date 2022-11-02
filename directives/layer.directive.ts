@@ -67,8 +67,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       strokeStyle,
       minZoom: this.conf.minZoom,
       maxZoom: this.conf.maxZoom,
-      minWidth: 2,
-      maxWidth: 5,
+      minStrokeWidth: this.conf.minStrokeWidth,
+      maxStrokeWidth: this.conf.maxStrokeWidth,
       currentZoom: this.map.getView().getZoom(),
     };
     handlingStrokeStyleWidth(opt);
@@ -99,8 +99,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       strokeStyle,
       minZoom: this.conf.minZoom,
       maxZoom: this.conf.maxZoom,
-      minWidth: 3,
-      maxWidth: 6,
+      minStrokeWidth: this.conf.minStrokeWidth + 1,
+      maxStrokeWidth: this.conf.maxStrokeWidth,
       currentZoom: this.map.getView().getZoom(),
     };
     handlingStrokeStyleWidth(opt);

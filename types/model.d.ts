@@ -181,6 +181,8 @@ export interface IMAP {
   layers?: ILAYER[];
   maxZoom: number;
   minZoom: number;
+  maxStrokeWidth: number;
+  minStrokeWidth: number;
   pois?: any;
   tiles: {[name: string]: string}[];
 }

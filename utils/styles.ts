@@ -180,16 +180,17 @@ export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
 
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
-  maxWidth?: number;
+  maxStrokeWidth?: number;
   maxZoom: number;
-  minWidth?: number;
+  minStrokeWidth?: number;
   minZoom: number;
   strokeStyle: StrokeStyle;
 }
 export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
-  options = {...{minWidth: 0.1, maxWidth: 5}, ...options};
+  options = {...{minStrokeWidth: 0.1, maxStrokeWidth: 5}, ...options};
   const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
-  const newWidth = options.minWidth + (options.maxWidth - options.minWidth) * delta;
+  const newWidth =
+    options.minStrokeWidth + (options.maxStrokeWidth - options.minStrokeWidth) * delta;
 
   options.strokeStyle.setWidth(newWidth);
 }
@@ -219,8 +220,8 @@ export function styleLowCoreFn(feature: FeatureLike) {
     strokeStyle,
     minZoom: this.conf.minZoom,
     maxZoom: this.conf.maxZoom,
-    minWidth: 3,
-    maxWidth: 6,
+    minStrokeWidth: this.conf.minStrokeWidth,
+    maxStrokeWidth: this.conf.maxStrokeWidth,
     currentZoom: this.map.getView().getZoom(),
   };
   handlingStrokeStyleWidth(opt);
@@ -231,6 +232,6 @@ export function styleLowCoreFn(feature: FeatureLike) {
   });
   return style;
 }
-export function styleLowFn(conf: IMAP, currentZoom: number) {
+export function styleLowFn(conf: any, currentZoom: number) {
   return styleLowCoreFn.bind({conf, currentZoom}) as StyleLike;
 }
