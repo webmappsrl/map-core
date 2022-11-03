@@ -187,7 +187,7 @@ export interface handlingStrokeStyleWidthOptions {
   strokeStyle: StrokeStyle;
 }
 export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
-  options = {...{minStrokeWidth: 0.1, maxStrokeWidth: 5}, ...options};
+  options = {...{minStrokeWidth: 3, maxStrokeWidth: 6}, ...options};
   const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
   const newWidth =
     options.minStrokeWidth + (options.maxStrokeWidth - options.minStrokeWidth) * delta;
