@@ -18,7 +18,12 @@ import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import * as localforage from 'localforage';
 import {WmMapBaseDirective} from '.';
-import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
+import {
+  DEF_LINE_COLOR,
+  SELECTED_TRACK_ZINDEX,
+  SWITCH_RESOLUTION_ZOOM_LEVEL,
+  TRACK_ZINDEX,
+} from '../readonly';
 import {IDATALAYER, ILAYER} from '../types/layer';
 import {
   clearStorage,
@@ -29,9 +34,15 @@ import {
   initVectorTileLayer,
   tileLoadFn,
   lowTileLoadFn,
+  getFlowStyle,
+  getLineStyle,
 } from '../utils';
 import {IMAP} from '../types/model';
-
+import RenderFeature, {toFeature} from 'ol/render/Feature';
+import {Fill, Stroke} from 'ol/style';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
 @Directive({
   selector: '[wmMapLayer]',
 })
@@ -40,6 +51,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _dataLayerUrls: IDATALAYER;
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _highVectorTileLayer: VectorTileLayer;
+  private _highlightLayer: VectorLayer<VectorSource>;
   private _ionProgress: any;
   private _loaded = 0;
   private _loading = 0;
@@ -188,6 +200,42 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           );
         } catch (_) {}
       });
+      let highlightFeatureId = null;
+      this._highlightLayer = new VectorLayer({
+        source: new VectorSource({
+          format: new GeoJSON(),
+        }),
+        style: () => getLineStyle('#CA1551'),
+        zIndex: SELECTED_TRACK_ZINDEX - 1,
+      });
+      this.map.addLayer(this._highlightLayer);
+      this.map.on('pointermove', (e: any) => {
+        let added = this.map.forEachFeatureAtPixel(
+          e.pixel,
+          (f: RenderFeature, l: VectorTileLayer) => {
+            if (f.getType != null) {
+              const feature = toFeature(f);
+              const featureId = feature.getProperties().id;
+              if (l.getOpacity() === 1 && l.getProperties().high) {
+                if (highlightFeatureId != featureId) {
+                  this.map.getViewport().style.cursor = 'pointer';
+                  this._highlightLayer.getSource().clear();
+                  this._highlightLayer.getSource().addFeature(toFeature(f));
+                  highlightFeatureId = featureId;
+                }
+                return true;
+              }
+            }
+          },
+          {hitTolerance: 30},
+        );
+        if (added) {
+          this.map.getViewport().style.cursor = 'pointer';
+        } else {
+          this._highlightLayer.getSource().clear();
+          this.map.getViewport().style.cursor = '';
+        }
+      });
 
       this._highVectorTileLayer.getSource().on('tileloadstart', () => {
         ++this._loading;
@@ -246,6 +294,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       tileLoadFn,
       true,
     );
+    this._lowVectorTileLayer.setProperties({'high': false});
+    this._highVectorTileLayer.setProperties({'high': true});
     this.map.addLayer(this._lowVectorTileLayer);
     this.map.addLayer(this._highVectorTileLayer);
     this._resolutionLayerSwitcher();
