@@ -59,6 +59,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowLoading = 0;
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
+  private _layerOrder: number[] = [];
   private _styleFn = (feature: FeatureLike) => {
     const properties = feature.getProperties();
     const layers: number[] = JSON.parse(properties.layers);
@@ -84,10 +85,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       currentZoom: this.map.getView().getZoom(),
     };
     handlingStrokeStyleWidth(opt);
-
+    const position = this._layerOrder.indexOf(+layers[0]);
     let style = new Style({
       stroke: strokeStyle,
-      zIndex: TRACK_ZINDEX + 1,
+      zIndex: TRACK_ZINDEX + position,
     });
     return style;
   };
@@ -267,6 +268,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   private _initLayer(map: IMAP) {
+    this._layerOrder = map.layers.map(l => +l.id).reverse();
     this._initializeDataLayers(map);
     initInteractions().forEach(interaction => {
       this.map.addInteraction(interaction);
