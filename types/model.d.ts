@@ -153,6 +153,12 @@ export interface WhereTaxonomy {
   updated_at: Date;
 }
 
+export interface PoiTypeTaxonomy {
+  description: ILocaleString;
+  id: number;
+  name: ILocaleString;
+}
+
 export interface iMarker {
   icon: Feature<Geometry>;
   id: string;
@@ -179,10 +185,10 @@ export interface IMAP {
   flow_line_quote_red: number;
   flow_line_quote_show: boolean;
   layers?: ILAYER[];
-  maxZoom: number;
-  minZoom: number;
   maxStrokeWidth: number;
+  maxZoom: number;
   minStrokeWidth: number;
+  minZoom: number;
   pois?: any;
   tiles: {[name: string]: string}[];
 }
