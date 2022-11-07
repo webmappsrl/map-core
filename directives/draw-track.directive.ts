@@ -78,16 +78,15 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
       if (!this._graphHopperRoutingObj) {
         this._graphHopperRoutingObj = new GraphHopperRouting({
           vehicle: 'foot',
-          key: GRAPH_HOPPER_API_KEY,
           elevation: true,
           instructions: false,
         });
         if (this.wmMapDrawTrackHost) {
           this._graphHopperRoutingObj.host = this.wmMapDrawTrackHost;
         }
-        this._graphHopperRoutingObj.defaults.profile = 'foot';
+        this._graphHopperRoutingObj.defaults.profile = 'hike';
       }
-      this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
+      this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
         if (this._enabled$.value) {
           stopPropagation(evt);
           const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
