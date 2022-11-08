@@ -1,13 +1,11 @@
 import {
   ChangeDetectorRef,
   Directive,
-  ElementRef,
   EventEmitter,
   Input,
   OnChanges,
   OnInit,
   Output,
-  Renderer2,
   SimpleChanges,
 } from '@angular/core';
 import {FeatureLike} from 'ol/Feature';
@@ -40,11 +38,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _dataLayerUrls: IDATALAYER;
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _highVectorTileLayer: VectorTileLayer;
-  private _ionProgress: any;
-  private _loaded = 0;
-  private _loading = 0;
-  private _lowLoaded = 0;
-  private _lowLoading = 0;
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
   private _styleFn = (feature: FeatureLike) => {
@@ -144,11 +137,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() map: Map;
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
-  constructor(
-    private _elRef: ElementRef,
-    private _renderer: Renderer2,
-    private _cdr: ChangeDetectorRef,
-  ) {
+  constructor(private _cdr: ChangeDetectorRef) {
     super();
     localforage.config({
       name: 'JIDO',
@@ -188,23 +177,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           );
         } catch (_) {}
       });
-
-      this._highVectorTileLayer.getSource().on('tileloadstart', () => {
-        ++this._loading;
-        this._updateProgressBar();
-      });
-      this._highVectorTileLayer.getSource().on(['tileloadend', 'tileloaderror'], () => {
-        ++this._loaded;
-        this._updateProgressBar();
-      });
-      this._lowVectorTileLayer.getSource().on('tileloadstart', () => {
-        ++this._lowLoading;
-        this._updateProgressBar();
-      });
-      this._lowVectorTileLayer.getSource().on(['tileloadend', 'tileloaderror'], () => {
-        ++this._lowLoaded;
-        this._updateProgressBar();
-      });
     }
 
     if (this._lowVectorTileLayer != null || this._highVectorTileLayer != null) {
@@ -212,11 +184,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-  ngOnInit(): void {
-    this._ionProgress = this._renderer.createElement('ion-progress-bar');
-    this._ionProgress.setAttribute('value', '1');
-    this._renderer.appendChild(this._elRef.nativeElement.parentNode, this._ionProgress);
-  }
+  ngOnInit(): void {}
 
   private _initLayer(map: IMAP) {
     this._initializeDataLayers(map);
@@ -272,28 +240,5 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._lowVectorTileLayer.changed();
     this._highVectorTileLayer.changed();
     this.map.updateSize();
-  }
-
-  private _updateProgressBar(): void {
-    const currentZoom = this.map.getView().getZoom();
-    let loaded = this._lowLoaded;
-    let loading = this._lowLoading;
-    if (currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL) {
-      loaded = this._loaded;
-      loading = this._loading;
-    }
-    const range = +((loaded / loading) * 100).toFixed(0);
-    this._ionProgress.style.width = `${range}%`;
-
-    if (loaded === loading) {
-      this._ionProgress.setAttribute('color', 'success');
-      setTimeout(() => {
-        this._ionProgress.style.visibility = 'hidden';
-      }, 1000);
-    } else {
-      this._ionProgress.setAttribute('color', 'primary');
-      this._ionProgress.style.visibility = 'visible';
-    }
-    this._updateMap();
   }
 }

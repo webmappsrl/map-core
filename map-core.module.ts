@@ -14,6 +14,7 @@ import {
   WmMapTrackDirective,
   WmMapRelatedPoisDirective,
   WmMapHighLightTrackDirective,
+  WmMapLayerProgressBarDirective,
 } from './directives';
 
 const directives = [
@@ -24,6 +25,7 @@ const directives = [
   WmMapDrawTrackDirective,
   WmMapCustomTracksDirective,
   WmMapHighLightTrackDirective,
+  WmMapLayerProgressBarDirective,
 ];
 const components = [WmMapComponent, WmMapControls, WmMapSaveCustomTrackControls];
 

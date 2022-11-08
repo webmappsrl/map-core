@@ -6,3 +6,4 @@ export * from './layer.directive';
 export * from './pois.directive';
 export * from './related-pois.directive';
 export * from './track.directive';
+export * from './layer-progess-bar.directive';
