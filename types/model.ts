@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
+import {ILAYER} from './layer';
 export type IPoint = [number, number, number?];
 export type ILineString = Array<IPoint>;
 export type IMultiLineString = Array<Array<IPoint>>;
@@ -159,16 +160,32 @@ export interface PoiTypeTaxonomy {
   name: ILocaleString;
 }
 
+/**
+ * @description
+ * @export
+ * @interface iMarker
+ */
 export interface iMarker {
   icon: Feature<Geometry>;
   id: string;
 }
 
+/**
+ * @description
+ * @export
+ * @interface PoiMarker
+ * @extends {iMarker}
+ */
 export interface PoiMarker extends iMarker {
   poi: IGeojsonFeature;
   style?: any;
 }
 
+/**
+ * @description
+ * @export
+ * @enum {number}
+ */
 export enum EGeojsonGeometryTypes {
   POINT = 'Point',
   LINE_STRING = 'LineString',
@@ -177,7 +194,14 @@ export enum EGeojsonGeometryTypes {
   MULTI_POLYGON = 'MultiPolygon',
 }
 
+/**
+ * @export
+ * @interface IMAP
+ */
 export interface IMAP {
+  /**
+   * rappresent the bounding box of the map
+   */
   bbox: [number, number, number, number];
   center?: [number, number];
   defZoom: number;

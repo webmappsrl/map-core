@@ -24,10 +24,24 @@ import {loadFeaturesXhr} from './httpRequest';
 import * as localforage from 'localforage';
 import {LoadFunction} from 'ol/Tile';
 
+/**
+ * set all interaction of  map active.
+ * [map](https://compodoc.app/guides/getting-started.html)
+ * @property {import("/Users/bongiu/Documents/wm-webapp/src/app/shared/map-core/node_modules/ol/Map.js").Map} map Map.
+ * @export
+ * @param {Map} map
+ */
 export function activateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(true));
 }
 
+/**
+ * add feature to the source of layer.
+ *
+ * @export
+ * @param {VectorLayer<VectorSource<Geometry>>} layer
+ * @param {Feature<Geometry>} feature
+ */
 export function addFeatureToLayer(
   layer: VectorLayer<VectorSource<Geometry>>,
   feature: Feature<Geometry>,
@@ -37,6 +51,13 @@ export function addFeatureToLayer(
   }
 }
 
+/**
+ * Create a circle Feature<Point> in lonLat coordinate.
+ * @export
+ * @param {Coordinate} lonLat
+ * @param {CircleOptions} [options]
+ * @returns {*}  {Feature<Point>}
+ */
 export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions): Feature<Point> {
   if (options == null) {
     options = {
