@@ -12,6 +12,13 @@ export abstract class WmMapBaseDirective {
   @Input() map: Map;
   @Input() padding: number[];
 
+  /**
+   *
+   *
+   * @param {(SimpleGeometry | Extent)} geometryOrExtent
+   * @param {FitOptions} [optOptions]
+   * @memberof WmMapBaseDirective
+   */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     const view = this.map.getView();
     if (view != null) {
