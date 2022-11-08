@@ -3,9 +3,10 @@
   "version": "1.0.3",
   "description": "",
   "scripts": {
+    "surge": "./node_modules/surge/lib/cli.js --project ./documentation --domain http://doc.map-core.surge.sh/",
     "release:major": "changelog -M && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version major && git push origin && git push origin --tags",
     "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version minor && git push origin && git push origin --tags",
-    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags",
+    "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags && npm run surge",
     "compodoc": "npx compodoc -p tsconfig.doc.json"
   },
   "author": "Webmapp",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@compodoc/compodoc": "^1.1.19",
-    "generate-changelog": "^1.8.0"
+    "generate-changelog": "^1.8.0",
+    "surge": "^0.23.1"
   }
 }
