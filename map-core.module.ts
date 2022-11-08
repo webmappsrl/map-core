@@ -13,6 +13,7 @@ import {
   WmMapPoisDirective,
   WmMapTrackDirective,
   WmMapRelatedPoisDirective,
+  WmMapHighLightTrackDirective,
 } from './directives';
 
 const directives = [
@@ -22,6 +23,7 @@ const directives = [
   WmMapPoisDirective,
   WmMapDrawTrackDirective,
   WmMapCustomTracksDirective,
+  WmMapHighLightTrackDirective,
 ];
 const components = [WmMapComponent, WmMapControls, WmMapSaveCustomTrackControls];
 
