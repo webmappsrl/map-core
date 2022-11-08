@@ -36,9 +36,12 @@ import {
 import VectorSource from 'ol/source/Vector';
 
 @Directive({
-  selector: '[wmMapRelatedPois]',
+  selector: '[wmMapTrackRelatedPois]',
 })
-export class WmMapRelatedPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
+export class wmMapTrackRelatedPoisDirective
+  extends WmMapBaseDirective
+  implements OnChanges, OnDestroy
+{
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
   private _onClickSub: Subscription = Subscription.EMPTY;

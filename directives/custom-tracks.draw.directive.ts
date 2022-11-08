@@ -21,14 +21,13 @@ import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts
 import {createCircleFeature} from '../utils/ol';
 import {getLineStyle} from '../utils/styles';
 import {WmMapBaseDirective} from './base.directive';
-
-const GRAPH_HOPPER_API_KEY: string = '92e49c7c-1c0a-4aad-8097-e9bfec06360d';
+import {IMAP} from '../types/model';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
-  selector: '[wmMapDrawTrack]',
+  selector: '[wmMapCustomTrackDrawTrack]',
 })
-export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnChanges {
+export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective implements OnChanges {
   private _customPoiLayer: VectorLayer<VectorSource>;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
@@ -39,7 +38,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   private _graphHopperRoutingObj: GraphHopperRouting;
   private _points: Coordinate[] = [];
 
-  @Input('wmMapDrawTrack') set enabled(val: boolean) {
+  @Input('wmMapCustomTrackDrawTrack') set enabled(val: boolean) {
     this._enabled$.next(val);
   }
 
@@ -50,7 +49,7 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
   @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
-  @Input() wmMapDrawTrackHost: string;
+  @Input() wmMapCustomTrackDrawTrackHost: string;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
   reset$ = new Subject();
@@ -81,8 +80,8 @@ export class WmMapDrawTrackDirective extends WmMapBaseDirective implements OnCha
           elevation: true,
           instructions: false,
         });
-        if (this.wmMapDrawTrackHost) {
-          this._graphHopperRoutingObj.host = this.wmMapDrawTrackHost;
+        if (this.wmMapCustomTrackDrawTrackHost) {
+          this._graphHopperRoutingObj.host = this.wmMapCustomTrackDrawTrackHost;
         }
         this._graphHopperRoutingObj.defaults.profile = 'hike';
       }

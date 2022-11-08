@@ -13,9 +13,9 @@ import {IMAP} from '../types/model';
 import {getLineStyle} from '../utils';
 
 @Directive({
-  selector: '[wmMapHighLightTrack]',
+  selector: '[wmMapTrackHighLight]',
 })
-export class WmMapHighLightTrackDirective extends WmMapBaseDirective implements OnChanges {
+export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements OnChanges {
   private _highlightLayer: VectorLayer<VectorSource>;
   private _mapIsInit = false;
 

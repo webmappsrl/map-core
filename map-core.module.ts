@@ -8,23 +8,23 @@ import {WmMapComponent} from './components/map/map.component';
 import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-custom-track.map';
 import {
   WmMapCustomTracksDirective,
-  WmMapDrawTrackDirective,
+  wmMapCustomTrackDrawTrackDirective,
   WmMapLayerDirective,
   WmMapPoisDirective,
   WmMapTrackDirective,
-  WmMapRelatedPoisDirective,
-  WmMapHighLightTrackDirective,
+  wmMapTrackRelatedPoisDirective,
+  wmMapTrackHighLightDirective,
   WmMapLayerProgressBarDirective,
 } from './directives';
 
 const directives = [
   WmMapTrackDirective,
   WmMapLayerDirective,
-  WmMapRelatedPoisDirective,
+  wmMapTrackRelatedPoisDirective,
   WmMapPoisDirective,
-  WmMapDrawTrackDirective,
+  wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
-  WmMapHighLightTrackDirective,
+  wmMapTrackHighLightDirective,
   WmMapLayerProgressBarDirective,
 ];
 const components = [WmMapComponent, WmMapControls, WmMapSaveCustomTrackControls];

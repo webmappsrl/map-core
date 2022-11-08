@@ -15,6 +15,7 @@ import Stroke from 'ol/style/Stroke';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from '.';
 import {createCircleFeature, getLineStyle} from '../utils';
+import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
