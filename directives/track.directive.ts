@@ -1,4 +1,13 @@
-import {Directive, Input, OnChanges, SimpleChanges} from '@angular/core';
+import {WmMapPopover} from './../components/popover/popover.map';
+import {
+  ComponentFactoryResolver,
+  Directive,
+  ElementRef,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ViewContainerRef,
+} from '@angular/core';
 
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -21,8 +30,9 @@ import {
   startIconHtml,
 } from '../readonly';
 import {ILocation} from '../types/location';
-import {ILineString} from '../types/model';
+import {ILineString, IMAP} from '../types/model';
 import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
+import {getFlowPopoverText} from '../utils/popover';
 
 @Directive({
   selector: '[wmMapTrack]',
@@ -38,17 +48,28 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _startFeature: Feature<Geometry>;
   private _trackFeatures: Feature<Geometry>[];
   private _trackLayer: VectorLayer<VectorSource>;
+  private _popoverRef: any;
 
   @Input() conf: IMAP;
   @Input() layer;
   @Input() track;
   @Input() trackElevationChartElements: any;
-
+  constructor(
+    private element: ElementRef,
+    private viewContainerRef: ViewContainerRef,
+    private componentFactoryResolver: ComponentFactoryResolver,
+  ) {
+    super();
+  }
   drawTrack(trackgeojson: any): void {
     const isFlowLine = this.conf.flow_line_quote_show || false;
     const orangeTreshold = this.conf.flow_line_quote_orange || 800;
     const redTreshold = this.conf.flow_line_quote_red || 1500;
     const geojson: any = this._getGeoJson(trackgeojson);
+
+    if (isFlowLine) {
+      this._initPopover();
+    }
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
@@ -67,6 +88,13 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     this.map.addLayer(this._trackLayer);
   }
 
+  private _initPopover(): void {
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(WmMapPopover);
+    this._popoverRef = this.viewContainerRef.createComponent(componentFactory);
+    const host = this.element.nativeElement;
+    host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     const resetCondition =
       (changes.track &&
@@ -83,6 +111,17 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       this._initTrack = true;
     }
     if (this.track != null && this.map != null && this.trackElevationChartElements != null) {
+      if (this._popoverRef != null) {
+        const altitude = this.trackElevationChartElements?.location.altitude || undefined;
+        this._popoverRef.instance.message$.next(
+          getFlowPopoverText(
+            altitude,
+            this.conf.flow_line_quote_orange,
+            this.conf.flow_line_quote_red,
+          ),
+        );
+      }
+
       this._drawTemporaryLocationFeature(
         this.trackElevationChartElements?.location,
         this.trackElevationChartElements?.track,
@@ -99,7 +138,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       }
     }
   }
-
+  private _updatePopover(altitude: number): void {}
   private _drawTemporaryLocationFeature(location?: ILocation, track?: any): void {
     if (location) {
       if (!this._elevationChartSource) {
@@ -226,6 +265,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._trackLayer != null) {
       this.map.removeLayer(this._trackLayer);
       this._trackLayer = undefined;
+    }
+    if (this._popoverRef != null) {
+      this._popoverRef.instance.message$.next(null);
     }
   }
 }

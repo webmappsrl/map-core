@@ -1,3 +1,4 @@
+import {WmMapPopover} from './components/popover/popover.map';
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
 
@@ -29,7 +30,7 @@ const directives = [
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
 ];
-const components = [WmMapComponent, WmMapControls, WmMapSaveCustomTrackControls];
+const components = [WmMapComponent, WmMapControls, WmMapPopover, WmMapSaveCustomTrackControls];
 
 @NgModule({
   declarations: [...components, ...directives],
