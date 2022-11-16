@@ -1,3 +1,4 @@
+import {fromHEXToColor} from './../utils/styles';
 import {
   Directive,
   EventEmitter,
@@ -102,13 +103,22 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             currentPoi.properties != null &&
             currentPoi.properties.svgIcon != null
           ) {
+            const properties = currentPoi.properties || null;
+            const taxonomy = properties.taxonomy || null;
+            const poyType = taxonomy.poi_type || null;
+            const poiColor = poyType.color
+              ? poyType.color
+              : properties.color
+              ? properties.color
+              : '#ff8c00';
+            const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
             iconStyle = new Style({
               image: new Icon({
                 anchor: [0.5, 0.5],
                 scale: 1,
                 src: `data:image/svg+xml;utf8,${currentPoi.properties.svgIcon
-                  .replaceAll('<circle fill="darkorange"', '<circle fill="white" ')
-                  .replaceAll('<g fill="white"', '<g fill="darkorange" ')}`,
+                  .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
+                  .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`,
               }),
             });
           }
@@ -159,12 +169,21 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
     if (poiCollection) {
       for (const poi of poiCollection) {
-        const icn = this._getIcnFromTaxonomies(poi.properties.taxonomyIdentifiers);
+        const properties = poi.properties || null;
+        const taxonomy = properties.taxonomy || null;
+        const poyType = taxonomy.poi_type || null;
+        const icn = this._getIcnFromTaxonomies(properties.taxonomyIdentifiers);
         const coordinates = [
           poi.geometry.coordinates[0] as number,
           poi.geometry.coordinates[1] as number,
         ] || [0, 0];
 
+        const poiColor = poyType.color
+          ? poyType.color
+          : properties.color
+          ? properties.color
+          : '#ff8c00';
+        const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         const iconFeature = new Feature({
           type: 'icon',
@@ -178,11 +197,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           }),
         });
         if (poi != null && poi.properties != null && poi.properties.svgIcon != null) {
+          const src = `data:image/svg+xml;utf8,${poi.properties.svgIcon.replaceAll(
+            'darkorange',
+            namedPoiColor,
+          )}`;
           iconStyle = new Style({
             image: new Icon({
               anchor: [0.5, 0.5],
               scale: 1,
-              src: `data:image/svg+xml;utf8,${poi.properties.svgIcon}`,
+              src,
             }),
           });
         }

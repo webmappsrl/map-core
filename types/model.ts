@@ -64,6 +64,7 @@ export interface IGeojsonProperties {
   taxonomy?: {
     activity?: any[];
     where?: string[];
+    poi_type?: any;
   };
   updated_at?: Date;
   user_id?: number;
