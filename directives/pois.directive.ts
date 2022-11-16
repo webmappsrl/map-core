@@ -144,9 +144,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   ngOnChanges(_: SimpleChanges): void {
     if (this.map != null && this.pois != null) {
-      if (this.filters.length > 0) {
+      if (this._poisClusterLayer != null) {
         this._poisClusterLayer.getSource().clear();
         (this._poisClusterLayer.getSource() as any).getSource().clear();
+        this._poisClusterLayer.getSource().changed();
+      }
+      if (this.filters.length > 0) {
         const selectedFeatures = this.pois.features.filter(
           p => intersectionBetweenArrays(p.properties.taxonomyIdentifiers, this.filters).length > 0,
         );
@@ -162,8 +165,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
-    this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
-    this.map.addLayer(this._poisClusterLayer);
+    if (this._poisClusterLayer == null) {
+      this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
+      this.map.addLayer(this._poisClusterLayer);
+    }
     const clusterSource: any = this._poisClusterLayer.getSource() as any;
     const featureSource = clusterSource.getSource();
 
