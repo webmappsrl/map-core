@@ -4,4 +4,13 @@ wm-map-popover {
   right: 0;
   min-width: 400px;
   z-index: 1;
+  .red {
+    color: red;
+  }
+  .orange {
+    color: orange;
+  }
+  .green {
+    color: green;
+  }
 }

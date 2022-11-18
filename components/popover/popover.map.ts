@@ -7,7 +7,7 @@ import {BehaviorSubject} from 'rxjs';
   <ng-container *ngIf="message$|async as message">
     <ion-card>
       <ion-card-content>
-        <div>{{message}} <a (click)="message$.next(null)">X</a></div>
+        <div> <span [innerHTML]="message"></span> <a (click)="message$.next(null)"> X</a></div>
       </ion-card-content>
     </ion-card>
   </ng-container>
