@@ -26,22 +26,21 @@ import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IMAP} from '../types/model';
 import {
-  activateInteractions,
   createCluster,
   createHull,
   createLayer,
-  deactivateInteractions,
   intersectionBetweenArrays,
   isCluster,
   nearestFeatureOfCluster,
   selectCluster,
 } from '../utils';
-import {Cluster, Vector} from 'ol/source';
+import {Cluster, } from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 @Directive({
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
+  private _lastId = -1;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
@@ -53,7 +52,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {
             const currentID = +poiFeature.getId() || -1;
-            this.poiClick.emit(currentID);
+            if(currentID != this._lastId) {
+              this.poiClick.emit(currentID);
+              this._lastId = currentID;
+              console.log('cliccato')
+            }
           }
         } else {
         }
@@ -152,8 +155,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       }
       selectCluster.getFeatures().on(['add'], e => {
         var c = e.element.get('features');
-        if (c.length === 1 && c[0].getId()) {
-          this.poiClick.emit(c[0].getId());
+        const id = c[0].getId()
+        if (c.length === 1 && id) {
+          if(id != this._lastId) {
+            this.poiClick.emit(c[0].getId());
+            console.log('cliccato')
+            this._lastId = id;
+          }
         }
       });
     }
