@@ -28,13 +28,15 @@ import {IGeojsonFeature, IMAP} from '../types/model';
 import {
   activateInteractions,
   createCluster,
+  createHull,
   createLayer,
   deactivateInteractions,
   intersectionBetweenArrays,
   isCluster,
   nearestFeatureOfCluster,
+  selectCluster,
 } from '../utils';
-import {Cluster} from 'ol/source';
+import {Cluster, Vector} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 @Directive({
   selector: '[wmMapPois]',
@@ -47,23 +49,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
-        stopPropagation(event);
-        if (isCluster(this._poisClusterLayer, event, this.map)) {
-          deactivateInteractions(this.map);
-          const geometry = new Point([event.coordinate[0], event.coordinate[1]]);
-          this._fitView(geometry as any, {
-            maxZoom: this.map.getView().getZoom() + 1,
-            duration: 500,
-          });
-        } else {
+        if (!isCluster(this._poisClusterLayer, event, this.map)) {
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {
-            deactivateInteractions(this.map);
             const currentID = +poiFeature.getId() || -1;
             this.poiClick.emit(currentID);
           }
+        } else {
         }
-        setTimeout(() => activateInteractions(this.map), 1200);
       } catch (e) {
         console.log(e);
       }
@@ -157,6 +150,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       } else {
         this._addPoisFeature(this.pois.features);
       }
+      selectCluster.getFeatures().on(['add'], e => {
+        var c = e.element.get('features');
+        if (c.length === 1 && c[0].getId()) {
+          this.poiClick.emit(c[0].getId());
+        }
+      });
     }
   }
 
@@ -168,6 +167,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     if (this._poisClusterLayer == null) {
       this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
       this.map.addLayer(this._poisClusterLayer);
+      createHull(this.map)
     }
     const clusterSource: any = this._poisClusterLayer.getSource() as any;
     const featureSource = clusterSource.getSource();
@@ -193,6 +193,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         const iconFeature = new Feature({
           type: 'icon',
           geometry: new Point([position[0], position[1]]),
+          properties: {...properties, ...{color: poiColor}, ...{taxonomyIdentifiers: properties.taxonomyIdentifiers}}
         });
         let iconStyle = new Style({
           image: new Icon({

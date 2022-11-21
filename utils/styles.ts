@@ -1,9 +1,11 @@
 import FlowLine from 'ol-ext/style/FlowLine';
 import Stroke from 'ol/style/Stroke';
+import {Text, Circle, Fill} from 'ol/style';
 import Style, {StyleLike} from 'ol/style/Style';
 import StrokeStyle from 'ol/style/Stroke';
 import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {FeatureLike} from 'ol/Feature';
+import {ILAYER} from '../types/layer';
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
     version: 8,
@@ -528,3 +530,41 @@ export const fromHEXToColor = {
   '#ffff00': 'yellow',
   '#9acd32': 'yellowgreen',
 };
+
+export function getClusterStyle(feature, resolution) {
+  var size = feature.get('features').length;
+  var style = null;
+  var color = size > 25 ? '192,0,0' : size > 8 ? '255,128,0' : '0,128,0';
+  var radius = Math.max(8, Math.min(size * 0.75, 20));
+  var dashv = (2 * Math.PI * radius) / 6;
+  var dash = [0, dashv, dashv, dashv, dashv, dashv, dashv];
+  const prop = feature.getProperties();
+  if (size === 1 && prop.features && prop.features[0] != null) {
+    const icon = feature.getProperties().features[0];
+    return icon.getStyle() || null;
+  } else {
+    style = new Style({
+      image: new Circle({
+        radius: radius,
+        stroke: new Stroke({
+          color: 'rgba(' + color + ',0.5)',
+          width: 15,
+          lineDash: dash,
+          lineCap: 'butt',
+        }),
+        fill: new Fill({
+          color: 'rgba(' + color + ',1)',
+        }),
+      }),
+      text: new Text({
+        text: size.toString(),
+        font: 'bold 12px comic sans ms',
+        //textBaseline: 'top',
+        fill: new Fill({
+          color: '#fff',
+        }),
+      }),
+    });
+  }
+  return style;
+}
