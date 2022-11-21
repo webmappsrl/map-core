@@ -34,7 +34,7 @@ import {
   nearestFeatureOfCluster,
   selectCluster,
 } from '../utils';
-import {Cluster, } from 'ol/source';
+import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 @Directive({
   selector: '[wmMapPois]',
@@ -52,13 +52,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {
             const currentID = +poiFeature.getId() || -1;
-            if(currentID != this._lastId) {
+            if (currentID != this._lastId) {
               this.poiClick.emit(currentID);
               this._lastId = currentID;
-              console.log('cliccato')
             }
           }
-        } else {
         }
       } catch (e) {
         console.log(e);
@@ -73,6 +71,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         this.map.addLayer(this._selectedPoiLayer);
       }
       this._selectedPoiLayer.getSource().clear();
+      selectCluster.clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
         if (currentPoi != null) {
@@ -155,11 +154,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       }
       selectCluster.getFeatures().on(['add'], e => {
         var c = e.element.get('features');
-        const id = c[0].getId()
+        const id = c[0].getId();
+
         if (c.length === 1 && id) {
-          if(id != this._lastId) {
+          if (id != this._lastId) {
             this.poiClick.emit(c[0].getId());
-            console.log('cliccato')
             this._lastId = id;
           }
         }
@@ -175,7 +174,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     if (this._poisClusterLayer == null) {
       this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
       this.map.addLayer(this._poisClusterLayer);
-      createHull(this.map)
+      createHull(this.map);
     }
     const clusterSource: any = this._poisClusterLayer.getSource() as any;
     const featureSource = clusterSource.getSource();
@@ -201,7 +200,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         const iconFeature = new Feature({
           type: 'icon',
           geometry: new Point([position[0], position[1]]),
-          properties: {...properties, ...{color: poiColor}, ...{taxonomyIdentifiers: properties.taxonomyIdentifiers}}
+          properties: {
+            ...properties,
+            ...{color: poiColor},
+            ...{taxonomyIdentifiers: properties.taxonomyIdentifiers},
+          },
         });
         let iconStyle = new Style({
           image: new Icon({

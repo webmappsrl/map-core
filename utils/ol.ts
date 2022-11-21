@@ -1,5 +1,4 @@
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
-import Hover from 'ol-ext/interaction/Hover';
 import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import {Feature, MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
@@ -107,8 +106,6 @@ export function createCluster(
       updateWhileInteracting: true,
       zIndex,
     });
-
-    const styleCache = {};
   }
   return clusterLayer;
 }
@@ -135,7 +132,7 @@ export function createHull(map: Map) {
   selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
     pointRadius: 17,
-    // circleMaxObjects: 40,
+    circleMaxObjects: 20,
     // spiral: false,
     autoClose: true,
     animate: true,
