@@ -593,3 +593,8 @@ export function clusterHullStyle(cluster) {
     }),
   });
 }
+
+export function getSrcStyleFromFeature(poiFeature) {
+  const source = poiFeature.getSource();
+  console.log(source)
+}

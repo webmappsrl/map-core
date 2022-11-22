@@ -46,6 +46,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _lastId = -1;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
+  private _selectedPoiLayer: VectorLayer<VectorSource>;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -59,8 +60,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         }
         if (!isCluster(this._poisClusterLayer, event, this.map)) {
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
+          const clusterSource: any = this._poisClusterLayer.getSource() as Cluster;
+          const featureSource = clusterSource.getSource();
+          const lastFeature =featureSource.getFeatureById(this._lastId);
+          if(lastFeature) {
+            console.log(lastFeature)
+          }
           if (poiFeature) {
             const currentID = +poiFeature.getId() || -1;
+            const currentSource:any = poiFeature.getStyle();
+            const currentSrc =currentSource.getImage().getSrc()
             if (currentID != this._lastId) {
               this.poiClick.emit(currentID);
               this._lastId = currentID;
@@ -107,6 +116,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
+      if (this._selectedPoiLayer == null) {
+        this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
+        this.map.addLayer(this._selectedPoiLayer);
+      }
+      this._selectedPoiLayer.getSource().clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
         if (currentPoi != null) {
@@ -152,6 +166,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
               }),
             });
           }
+          iconFeature.setStyle(iconStyle);
+          iconFeature.setId(currentPoi.properties.id);
+          const source = this._selectedPoiLayer.getSource();
+          source.addFeature(iconFeature);
+          source.changed();
 
           this._fitView(geometry as any);
         }
