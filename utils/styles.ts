@@ -1,3 +1,4 @@
+import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
 import Stroke from 'ol/style/Stroke';
 import {Text, Circle, Fill} from 'ol/style';
@@ -6,6 +7,7 @@ import StrokeStyle from 'ol/style/Stroke';
 import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {FeatureLike} from 'ol/Feature';
 import {ILAYER} from '../types/layer';
+import { Polygon } from 'ol/geom';
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
     version: 8,
@@ -567,4 +569,27 @@ export function getClusterStyle(feature, resolution) {
     });
   }
   return style;
+}
+export let currentCluster = null;
+export function setCurrentCluser(cluster):void {
+  currentCluster = cluster;
+}
+export function clusterHullStyle(cluster) {
+  if(cluster !=currentCluster ) {
+    return;
+  }
+  const originalFeatures = cluster.get('features');
+  const points = originalFeatures.map((feature) =>
+    feature.getGeometry().getCoordinates()
+  );
+  return new Style({
+    geometry: new Polygon([convexHull(points)]),
+    fill:  new Fill({
+      color: 'rgba(255, 153, 0, 0.4)',
+    }),
+    stroke: new Stroke({
+      color: 'rgba(204, 85, 0, 1)',
+      width: 1.5,
+    }),
+  });
 }

@@ -188,6 +188,7 @@ export function createHull(map: Map) {
       }
     },
   });
+  selectCluster.setActive(false)
   map.addInteraction(selectCluster);
 }
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
@@ -341,6 +342,30 @@ export function isCluster(
   }
 
   return features.length > 1;
+}
+export function getCluster(
+  layer: VectorLayer<Cluster>,
+  evt: MapBrowserEvent<UIEvent>,
+  map: Map,
+): Feature<Geometry>[] {
+  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
+  const features: Feature<Geometry>[] = [];
+  const clusterSource = layer?.getSource() ?? (null as any);
+  const layerSource = clusterSource?.getSource();
+
+  if (layer && layerSource) {
+    layerSource.forEachFeatureInExtent(
+      buffer(
+        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
+        precision,
+      ),
+      feature => {
+        features.push(feature);
+      },
+    );
+  }
+
+  return features;
 }
 
 export function intersectionBetweenArrays(a: any[], b: any[]): any[] {

@@ -1,4 +1,4 @@
-import {fromHEXToColor} from './../utils/styles';
+import {clusterHullStyle, fromHEXToColor, setCurrentCluser} from './../utils/styles';
 import {
   Directive,
   EventEmitter,
@@ -10,7 +10,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import {Subscription} from 'rxjs';
-
+import {createEmpty, extend, getWidth} from 'ol/extent';
 import {stopPropagation} from 'ol/events/Event';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -31,8 +31,10 @@ import {
   createLayer,
   intersectionBetweenArrays,
   isCluster,
+  getCluster,
   nearestFeatureOfCluster,
   selectCluster,
+  currentCluster,
 } from '../utils';
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
@@ -40,14 +42,21 @@ import VectorSource from 'ol/source/Vector';
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
+  private _hullCluserLayer: VectorLayer<VectorSource>;
   private _lastId = -1;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
-  private _selectedPoiLayer: VectorLayer<VectorSource>;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
+        if (
+          this.map.getView().getZoom() === this.map.getView().getMaxZoom() 
+        ){
+          selectCluster.setActive(true)
+        }else {
+          selectCluster.setActive(false)  
+        }
         if (!isCluster(this._poisClusterLayer, event, this.map)) {
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           if (poiFeature) {
@@ -57,6 +66,38 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
               this._lastId = currentID;
             }
           }
+        } else {
+          this._poisClusterLayer.getFeatures(event.pixel).then(features => {
+            if (features.length > 0) {
+              setCurrentCluser(features[0]);
+              const clusterMembers = features[0].get('features');
+              this._hullCluserLayer.setStyle(clusterHullStyle);
+              if (clusterMembers.length > 1) {
+                // Calculate the extent of the cluster members.
+                const extent = createEmpty();
+                clusterMembers.forEach(feature =>
+                  extend(extent, feature.getGeometry().getExtent()),
+                );
+                const view = this.map.getView();
+                setTimeout(() => {
+                  if (
+                    view.getZoom() === view.getMaxZoom() 
+                  ){
+                    selectCluster.setActive(true)
+                  }
+                  // Zoom to the extent of the cluster members.
+                  view.fit(extent, {duration: 500, padding: [50, 50, 50, 50]});
+                  setTimeout(() => {
+                    if (
+                      view.getZoom() === view.getMaxZoom() 
+                    ){
+                      selectCluster.setActive(true)
+                    }
+                  },200);
+                }, 400);
+              }
+            }
+          });
         }
       } catch (e) {
         console.log(e);
@@ -66,12 +107,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input('poi') set setPoi(id: number) {
     if (this.map != null) {
-      if (this._selectedPoiLayer == null) {
-        this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-        this.map.addLayer(this._selectedPoiLayer);
-      }
-      this._selectedPoiLayer.getSource().clear();
-      selectCluster.clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
         if (currentPoi != null) {
@@ -117,11 +152,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
               }),
             });
           }
-          iconFeature.setStyle(iconStyle);
-          iconFeature.setId(currentPoi.properties.id);
-          const source = this._selectedPoiLayer.getSource();
-          source.addFeature(iconFeature);
-          source.changed();
+
           this._fitView(geometry as any);
         }
       }
@@ -174,11 +205,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     if (this._poisClusterLayer == null) {
       this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
       this.map.addLayer(this._poisClusterLayer);
-      createHull(this.map);
+      createHull(this.map)
     }
-    const clusterSource: any = this._poisClusterLayer.getSource() as any;
+    const clusterSource: any = this._poisClusterLayer.getSource() as Cluster;
     const featureSource = clusterSource.getSource();
-
+    this._hullCluserLayer = new VectorLayer({
+      style: clusterHullStyle,
+      source: clusterSource,
+    });
+    this.map.addLayer(this._hullCluserLayer);
     if (poiCollection) {
       for (const poi of poiCollection) {
         const properties = poi.properties || null;
