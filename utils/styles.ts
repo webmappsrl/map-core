@@ -536,7 +536,7 @@ export const fromHEXToColor = {
 export function getClusterStyle(feature, resolution) {
   var size = feature.get('features').length;
   var style = null;
-  var color = size > 25 ? '192,0,0' : size > 8 ? '255,128,0' : '0,128,0';
+  var color = '41,128,185';
   var radius = Math.max(8, Math.min(size * 0.75, 20));
   var dashv = (2 * Math.PI * radius) / 6;
   var dash = [0, dashv, dashv, dashv, dashv, dashv, dashv];

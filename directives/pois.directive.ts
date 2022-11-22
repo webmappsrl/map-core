@@ -55,10 +55,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           this.map.getView().getZoom() === this.map.getView().getMaxZoom() 
         ){
           selectCluster.setActive(true)
+          if(this._selectedPoiLayer!= null)this._selectedPoiLayer.setVisible(false);
         }else {
           selectCluster.setActive(false)  
+          if(this._selectedPoiLayer!= null)this._selectedPoiLayer.setVisible(true);
         }
         if (!isCluster(this._poisClusterLayer, event, this.map)) {
+          selectCluster.setActive(true)
           const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
           const clusterSource: any = this._poisClusterLayer.getSource() as Cluster;
           const featureSource = clusterSource.getSource();
@@ -68,8 +71,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           }
           if (poiFeature) {
             const currentID = +poiFeature.getId() || -1;
-            const currentSource:any = poiFeature.getStyle();
-            const currentSrc =currentSource.getImage().getSrc()
             if (currentID != this._lastId) {
               this.poiClick.emit(currentID);
               this._lastId = currentID;
