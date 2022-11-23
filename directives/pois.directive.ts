@@ -45,10 +45,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
-      console.log('click event');
       if (this._selectedPoiLayer == null) {
         this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-        console.log('poisss');
         this.map.addLayer(this._selectedPoiLayer);
       }
       this._selectedPoiLayer.getSource().clear();
@@ -66,9 +64,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             if (clusterMembers.length > 1) {
               // Calculate the extent of the cluster members.
               const extent = createEmpty();
-              clusterMembers.forEach(feature =>
-                extend(extent, feature.getGeometry().getExtent()),
-              );
+              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
               const view = this.map.getView();
               setTimeout(() => {
                 if (view.getZoom() === view.getMaxZoom()) {
@@ -83,19 +79,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
                 }, 200);
               }, 400);
             } else {
-              console.log('click sul poi');
               selectCluster.setActive(true);
               const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
-    
+
               if (poiFeature) {
                 const poi = poiFeature.getProperties();
                 this.currentPoiEvt.emit(poi);
-                this._selectIcon(poi)
-                this._fitView(poi.geometry);
-              } 
-
-
-              
+                this._selectIcon(poi);
+              }
             }
           }
         });
@@ -109,14 +100,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     if (this.map != null) {
       if (this._selectedPoiLayer == null) {
         this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-        console.log('poisss');
         this.map.addLayer(this._selectedPoiLayer);
       }
-      console.log(`this._selectedPoiLayer.getSource().clear();`);
+      selectCluster.setActive(false);
       this._selectedPoiLayer.getSource().clear();
       if (id > -1) {
         const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
         this._selectIcon(currentPoi);
+        this.currentPoiEvt.emit(currentPoi);
       }
     }
   }
@@ -129,70 +120,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
   }
-  private _selectIcon(currentPoi): void {
-    if (currentPoi != null) {
-      const icn = this._getIcnFromTaxonomies(currentPoi.properties.taxonomyIdentifiers);
-      let geometry = null;
-      if(currentPoi.geometry.coordinates != null) {
-
-        const coordinates = [
-          currentPoi.geometry.coordinates[0] as number,
-        currentPoi.geometry.coordinates[1] as number,
-      ] || [0, 0];
-      const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
-       geometry = new Point([position[0], position[1]]);
-    } else {
-      geometry =currentPoi.geometry;
-    }
-      const iconFeature = new Feature({
-        type: 'icon',
-        geometry,
-      });
-      let iconStyle = new Style({
-        image: new Icon({
-          anchor: [0.5, 0.5],
-          scale: 0.5,
-          src: `${ICN_PATH}/${icn}_selected.png`,
-        }),
-      });
-      if (
-        currentPoi != null &&
-        currentPoi.properties != null &&
-        currentPoi.properties.svgIcon != null
-      ) {
-        const properties = currentPoi.properties || null;
-        const taxonomy = properties.taxonomy || null;
-        const poyType = taxonomy.poi_type || null;
-        const poiColor = poyType.color
-          ? poyType.color
-          : properties.color
-          ? properties.color
-          : '#ff8c00';
-        const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
-        iconStyle = new Style({
-          image: new Icon({
-            anchor: [0.5, 0.5],
-            scale: 1,
-            src: `data:image/svg+xml;utf8,${currentPoi.properties.svgIcon
-              .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
-              .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`,
-          }),
-        });
-      }
-      iconFeature.setStyle(iconStyle);
-      iconFeature.setId(currentPoi.properties.id);
-      console.log(`const source = this._selectedPoiLayer.getSource();`);
-      const source = this._selectedPoiLayer.getSource();
-      source.addFeature(iconFeature);
-      source.changed();
-
-      this._fitView(geometry as any);
-      this.currentPoiEvt.emit(currentPoi);
-    }
-  }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes && changes.filters != null && changes.filters.firstChange === false) {
+    if (changes && changes.filters != null && changes.filters.firstChange === false) {
       this._selectedPoiLayer.getSource().clear();
     }
     if (this.map != null && this.pois != null) {
@@ -323,5 +253,66 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
     );
     return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
+  }
+
+  private _selectIcon(currentPoi): void {
+    console.log('select icon');
+    if (currentPoi != null) {
+      const icn = this._getIcnFromTaxonomies(currentPoi.properties.taxonomyIdentifiers);
+      let geometry = null;
+      if (currentPoi.geometry.coordinates != null) {
+        const coordinates = [
+          currentPoi.geometry.coordinates[0] as number,
+          currentPoi.geometry.coordinates[1] as number,
+        ] || [0, 0];
+        const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
+        geometry = new Point([position[0], position[1]]);
+      } else {
+        geometry = currentPoi.geometry;
+      }
+      const iconFeature = new Feature({
+        type: 'icon',
+        geometry,
+      });
+      let iconStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 0.5],
+          scale: 0.5,
+          src: `${ICN_PATH}/${icn}_selected.png`,
+        }),
+      });
+      if (
+        currentPoi != null &&
+        currentPoi.properties != null &&
+        currentPoi.properties.svgIcon != null
+      ) {
+        const properties = currentPoi.properties || null;
+        const taxonomy = properties.taxonomy || null;
+        const poyType = taxonomy.poi_type || null;
+        const poiColor = poyType.color
+          ? poyType.color
+          : properties.color
+          ? properties.color
+          : '#ff8c00';
+        const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
+        iconStyle = new Style({
+          image: new Icon({
+            anchor: [0.5, 0.5],
+            scale: 1,
+            src: `data:image/svg+xml;utf8,${currentPoi.properties.svgIcon
+              .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
+              .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`,
+          }),
+        });
+      }
+      iconFeature.setStyle(iconStyle);
+      iconFeature.setId(currentPoi.properties.id);
+      const source = this._selectedPoiLayer.getSource();
+      source.addFeature(iconFeature);
+      source.changed();
+
+      this._fitView(geometry as any);
+      this.currentPoiEvt.emit(currentPoi);
+    }
   }
 }
