@@ -166,7 +166,6 @@ export class WmMapComponent implements OnChanges {
     });
 
     this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
-      'singleclick';
       this.clickEVT$.emit(evt);
     });
     this.map$.next(this.map);

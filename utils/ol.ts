@@ -1,3 +1,5 @@
+import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
+import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import {Feature, MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
@@ -11,19 +13,21 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
 import {fromLonLat, transform, transformExtent} from 'ol/proj';
-import {Cluster} from 'ol/source';
+import {Cluster, Vector} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import VectorTileSource from 'ol/source/VectorTile';
-import {Fill, Icon, Stroke, Style, Text} from 'ol/style';
+import {Circle, Fill, Icon, Stroke, Style, Text} from 'ol/style';
 import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
 
 import {TRACK_ZINDEX} from '../readonly';
-import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE} from '../readonly/constants';
+import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from '../readonly/constants';
 import {ILocation} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import * as localforage from 'localforage';
 import {LoadFunction} from 'ol/Tile';
-
+import {fromHEXToColor, getClusterStyle} from './styles';
+import convexHull from 'ol-ext/geom/ConvexHull';
+import Polygon from 'ol/geom/Polygon';
 /**
  * set all interaction of  map active.
  * [map](https://compodoc.app/guides/getting-started.html)
@@ -50,6 +54,7 @@ export function addFeatureToLayer(
     layer.getSource().addFeature(feature);
   }
 }
+export let selectCluster = null
 
 /**
  * Create a circle Feature<Point> in lonLat coordinate.
@@ -84,7 +89,9 @@ export function createCluster(
   zIndex: number,
 ): VectorLayer<Cluster> {
   if (clusterLayer == null) {
-    clusterLayer = new VectorLayer({
+    clusterLayer = new AnimatedCluster({
+      name: 'cluster',
+      animationDuration: 0,
       source: new Cluster({
         distance: CLUSTER_DISTANCE,
         source: new VectorSource({
@@ -94,48 +101,103 @@ export function createCluster(
           return feature.getGeometry().getType() === 'Point' ? <Point>feature.getGeometry() : null;
         },
       }),
-      style: function (feature) {
-        const size = feature.get('features').length;
-        let style = styleCache[size];
-        if (size === 1) {
-          const icon = feature.getProperties().features[0];
-          return icon.getStyle() || null;
-        }
-        if (!style) {
-          style = new Style({
-            image: new CircleStyle({
-              radius: 15,
-              stroke: new Stroke({
-                color: '#fff',
-              }),
-              fill: new Fill({
-                color: '#3399CC',
-              }),
-            }),
-            text: new Text({
-              text: `${size}`,
-              scale: 1.5,
-              fill: new Fill({
-                color: '#fff',
-              }),
-              font: '30px',
-            }),
-          });
-          styleCache[size] = style;
-        }
-        return style;
-      },
+      style: getClusterStyle,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex,
     });
-
-    const styleCache = {};
   }
-
   return clusterLayer;
 }
 
+export function createHull(map: Map) {
+  var img = new Circle({
+    radius: 5,
+    stroke: new Stroke({
+      color: 'rgba(0,255,255,1)',
+      width: 1,
+    }),
+    fill: new Fill({
+      color: 'rgba(0,255,255,0.3)',
+    }),
+  });
+  var style = new Style({
+    image: img,
+    // Draw a link beetween points (or not)
+    stroke: new Stroke({
+      color: '#fff',
+      width: 1,
+    }),
+  });
+  selectCluster = new SelectCluster({
+    // Point radius: to calculate distance between the features
+    pointRadius: 34,
+    circleMaxObjects: 20,
+    // spiral: false,
+    autoClose: true,
+    animate: true,
+    name:'selectCluster',
+    // Feature style when it springs apart
+    featureStyle: function () {
+      return [style];
+    },
+    style: function (f, res) {
+      var cluster = f.get('features');
+      if (cluster.length > 1) {
+        var s = [getClusterStyle(f, res)];
+        if (convexHull) {
+          var coords = [];
+          for (let i = 0; i < cluster.length; i++)
+            coords.push(cluster[i].getGeometry().getFirstCoordinate());
+          var chull = convexHull(coords);
+          s.push(
+            new Style({
+              stroke: new Stroke({color: 'rgba(0,0,192,0.5)', width: 2}),
+              fill: new Fill({color: 'rgba(0,0,192,0.3)'}),
+              geometry: new Polygon([chull]),
+              zIndex: 1,
+            }),
+          );
+        }
+        return s;
+      } else {
+        const selectedFeature = cluster[0];
+        const prop = selectedFeature.getProperties().properties;
+        const color = prop.color || 'darkorange';
+        const namedPoiColor = fromHEXToColor[color] || 'darkorange';
+        if(prop.svgIcon != null) {
+          const src = `data:image/svg+xml;utf8,${prop.svgIcon.replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
+          .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
+          return new Style({
+            image: new Icon({
+              anchor: [0.5, 0.5],
+              scale: 1,
+              src,
+            }),
+          });
+        } else {
+          const icn = getIcnFromTaxonomies(prop.taxonomyIdentifiers);
+          return new Style({
+            image: new Icon({
+              anchor: [0.5, 0.5],
+              scale: 0.5,
+              src: `${ICN_PATH}/${icn}_selected.png`,
+            }),
+          });
+        }
+      }
+    },
+  });
+  selectCluster.setActive(false)
+  map.addInteraction(selectCluster);
+}
+export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
+  const excludedIcn = ['theme_ucvs'];
+  const res = taxonomyIdentifiers.filter(
+    p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
+  );
+  return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
+}
 export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
   if (!layer) {
     layer = new VectorLayer({
@@ -280,6 +342,30 @@ export function isCluster(
   }
 
   return features.length > 1;
+}
+export function getCluster(
+  layer: VectorLayer<Cluster>,
+  evt: MapBrowserEvent<UIEvent>,
+  map: Map,
+): Feature<Geometry>[] {
+  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
+  const features: Feature<Geometry>[] = [];
+  const clusterSource = layer?.getSource() ?? (null as any);
+  const layerSource = clusterSource?.getSource();
+
+  if (layer && layerSource) {
+    layerSource.forEachFeatureInExtent(
+      buffer(
+        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
+        precision,
+      ),
+      feature => {
+        features.push(feature);
+      },
+    );
+  }
+
+  return features;
 }
 
 export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
