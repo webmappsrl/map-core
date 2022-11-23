@@ -131,7 +131,7 @@ export function createHull(map: Map) {
   });
   selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
-    pointRadius: 17,
+    pointRadius: 34,
     circleMaxObjects: 20,
     // spiral: false,
     autoClose: true,
