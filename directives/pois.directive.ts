@@ -149,7 +149,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       selectCluster.getFeatures().on(['add'], e => {
         var c = e.element.get('features');
 
-        if (c.length === 1) {
+        if (c.length === 1 && this.map.getView().getZoom() === this.map.getView().getMaxZoom()) {
           this.currentPoiEvt.emit(c[0].getProperties());
           clearLayer(this._selectedPoiLayer);
         }
