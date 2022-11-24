@@ -69,7 +69,7 @@ export class wmMapTrackRelatedPoisDirective
     });
   }
 
-  @Input('poi') set setPoi(id: number) {
+  @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.map.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;

@@ -571,7 +571,7 @@ export function getClusterStyle(feature, resolution) {
   return style;
 }
 export let currentCluster = null;
-export function setCurrentCluser(cluster):void {
+export function setCurrentCluster(cluster):void {
   currentCluster = cluster;
 }
 export function clusterHullStyle(cluster) {

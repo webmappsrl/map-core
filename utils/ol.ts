@@ -1,3 +1,4 @@
+import {IGeojsonGeneric} from './../types/model';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
 import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import {Feature, MapBrowserEvent} from 'ol';
@@ -54,7 +55,7 @@ export function addFeatureToLayer(
     layer.getSource().addFeature(feature);
   }
 }
-export let selectCluster = null
+export let selectCluster = null;
 
 /**
  * Create a circle Feature<Point> in lonLat coordinate.
@@ -136,7 +137,7 @@ export function createHull(map: Map) {
     // spiral: false,
     autoClose: true,
     animate: true,
-    name:'selectCluster',
+    name: 'selectCluster',
     // Feature style when it springs apart
     featureStyle: function () {
       return [style];
@@ -165,9 +166,10 @@ export function createHull(map: Map) {
         const prop = selectedFeature.getProperties().properties;
         const color = prop.color || 'darkorange';
         const namedPoiColor = fromHEXToColor[color] || 'darkorange';
-        if(prop.svgIcon != null) {
-          const src = `data:image/svg+xml;utf8,${prop.svgIcon.replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
-          .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
+        if (prop.svgIcon != null) {
+          const src = `data:image/svg+xml;utf8,${prop.svgIcon
+            .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
+            .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
           return new Style({
             image: new Icon({
               anchor: [0.5, 0.5],
@@ -188,7 +190,7 @@ export function createHull(map: Map) {
       }
     },
   });
-  selectCluster.setActive(false)
+  selectCluster.setActive(false);
   map.addInteraction(selectCluster);
 }
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
@@ -545,5 +547,18 @@ export function lowTileLoadFn(tile: any, url: string) {
     );
   } else {
     tileLoadFn(tile, url);
+  }
+}
+export function clearLayer(layer: VectorLayer<any>): void {
+  if (layer != null && layer.getSource != null) {
+    layer.getSource().clear();
+    console.log('clear');
+  }
+}
+
+export function changedLayer(layer: VectorLayer<any>): void {
+  if (layer != null && layer.getSource() != null) {
+    layer.getSource().changed();
+    layer.changed();
   }
 }
