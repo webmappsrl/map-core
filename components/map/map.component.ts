@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -37,17 +38,14 @@ import TileLayer from 'ol/layer/Tile';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WmMapComponent implements OnChanges {
+export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
 
-  @Input() set reset(_) {
-    this._reset();
-  }
-
   @Input() conf: IMAP;
   @Input() padding: number[];
+  @Input() reset;
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
@@ -75,6 +73,12 @@ export class WmMapComponent implements OnChanges {
     }, 200);
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.map.updateSize();
+    }, 100);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (
       changes.conf != null &&
@@ -82,6 +86,9 @@ export class WmMapComponent implements OnChanges {
       changes.conf.previousValue == null
     ) {
       this._initMap(this.conf);
+    }
+    if (changes.reset && changes.reset.currentValue != null) {
+      this._reset();
     }
   }
 
@@ -168,7 +175,10 @@ export class WmMapComponent implements OnChanges {
     this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
       this.clickEVT$.emit(evt);
     });
-    this.map$.next(this.map);
+    setTimeout(() => {
+      this.map$.next(this.map);
+    }, 0);
+    console.log('map init');
   }
 
   private _reset(): void {

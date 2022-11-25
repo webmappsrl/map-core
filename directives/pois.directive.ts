@@ -44,6 +44,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
+  private _isInit = false;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -94,7 +95,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   @Input('poi') set setPoi(id: number | 'reset') {
-    console.log('poiiiiiii');
     if (this.map != null) {
       selectCluster.setActive(false);
       clearLayer(this._selectedPoiLayer);
@@ -119,12 +119,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     if (
       changes.map != null &&
       changes.map.previousValue == null &&
-      changes.map.currentValue != null
+      changes.map.currentValue != null &&
+      this._isInit === false
     ) {
       this._initDirective();
+      this._renderPois();
     }
     if (
       changes &&
@@ -134,6 +137,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       clearLayer(this._selectedPoiLayer);
     }
     if (this.map != null && (changes.filters != null || changes.pois != null)) {
+      this._renderPois();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this._onClickSub.unsubscribe();
+  }
+  private _renderPois(): void {
+    if (this.pois != null) {
       if (this.filters.length > 0) {
         if (this._poisClusterLayer != null) {
           clearLayer(this._poisClusterLayer);
@@ -146,19 +158,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       } else {
         this._addPoisFeature(this.pois.features);
       }
-      selectCluster.getFeatures().on(['add'], e => {
-        var c = e.element.get('features');
-
-        if (c.length === 1 && this.map.getView().getZoom() === this.map.getView().getMaxZoom()) {
-          this.currentPoiEvt.emit(c[0].getProperties());
-          clearLayer(this._selectedPoiLayer);
-        }
-      });
+      console.log('pois rendered');
     }
-  }
-
-  ngOnDestroy(): void {
-    this._onClickSub.unsubscribe();
   }
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
@@ -260,6 +261,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _initDirective(): void {
+    this._isInit = true;
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
     this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
     createHull(this.map);
@@ -272,6 +274,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     this.map.addLayer(this._poisClusterLayer);
     this.map.addLayer(this._hullClusterLayer);
     this.map.addLayer(this._selectedPoiLayer);
+    selectCluster.getFeatures().on(['add'], e => {
+      var c = e.element.get('features');
+
+      if (c.length === 1 && this.map.getView().getZoom() === this.map.getView().getMaxZoom()) {
+        this.currentPoiEvt.emit(c[0].getProperties());
+        clearLayer(this._selectedPoiLayer);
+      }
+    });
+    console.log('pois init');
   }
 
   private _selectIcon(currentPoi: IGeojsonGeneric): void {
