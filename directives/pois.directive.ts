@@ -36,15 +36,17 @@ import {
   nearestFeatureOfCluster,
   selectCluster,
 } from '../utils';
+
+const PADDING = [0, 0, 250, 0];
 @Directive({
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _hullClusterLayer: VectorLayer<Cluster>;
+  private _isInit = false;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
-  private _isInit = false;
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -70,7 +72,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
               }
               setTimeout(() => {
                 // Zoom to the extent of the cluster members.
-                view.fit(extent, {duration: 500, padding: [50, 50, 50, 50]});
+                view.fit(extent, {duration: 500, padding: PADDING});
                 setTimeout(() => {
                   if (view.getZoom() === view.getMaxZoom()) {
                     selectCluster.setActive(true);
@@ -143,23 +145,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
-  }
-  private _renderPois(): void {
-    if (this.pois != null) {
-      if (this.filters.length > 0) {
-        if (this._poisClusterLayer != null) {
-          clearLayer(this._poisClusterLayer);
-          changedLayer(this._poisClusterLayer);
-        }
-        const selectedFeatures = this.pois.features.filter(
-          p => intersectionBetweenArrays(p.properties.taxonomyIdentifiers, this.filters).length > 0,
-        );
-        this._addPoisFeature(selectedFeatures);
-      } else {
-        this._addPoisFeature(this.pois.features);
-      }
-      console.log('pois rendered');
-    }
   }
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
@@ -247,6 +232,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       optOptions = {
         maxZoom: this.map.getView().getMaxZoom() - 1,
         duration: 1000,
+        padding: PADDING,
       };
     }
     this._mapCmp.fitView(geometryOrExtent, optOptions);
@@ -278,11 +264,30 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       var c = e.element.get('features');
 
       if (c.length === 1 && this.map.getView().getZoom() === this.map.getView().getMaxZoom()) {
-        this.currentPoiEvt.emit(c[0].getProperties());
-        clearLayer(this._selectedPoiLayer);
+        const poi = c[0].getProperties();
+        this.currentPoiEvt.emit(poi);
+        this._selectIcon(poi);
       }
     });
     console.log('pois init');
+  }
+
+  private _renderPois(): void {
+    if (this.pois != null) {
+      if (this.filters.length > 0) {
+        if (this._poisClusterLayer != null) {
+          clearLayer(this._poisClusterLayer);
+          changedLayer(this._poisClusterLayer);
+        }
+        const selectedFeatures = this.pois.features.filter(
+          p => intersectionBetweenArrays(p.properties.taxonomyIdentifiers, this.filters).length > 0,
+        );
+        this._addPoisFeature(selectedFeatures);
+      } else {
+        this._addPoisFeature(this.pois.features);
+      }
+      console.log('pois rendered');
+    }
   }
 
   private _selectIcon(currentPoi: IGeojsonGeneric): void {
