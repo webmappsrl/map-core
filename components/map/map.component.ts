@@ -178,7 +178,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     setTimeout(() => {
       this.map$.next(this.map);
     }, 0);
-    console.log('map init');
   }
 
   private _reset(): void {

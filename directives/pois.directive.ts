@@ -33,6 +33,7 @@ import {
   createHull,
   createLayer,
   intersectionBetweenArrays,
+  Log,
   nearestFeatureOfCluster,
   selectCluster,
 } from '../utils';
@@ -119,9 +120,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
   }
-
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     if (
       changes.map != null &&
       changes.map.previousValue == null &&
@@ -152,8 +151,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
   }
-
-  private _addPoisFeature(poiCollection: IGeojsonFeature[]) {
+  private _addPoisFeature(poiCollection: IGeojsonFeature[]): void {
     clearLayer(this._poisClusterLayer);
     clearLayer(selectCluster);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
@@ -219,7 +217,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       this._checkZoom(this._poisClusterLayer);
     });
   }
-
   private _checkZoom(layer: VectorLayer<any>): void {
     const view = this.map.getView();
     if (view != null) {
@@ -232,7 +229,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       }
     }
   }
-
+  @Log({prefix: 'map.directive'})
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
       optOptions = {
@@ -251,7 +248,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     );
     return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
   }
-
   private _initDirective(): void {
     this._isInit = true;
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
@@ -275,9 +271,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         this._selectIcon(poi);
       }
     });
-    console.log('pois init');
   }
-
+  @Log({prefix: 'map.directive'})
   private _renderPois(): void {
     if (this.pois != null) {
       if (this.filters.length > 0) {
