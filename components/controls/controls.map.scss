@@ -10,6 +10,7 @@ wm-map-controls {
     display: block;
     padding: 10px;
     cursor: pointer;
+    z-index: 1;
   }
   .layer-content {
     position: fixed;
@@ -17,6 +18,7 @@ wm-map-controls {
     top: calc(2% + 50px);
     right: 2%;
     height: 100px;
+    z-index: 1;
   }
 
   ion-item {

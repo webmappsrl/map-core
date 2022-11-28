@@ -17,7 +17,7 @@ import TileLayer from 'ol/layer/Tile';
     <ion-icon name="layers-outline" (click)="toggle$.next(!toggle$.value)"></ion-icon>
   </div>
   <ion-list  *ngIf="toggle$|async" class="layer-content">
-    <ion-radio-group value="v0">
+    <ion-radio-group value="v{{currentTileLayerIdx$|async}}">
       <ion-item *ngFor="let tileLayer of tileLayers;let idx = index">
         <ion-label>{{tileLayer.getClassName()}}</ion-label>
         <ion-radio slot="start" [value]="'v'+idx" (click)="selectTileLayer(idx)"></ion-radio>
@@ -48,5 +48,6 @@ export class WmMapControls implements OnChanges {
       const visibility = idx === tidx;
       tile.setVisible(visibility);
     });
+    this.toggle$.next(!this.toggle$.value);
   }
 }
