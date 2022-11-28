@@ -149,7 +149,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   ngOnChanges(_: SimpleChanges): void {
+    console.log(_);
     if (this.map != null && this.conf != null && this._mapIsInit == false) {
+      console.log('init layer');
       this._initLayer(this.conf);
       this._mapIsInit = true;
       this.map.on('moveend', () => {
@@ -239,6 +241,5 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _updateMap(): void {
     this._lowVectorTileLayer.changed();
     this._highVectorTileLayer.changed();
-    this.map.updateSize();
   }
 }

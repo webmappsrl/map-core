@@ -138,7 +138,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     ) {
       clearLayer(this._selectedPoiLayer);
     }
-    if (this.map != null && (changes.filters != null || changes.pois != null)) {
+    const filtersCondition =
+      changes.filters != null &&
+      changes.filters.previousValue != null &&
+      changes.filters.previousValue.length != 0 &&
+      changes.filters.currentValue != null &&
+      changes.filters.currentValue.length != 0;
+    if (this.map != null && (filtersCondition || changes.pois != null)) {
       this._renderPois();
     }
   }
@@ -286,7 +292,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       } else {
         this._addPoisFeature(this.pois.features);
       }
-      console.log('pois rendered');
     }
   }
 
