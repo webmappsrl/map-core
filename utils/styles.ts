@@ -1,13 +1,14 @@
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
-import Stroke from 'ol/style/Stroke';
-import {Text, Circle, Fill} from 'ol/style';
-import Style, {StyleLike} from 'ol/style/Style';
-import StrokeStyle from 'ol/style/Stroke';
-import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {FeatureLike} from 'ol/Feature';
+import {Polygon} from 'ol/geom';
+import {Circle, Fill, Text} from 'ol/style';
+import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
+import Style from 'ol/style/Style';
+
+import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {ILAYER} from '../types/layer';
-import { Polygon } from 'ol/geom';
+
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
     version: 8,
@@ -181,7 +182,6 @@ export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
     width: 10,
   });
 }
-
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
   maxStrokeWidth?: number;
@@ -190,6 +190,7 @@ export interface handlingStrokeStyleWidthOptions {
   minZoom: number;
   strokeStyle: StrokeStyle;
 }
+
 export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
   options = {...{minStrokeWidth: 3, maxStrokeWidth: 6}, ...options};
   const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
@@ -204,15 +205,122 @@ export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
   return layer[0] && layer[0].style && layer[0].style.color ? layer[0].style.color : DEF_LINE_COLOR;
 }
 
-export function styleLowCoreFn(feature: FeatureLike) {
+export function getClusterStyle(feature, resolution) {
+  var size = feature.get('features').length;
+  var style = null;
+  var color = '41,128,185';
+  var radius = Math.max(8, Math.min(size * 0.75, 20));
+  var dashv = (2 * Math.PI * radius) / 6;
+  var dash = [0, dashv, dashv, dashv, dashv, dashv, dashv];
+  const prop = feature.getProperties();
+  if (size === 1 && prop.features && prop.features[0] != null) {
+    const icon = feature.getProperties().features[0];
+    return icon.getStyle() || null;
+  } else {
+    style = new Style({
+      image: new Circle({
+        radius: radius,
+        stroke: new Stroke({
+          color: 'rgba(' + color + ',0.5)',
+          width: 15,
+          lineDash: dash,
+          lineCap: 'butt',
+        }),
+        fill: new Fill({
+          color: 'rgba(' + color + ',1)',
+        }),
+      }),
+      text: new Text({
+        text: size.toString(),
+        font: 'bold 12px comic sans ms',
+        //textBaseline: 'top',
+        fill: new Fill({
+          color: '#fff',
+        }),
+      }),
+    });
+  }
+  return style;
+}
+
+export let currentCluster = null;
+
+export function setCurrentCluster(cluster): void {
+  currentCluster = cluster;
+}
+
+export function clusterHullStyle(cluster) {
+  if (cluster != currentCluster) {
+    return;
+  }
+  const originalFeatures = cluster.get('features');
+  const points = originalFeatures.map(feature => feature.getGeometry().getCoordinates());
+  return new Style({
+    geometry: new Polygon([convexHull(points)]),
+    fill: new Fill({
+      color: 'rgba(255, 153, 0, 0.4)',
+    }),
+    stroke: new Stroke({
+      color: 'rgba(204, 85, 0, 1)',
+      width: 1.5,
+    }),
+  });
+}
+
+export function styleCoreFn(feature: FeatureLike) {
   const properties = feature.getProperties();
   const layers: number[] = JSON.parse(properties.layers);
   let strokeStyle: StrokeStyle = new StrokeStyle();
 
-  if (this._currentLayer != null) {
-    const currentIDLayer = +this._currentLayer.id;
+  if (this.currentLayer != null) {
+    const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
-      strokeStyle.setColor(this._currentLayer.style.color ?? this._defaultFeatureColor);
+      strokeStyle.setColor(this.currentLayer.style.color ?? DEF_LINE_COLOR);
+    } else {
+      strokeStyle.setColor('rgba(0,0,0,0)');
+    }
+  } else {
+    const layerId = +layers[0];
+    strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
+  }
+  const opt: handlingStrokeStyleWidthOptions = {
+    strokeStyle,
+    minZoom: this.conf.minZoom,
+    maxZoom: this.conf.maxZoom,
+    minStrokeWidth: this.minStrokeWidth,
+    maxStrokeWidth: this.conf.maxStrokeWidth,
+    currentZoom: this.map.getView().getZoom(),
+  };
+  handlingStrokeStyleWidth(opt);
+
+  let style = new Style({
+    stroke: strokeStyle,
+    zIndex: this.TRACK_ZINDEX,
+  });
+  return style;
+}
+
+export function styleLowFn(feature: FeatureLike) {
+  this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
+  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
+  return styleCoreFn.bind(this)(feature);
+}
+
+export function styleHighFn(feature: FeatureLike) {
+  this.TRACK_ZINDEX = TRACK_ZINDEX;
+  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
+  return styleCoreFn.bind(this)(feature);
+}
+
+export function styleFn(feature: FeatureLike) {
+  const properties = feature.getProperties();
+  const layers: number[] = JSON.parse(properties.layers);
+  let strokeStyle: StrokeStyle = new StrokeStyle();
+
+  if (this.currentLayer != null) {
+    const currentIDLayer = +this.currentLayer.id;
+    if (layers.indexOf(currentIDLayer) >= 0) {
+      strokeStyle.setColor(this.currentLayer.style.color ?? this._defaultFeatureColor);
     } else {
       strokeStyle.setColor('rgba(0,0,0,0)');
     }
@@ -232,12 +340,9 @@ export function styleLowCoreFn(feature: FeatureLike) {
 
   let style = new Style({
     stroke: strokeStyle,
-    zIndex: TRACK_ZINDEX,
+    zIndex: TRACK_ZINDEX + 1,
   });
   return style;
-}
-export function styleLowFn(conf: any, currentZoom: number) {
-  return styleLowCoreFn.bind({conf, currentZoom}) as StyleLike;
 }
 
 export const fromNameToHEX = {
@@ -532,69 +637,3 @@ export const fromHEXToColor = {
   '#ffff00': 'yellow',
   '#9acd32': 'yellowgreen',
 };
-
-export function getClusterStyle(feature, resolution) {
-  var size = feature.get('features').length;
-  var style = null;
-  var color = '41,128,185';
-  var radius = Math.max(8, Math.min(size * 0.75, 20));
-  var dashv = (2 * Math.PI * radius) / 6;
-  var dash = [0, dashv, dashv, dashv, dashv, dashv, dashv];
-  const prop = feature.getProperties();
-  if (size === 1 && prop.features && prop.features[0] != null) {
-    const icon = feature.getProperties().features[0];
-    return icon.getStyle() || null;
-  } else {
-    style = new Style({
-      image: new Circle({
-        radius: radius,
-        stroke: new Stroke({
-          color: 'rgba(' + color + ',0.5)',
-          width: 15,
-          lineDash: dash,
-          lineCap: 'butt',
-        }),
-        fill: new Fill({
-          color: 'rgba(' + color + ',1)',
-        }),
-      }),
-      text: new Text({
-        text: size.toString(),
-        font: 'bold 12px comic sans ms',
-        //textBaseline: 'top',
-        fill: new Fill({
-          color: '#fff',
-        }),
-      }),
-    });
-  }
-  return style;
-}
-export let currentCluster = null;
-export function setCurrentCluster(cluster):void {
-  currentCluster = cluster;
-}
-export function clusterHullStyle(cluster) {
-  if(cluster !=currentCluster ) {
-    return;
-  }
-  const originalFeatures = cluster.get('features');
-  const points = originalFeatures.map((feature) =>
-    feature.getGeometry().getCoordinates()
-  );
-  return new Style({
-    geometry: new Polygon([convexHull(points)]),
-    fill:  new Fill({
-      color: 'rgba(255, 153, 0, 0.4)',
-    }),
-    stroke: new Stroke({
-      color: 'rgba(204, 85, 0, 1)',
-      width: 1.5,
-    }),
-  });
-}
-
-export function getSrcStyleFromFeature(poiFeature) {
-  const source = poiFeature.getSource();
-  console.log(source)
-}
