@@ -109,7 +109,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
                 const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.map);
                 if (poiFeature) {
                   const poi: IGeojsonFeature = poiFeature.getProperties() as any;
-                  this.currentPoiEvt.emit(poi);
                   this._selectIcon(poi);
                 }
               }
@@ -270,7 +269,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
       if (c.length === 1 && this.map.getView().getZoom() === this.map.getView().getMaxZoom()) {
         const poi = c[0].getProperties();
-        this.currentPoiEvt.emit(poi);
         this._selectIcon(poi);
       }
     });
@@ -342,6 +340,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       iconFeature.setStyle(iconStyle);
       iconFeature.setId(currentPoi.properties.id);
       selectedPoiLayerSource.addFeature(iconFeature);
+      selectedPoiLayerSource.changed();
 
       this._fitView(geometry as any);
       this.currentPoiEvt.emit(currentPoi);
@@ -352,8 +351,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     selectCluster.setActive(false);
     if (id != 'reset' && id > -1) {
       const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
-      this.currentPoiEvt.emit(currentPoi);
-      this._selectIcon(currentPoi);
+      setTimeout(() => {
+        this._selectIcon(currentPoi);
+      }, 200);
     }
   }
 }
