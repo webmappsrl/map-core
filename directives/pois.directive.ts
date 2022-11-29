@@ -295,6 +295,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _selectIcon(currentPoi: IGeojsonGeneric): void {
+    clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
       const icn = this._getIcnFromTaxonomies(currentPoi.properties.taxonomyIdentifiers);
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();
@@ -349,13 +350,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   private _setPoi(id: number | 'reset'): void {
     selectCluster.setActive(false);
-    clearLayer(this._selectedPoiLayer);
     if (id != 'reset' && id > -1) {
       const currentPoi = this.pois.features.find(p => +p.properties.id === +id);
-      this._selectIcon(currentPoi);
       this.currentPoiEvt.emit(currentPoi);
-    } else {
-      clearLayer(this._selectedPoiLayer);
+      this._selectIcon(currentPoi);
     }
   }
 }
