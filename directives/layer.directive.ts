@@ -4,106 +4,36 @@ import {
   EventEmitter,
   Input,
   OnChanges,
-  OnInit,
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {FeatureLike} from 'ol/Feature';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
-import StrokeStyle from 'ol/style/Stroke';
-import Style from 'ol/style/Style';
 import * as localforage from 'localforage';
 import {WmMapBaseDirective} from '.';
-import {DEF_LINE_COLOR, SWITCH_RESOLUTION_ZOOM_LEVEL, TRACK_ZINDEX} from '../readonly';
+import {SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
 import {IDATALAYER, ILAYER} from '../types/layer';
 import {
   clearStorage,
-  handlingStrokeStyleWidthOptions,
-  handlingStrokeStyleWidth,
-  getColorFromLayer,
   initInteractions,
   initVectorTileLayer,
   tileLoadFn,
   lowTileLoadFn,
+  styleLowFn,
+  styleHighFn,
 } from '../utils';
 import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapLayer]',
 })
-export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges, OnInit {
+export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges {
   private _currentLayer: ILAYER;
   private _dataLayerUrls: IDATALAYER;
-  private _defaultFeatureColor = DEF_LINE_COLOR;
   private _highVectorTileLayer: VectorTileLayer;
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
-  private _styleFn = (feature: FeatureLike) => {
-    const properties = feature.getProperties();
-    const layers: number[] = JSON.parse(properties.layers);
-    let strokeStyle: StrokeStyle = new StrokeStyle();
-
-    if (this._currentLayer != null) {
-      const currentIDLayer = +this._currentLayer.id;
-      if (layers.indexOf(currentIDLayer) >= 0) {
-        strokeStyle.setColor(this._currentLayer.style.color ?? this._defaultFeatureColor);
-      } else {
-        strokeStyle.setColor('rgba(0,0,0,0)');
-      }
-    } else {
-      const layerId = +layers[0];
-      strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
-    }
-    const opt: handlingStrokeStyleWidthOptions = {
-      strokeStyle,
-      minZoom: this.conf.minZoom,
-      maxZoom: this.conf.maxZoom,
-      minStrokeWidth: this.conf.minStrokeWidth,
-      maxStrokeWidth: this.conf.maxStrokeWidth,
-      currentZoom: this.map.getView().getZoom(),
-    };
-    handlingStrokeStyleWidth(opt);
-
-    let style = new Style({
-      stroke: strokeStyle,
-      zIndex: TRACK_ZINDEX + 1,
-    });
-    return style;
-  };
-  private _styleLowFn = (feature: FeatureLike) => {
-    const properties = feature.getProperties();
-    const layers: number[] = JSON.parse(properties.layers);
-    let strokeStyle: StrokeStyle = new StrokeStyle();
-
-    if (this._currentLayer != null) {
-      const currentIDLayer = +this._currentLayer.id;
-      if (layers.indexOf(currentIDLayer) >= 0) {
-        strokeStyle.setColor(this._currentLayer.style.color ?? this._defaultFeatureColor);
-      } else {
-        strokeStyle.setColor('rgba(0,0,0,0)');
-      }
-    } else {
-      const layerId = +layers[0];
-      strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
-    }
-    const opt: handlingStrokeStyleWidthOptions = {
-      strokeStyle,
-      minZoom: this.conf.minZoom,
-      maxZoom: this.conf.maxZoom,
-      minStrokeWidth: this.conf.minStrokeWidth + 1,
-      maxStrokeWidth: this.conf.maxStrokeWidth,
-      currentZoom: this.map.getView().getZoom(),
-    };
-    handlingStrokeStyleWidth(opt);
-
-    let style = new Style({
-      stroke: strokeStyle,
-      zIndex: TRACK_ZINDEX,
-    });
-    return style;
-  };
 
   @Input() set dataLayerUrls(urls: IDATALAYER) {
     this._dataLayerUrls = urls;
@@ -184,8 +114,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-  ngOnInit(): void {}
-
   private _initLayer(map: IMAP) {
     this._initializeDataLayers(map);
     initInteractions().forEach(interaction => {
@@ -204,13 +132,23 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _initializeDataLayers(map: IMAP): void {
     this._lowVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.low,
-      this._styleLowFn,
+      f => {
+        return styleLowFn.bind({currentLayer: this._currentLayer, conf: this.conf, map: this.map})(
+          f,
+        );
+      },
       lowTileLoadFn,
       true,
     );
     this._highVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.high,
-      this._styleFn,
+      f => {
+        return styleHighFn.bind({
+          currentLayer: this._currentLayer,
+          conf: this.conf,
+          map: this.map,
+        })(f);
+      },
       tileLoadFn,
       true,
     );
@@ -239,6 +177,5 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _updateMap(): void {
     this._lowVectorTileLayer.changed();
     this._highVectorTileLayer.changed();
-    this.map.updateSize();
   }
 }

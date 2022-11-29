@@ -20,15 +20,17 @@ export abstract class WmMapBaseDirective {
    * @memberof WmMapBaseDirective
    */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    const view = this.map.getView();
-    if (view != null) {
-      if (optOptions == null) {
-        optOptions = {
-          duration: 500,
-          padding: this.padding ?? undefined,
-        };
+    if (this.map != null) {
+      const view = this.map.getView();
+      if (view != null) {
+        if (optOptions == null) {
+          optOptions = {
+            duration: 500,
+            padding: this.padding ?? undefined,
+          };
+        }
+        view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
       }
-      view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
     }
   }
 }

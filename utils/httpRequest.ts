@@ -79,7 +79,7 @@ export function cacheSetUrl(url: string, value: string): void {
       localStorage.setItem(url, value);
     } catch (e) {
       localforage.setItem(url, value);
-      console.warn('local storage failed: ', url);
+      // console.warn('local storage failed: ', url);
     }
   } else {
     localforage.setItem(url, value);

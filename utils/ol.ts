@@ -552,7 +552,6 @@ export function lowTileLoadFn(tile: any, url: string) {
 export function clearLayer(layer: VectorLayer<any>): void {
   if (layer != null && layer.getSource != null) {
     layer.getSource().clear();
-    console.log('clear');
   }
 }
 
