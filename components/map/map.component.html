@@ -15,8 +15,10 @@
     </div>
   </div>
   <div class="wm-fab-buttons">
-    <ng-content #buttons></ng-content>
+    <ng-content select="[bottom-right]"></ng-content>
   </div>
-
-  <wm-map-controls [tileLayers]="tileLayers"></wm-map-controls>
+  <div class="top">
+    <wm-map-controls [tileLayers]="tileLayers"></wm-map-controls>
+    <ng-content select="[top-right]"></ng-content>
+  </div>
 </div>

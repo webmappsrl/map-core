@@ -1,0 +1,26 @@
+@import "src/theme/mixins.scss";
+
+.webmapp-btn-orientation-fab {
+  margin: 0;
+  @include box-shadow-light;
+  border-radius: 20px;
+
+  &.webmapp-btn-orientation-fab-light {
+    --background: var(--wm-color-light);
+    --color: var(--wm-color-dark);
+    --background-activated: var(--wm-color-dark);
+    --background-activated-opacity: 0.25;
+    --background-focused: var(--wm-color-light);
+    --background-focused-opacity: 0;
+    --background-hover: var(--wm-color-light);
+    --background-hover-opacity: 0;
+  }
+}
+
+.webmapp-btn-orientation-icon{
+    font-size: 28px;
+}
+
+.path2,.path4{
+  margin-left:1px;
+}

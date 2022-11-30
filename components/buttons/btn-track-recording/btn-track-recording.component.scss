@@ -1,0 +1,25 @@
+@import 'src/theme/mixins.scss';
+
+wm-btn-track-recording {
+  ion-fab-button {
+    @include box-shadow-light;
+
+    margin: 0;
+    border-radius: 20px;
+
+    --color: var(--wm-color-primary);
+    --background: var(--wm-color-light);
+    --background-activated: var(--wm-color-primary);
+    --background-activated-opacity: 0.25;
+    --background-focused: var(--wm-color-light);
+    --background-focused-opacity: 0;
+    --background-hover: var(--wm-color-light);
+    --background-hover-opacity: 0;
+    i {
+      width: 42px;
+      height: 42px;
+      padding: 9px;
+      font-size: var(--wm-font-icon);
+    }
+  }
+}

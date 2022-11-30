@@ -1,25 +1,23 @@
-wm-map-controls {
+wm-btn-tiles {
+  z-index: 99999;
   .layer-button {
-    position: relative !important;
     color: black;
     background-color: rgba($color: white, $alpha: 0.8);
     position: fixed;
     font-size: 20px;
-    top: 2%;
+    top: calc(2% + env(safe-area-inset-top));
     right: 2%;
     height: 40px;
     display: block;
     padding: 10px;
     cursor: pointer;
-    z-index: 1;
   }
   .layer-content {
     position: fixed;
     background-color: rgba($color: white, $alpha: 0.8);
-    top: calc(2% + 50px);
+    top: calc(2% + 50px + env(safe-area-inset-top));
     right: 2%;
     height: 100px;
-    z-index: 1;
   }
 
   ion-item {

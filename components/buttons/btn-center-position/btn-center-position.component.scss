@@ -1,0 +1,20 @@
+@import 'src/theme/mixins.scss';
+wm-btn-center-position {
+  ion-fab-button {
+    margin: 0;
+    @include box-shadow-light;
+    border-radius: 20px;
+
+    --background: var(--wm-color-light);
+    --color: var(--wm-color-dark);
+    --background-activated: var(--wm-color-dark);
+    --background-activated-opacity: 0.25;
+    --background-focused: var(--wm-color-light);
+    --background-focused-opacity: 0;
+    --background-hover: var(--wm-color-light);
+    --background-hover-opacity: 0;
+    * {
+      padding: 10px;
+    }
+  }
+}

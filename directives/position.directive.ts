@@ -19,7 +19,6 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
-
 interface Bearing {
   cos: number;
   sin: number;
@@ -29,6 +28,7 @@ interface Location {
   bearing: number;
   latitude: number;
   longitude: number;
+  runningAvg?: number;
 }
 @Directive({
   selector: '[wmMapPosition]',
@@ -40,13 +40,13 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   private _focus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _lastBearings: Bearing[] = [];
   private _locationArrowIcon = new Icon({
-    src: 'assets/location-icon-arrow.png',
+    src: 'map-core/assets/location-icon-arrow.png',
     scale: 0.4,
     size: [125, 125],
   });
   private _locationFeature = new Feature();
   private _locationIcon = new Icon({
-    src: 'assets/location-icon.png',
+    src: 'map-core/assets/location-icon.png',
     scale: 0.4,
     size: [125, 125],
   });
@@ -60,27 +60,33 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     zIndex: POSITION_ZINDEX,
   });
 
-  @Input() currentLocation: Location;
-  @Input() focus;
-  @Input() position;
-  @Output() locationEvt: EventEmitter<Location> = new EventEmitter();
-
+  @Input() wmMapPositioncurrentLocation: Location;
+  @Input() wmMapPositionfocus;
+  @Input() wmMapPositionCenter;
   ngOnChanges(changes: SimpleChanges): void {
     if (
       changes &&
-      changes.currentLocation != null &&
-      changes.currentLocation.currentValue != null
+      changes.wmMapPositioncurrentLocation != null &&
+      changes.wmMapPositioncurrentLocation.currentValue != null
     ) {
-      this._currentLocation = changes.currentLocation.currentValue;
-      this._setPositionByLocation(changes.currentLocation.currentValue);
+      const currentLocation = changes.wmMapPositioncurrentLocation.currentValue;
+      this._currentLocation = currentLocation;
+      this._setPositionByLocation(currentLocation);
     }
     if (changes && changes.map && changes.map.currentValue != null) {
       this.map.addLayer(this._locationLayer);
+      if (this._currentLocation != null) {
+        this._setPositionByLocation(this._currentLocation);
+      }
       this.map.render();
       this._locationLayer.getSource().changed();
     }
-    if (changes && changes.position && changes.position.currentValue != null) {
-      this._setPositionToUser();
+    if (
+      changes &&
+      changes.wmMapPositionCenter &&
+      changes.wmMapPositionCenter.currentValue != null
+    ) {
+      this._centerPosition();
     }
     if (changes && changes.focus && changes.focus.currentValue != null) {
       const val = changes.focus.currentValue;
@@ -171,26 +177,24 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   }
 
   private _setPositionByLocation(loc: Location): void {
-    console.log('*************************************');
-    console.log('->locationnnnnnn');
-    console.log(JSON.stringify(loc));
-    console.log('*************************************');
-    let location = loc as any;
-    const runningAvg = this._runningAvg(location.bearing);
-    location.runningAvg = this._radiansToDegrees(runningAvg);
-    this.locationEvt.emit(location);
-    const point = new Point(fromLonLat([location.longitude, location.latitude]));
-    this._locationFeature.setGeometry(point);
+    const point = this._updateGeometry(loc);
     if (this._focus$.value === true) {
-      this._fitView(point);
-      this._rotate(-runningAvg, 500);
+      this._followLocation(point);
     }
   }
 
-  private _setPositionToUser() {
-    const point = new Point(
-      fromLonLat([this._currentLocation.longitude, this._currentLocation.latitude]),
-    );
+  private _centerPosition() {
+    const point = this._updateGeometry(this._currentLocation);
+    this._followLocation(point);
+  }
+
+  private _updateGeometry(loc: Location): Point {
+    const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
+    this._locationFeature.setGeometry(point);
+    return point;
+  }
+
+  private _followLocation(point: Point): void {
     this._fitView(point);
     const runningAvg = this._runningAvg(this._currentLocation.bearing);
     this._rotate(-runningAvg, 500);
