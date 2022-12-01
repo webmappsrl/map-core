@@ -64,16 +64,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   @Input() wmMapPositionfocus;
   @Input() wmMapPositionCenter;
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes &&
-      changes.wmMapPositioncurrentLocation != null &&
-      changes.wmMapPositioncurrentLocation.currentValue != null
-    ) {
-      const currentLocation = changes.wmMapPositioncurrentLocation.currentValue;
-      this._currentLocation = currentLocation;
-      this._setPositionByLocation(currentLocation);
-    }
-    if (changes && changes.map && changes.map.currentValue != null) {
+    if (changes.map && changes.map.currentValue != null) {
       this.map.addLayer(this._locationLayer);
       if (this._currentLocation != null) {
         this._setPositionByLocation(this._currentLocation);
@@ -82,14 +73,19 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
       this._locationLayer.getSource().changed();
     }
     if (
-      changes &&
-      changes.wmMapPositionCenter &&
-      changes.wmMapPositionCenter.currentValue != null
+      changes.wmMapPositioncurrentLocation != null &&
+      changes.wmMapPositioncurrentLocation.currentValue != null
     ) {
+      const currentLocation = changes.wmMapPositioncurrentLocation.currentValue;
+      this._currentLocation = currentLocation;
+      this._setPositionByLocation(currentLocation);
+    }
+
+    if (changes.wmMapPositionCenter && changes.wmMapPositionCenter.currentValue != null) {
       this._centerPosition();
     }
-    if (changes && changes.focus && changes.focus.currentValue != null) {
-      const val = changes.focus.currentValue;
+    if (changes.wmMapPositionfocus && changes.wmMapPositionfocus.currentValue != null) {
+      const val = changes.wmMapPositionfocus.currentValue;
       this._focus$.next(val);
       if (val === true) {
         this._locationLayer.setStyle(
