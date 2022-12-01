@@ -1,4 +1,4 @@
-@import "src/theme/mixins.scss";
+@import '../../../theme/mixins.scss';
 
 .webmapp-btn-orientation-fab {
   margin: 0;
@@ -17,10 +17,11 @@
   }
 }
 
-.webmapp-btn-orientation-icon{
-    font-size: 28px;
+.webmapp-btn-orientation-icon {
+  font-size: 28px;
 }
 
-.path2,.path4{
-  margin-left:1px;
+.path2,
+.path4 {
+  margin-left: 1px;
 }
