@@ -46,7 +46,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
     if (val != null) this._clear();
   }
 
-  @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
   @Input() wmMapCustomTrackDrawTrackHost: string;
@@ -60,7 +59,11 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
 
   ngOnChanges(changes: SimpleChanges): void {
     this.reset$.next(void 0);
-    if (changes.map != null && changes.previousValue == null && changes.map.currentValue != null) {
+    if (
+      changes.wmMapMap != null &&
+      changes.wmMapMap.previousValue == null &&
+      changes.wmMapMap.currentValue != null
+    ) {
       this._initializeCustomTrackLayer();
       this._customTrack = {
         type: 'Feature',
@@ -85,10 +88,10 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
         }
         this._graphHopperRoutingObj.defaults.profile = 'hike';
       }
-      this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      this.wmMapMap.on('click', (evt: MapBrowserEvent<UIEvent>) => {
         if (this._enabled$.value) {
           stopPropagation(evt);
-          const oldCoordinates = this.map.getFeaturesAtPixel(evt.pixel);
+          const oldCoordinates = this.wmMapMap.getFeaturesAtPixel(evt.pixel);
           if (oldCoordinates != null && oldCoordinates.length > 0) {
             const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
             this._customPoiSource.removeFeature(oldCoordinate);
@@ -178,14 +181,14 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
         updateWhileInteracting: true,
         zIndex: 1000,
       });
-      if (this.map != null) {
-        this.map.addLayer(this._customTrackLayer);
+      if (this.wmMapMap != null) {
+        this.wmMapMap.addLayer(this._customTrackLayer);
         this._customPoiLayer = new VectorLayer({
           zIndex: 1100,
           source: this._customPoiSource,
         });
-        this.map.addLayer(this._customPoiLayer);
-        this.map.getRenderer();
+        this.wmMapMap.addLayer(this._customPoiLayer);
+        this.wmMapMap.getRenderer();
       }
     }
   }
@@ -210,7 +213,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
     }
 
     this._customPoiLayer.changed();
-    this.map.render();
+    this.wmMapMap.render();
   }
 
   private _updateTrack(): void {
@@ -226,6 +229,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective imple
     this._customTrackLayer.getSource().addFeature(feature);
     this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID).changed();
     this._customTrackLayer.changed();
-    this.map.render();
+    this.wmMapMap.render();
   }
 }

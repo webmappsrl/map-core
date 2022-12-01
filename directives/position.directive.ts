@@ -64,12 +64,12 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   @Input() wmMapPositionfocus;
   @Input() wmMapPositionCenter;
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.map && changes.map.currentValue != null) {
-      this.map.addLayer(this._locationLayer);
+    if (changes.wmMapMap && changes.wmMapMap.currentValue != null) {
+      this.wmMapMap.addLayer(this._locationLayer);
       if (this._currentLocation != null) {
         this._setPositionByLocation(this._currentLocation);
       }
-      this.map.render();
+      this.wmMapMap.render();
       this._locationLayer.getSource().changed();
     }
     if (
@@ -93,7 +93,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
             image: this._locationArrowIcon,
           }),
         );
-        this.map.getView().setZoom(this.map.getView().getZoom() + 1);
+        this.wmMapMap.getView().setZoom(this.wmMapMap.getView().getZoom() + 1);
         this._setPositionByLocation(this._currentLocation);
       } else {
         this._locationLayer.setStyle(
@@ -103,8 +103,8 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
         );
       }
       this._locationLayer.getSource().changed();
-      if (this.map != null) {
-        this.map.render();
+      if (this.wmMapMap != null) {
+        this.wmMapMap.render();
       }
     }
   }
@@ -120,15 +120,15 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
 
   private _fitView(geometryOrExtent: Point, optOptions?: FitOptions): void {
     if (optOptions == null) {
-      const size = this.map.getSize();
+      const size = this.wmMapMap.getSize();
       const height = size != null && size.length > 0 ? size[1] : 0;
       optOptions = {
-        maxZoom: this.map.getView().getZoom(),
+        maxZoom: this.wmMapMap.getView().getZoom(),
         duration: 500,
         size,
       };
     }
-    this.map.getView().fit(geometryOrExtent, optOptions);
+    this.wmMapMap.getView().fit(geometryOrExtent, optOptions);
   }
 
   private _radiansToDegrees(radians): number {
@@ -136,7 +136,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   }
 
   private _rotate(bearing: number, duration?: number): void {
-    this.map.getView().animate({
+    this.wmMapMap.getView().animate({
       rotation: bearing,
       duration: duration ? duration : 0,
     });

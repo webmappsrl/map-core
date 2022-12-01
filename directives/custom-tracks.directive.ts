@@ -15,7 +15,6 @@ import Stroke from 'ol/style/Stroke';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from '.';
 import {createCircleFeature, getLineStyle} from '../utils';
-import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
@@ -40,7 +39,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     }
   }
 
-  @Input() conf: IMAP;
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
@@ -54,12 +52,11 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
   ngOnChanges(changes: SimpleChanges): void {
     this.reset$.next(void 0);
     if (
-      changes.map != null &&
-      changes.map.previousValue == null &&
-      changes.map.currentValue !== null
+      changes.wmMapMap != null &&
+      changes.wmMapMap.previousValue == null &&
+      changes.wmMapMap.currentValue !== null
     ) {
       this._loadSavedTracks();
-
       this._initLayer();
     }
   }
@@ -85,17 +82,17 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
         zIndex: 0,
       });
       this._customTrackLayer.getSource().addFeatures(this._savedTracks$.value);
-      if (this.map != null) {
-        this.map.addLayer(this._customTrackLayer);
+      if (this.wmMapMap != null) {
+        this.wmMapMap.addLayer(this._customTrackLayer);
       }
 
-      this.map.getRenderer();
+      this.wmMapMap.getRenderer();
     }
     this._customPoiLayer = new VectorLayer({
       zIndex: 1100,
       source: this._customPoiSource,
     });
-    this.map.addLayer(this._customPoiLayer);
+    this.wmMapMap.addLayer(this._customPoiLayer);
   }
 
   private _loadSavedTracks(): void {

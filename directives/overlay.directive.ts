@@ -22,7 +22,7 @@ export class WmMapOverlayDirective extends WmMapBaseDirective implements OnChang
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.map != null && this._mapIsInit == false && this._enabled$.value === true) {
+    if (this.wmMapMap != null && this._mapIsInit == false && this._enabled$.value === true) {
       this._mapIsInit = true;
       const baseVector = new VectorLayer({
         source: new VectorSource({
@@ -40,7 +40,7 @@ export class WmMapOverlayDirective extends WmMapBaseDirective implements OnChang
         }),
         zIndex: 1,
       });
-      this.map.addLayer(baseVector);
+      this.wmMapMap.addLayer(baseVector);
     }
   }
 }

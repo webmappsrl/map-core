@@ -54,13 +54,13 @@ export class wmMapTrackRelatedPoisDirective
     this._onClickSub = clickEVT$.subscribe(event => {
       try {
         this._deselectCurrentPoi();
-        const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.map);
+        const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
         if (poiFeature) {
-          this.map.getInteractions().forEach(i => i.setActive(false));
+          this.wmMapMap.getInteractions().forEach(i => i.setActive(false));
           const currentID = +poiFeature.getId() || -1;
           this.poiClick.emit(currentID);
           setTimeout(() => {
-            this.map.getInteractions().forEach(i => i.setActive(true));
+            this.wmMapMap.getInteractions().forEach(i => i.setActive(true));
           }, 1200);
         }
       } catch (e) {
@@ -71,7 +71,7 @@ export class wmMapTrackRelatedPoisDirective
 
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
-      this.map.removeLayer(this._selectedPoiLayer);
+      this.wmMapMap.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     } else {
       const currentPoi = this._poiMarkers.find(p => +p.id === +id);
@@ -82,8 +82,6 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
-  @Input() conf: IMAP;
-  @Input() map: Map;
   @Input() track;
   @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
 
@@ -98,7 +96,7 @@ export class wmMapTrackRelatedPoisDirective
         changes.track.currentValue != null &&
         changes.track.previousValue.properties.id != changes.track.currentValue.properties.id) ??
       false;
-    if (this.track == null || this.map == null || resetCondition) {
+    if (this.track == null || this.wmMapMap == null || resetCondition) {
       this._resetView();
       this._initPois = false;
     }
@@ -106,7 +104,7 @@ export class wmMapTrackRelatedPoisDirective
       this.track != null &&
       this.track.properties != null &&
       this.track.properties.related_pois != null &&
-      this.map != null &&
+      this.wmMapMap != null &&
       this._initPois === false
     ) {
       this._addPoisMarkers(this.track.properties.related_pois);
@@ -120,7 +118,7 @@ export class wmMapTrackRelatedPoisDirective
 
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
     this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX);
-    this.map.addLayer(this._poisLayer);
+    this.wmMapMap.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
       if (!poiCollection?.find(x => x.properties.id + '' === ov.id)) {
@@ -238,16 +236,16 @@ export class wmMapTrackRelatedPoisDirective
 
   private _deselectCurrentPoi(): void {
     if (this._selectedPoiMarker != null) {
-      this.map.removeLayer(this._selectedPoiLayer);
+      this.wmMapMap.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     }
   }
 
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
-      const size = this.map.getSize();
+      const size = this.wmMapMap.getSize();
       optOptions = {
-        maxZoom: this.map.getView().getZoom(),
+        maxZoom: this.wmMapMap.getView().getZoom(),
         duration: 500,
         size,
       };
@@ -256,23 +254,23 @@ export class wmMapTrackRelatedPoisDirective
   }
 
   private _resetView(): void {
-    if (this.map != null && this._poisLayer != null) {
-      this.map.removeLayer(this._poisLayer);
+    if (this.wmMapMap != null && this._poisLayer != null) {
+      this.wmMapMap.removeLayer(this._poisLayer);
       this._poisLayer = undefined;
     }
-    if (this.map != null && this._selectedPoiLayer != null) {
-      this.map.removeLayer(this._selectedPoiLayer);
+    if (this.wmMapMap != null && this._selectedPoiLayer != null) {
+      this.wmMapMap.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     }
-    if (this.map != null) {
-      this.map.render();
+    if (this.wmMapMap != null) {
+      this.wmMapMap.render();
     }
   }
 
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
     this._deselectCurrentPoi();
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);
-    this.map.addLayer(this._selectedPoiLayer);
+    this.wmMapMap.addLayer(this._selectedPoiLayer);
     this._selectedPoiMarker = poiMarker;
     const {marker} = await this._createPoiCanvasIcon(poiMarker.poi, null, true);
     addFeatureToLayer(this._selectedPoiLayer, marker.icon);

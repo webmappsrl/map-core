@@ -19,8 +19,6 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
   private _highlightLayer: VectorLayer<VectorSource>;
   private _mapIsInit = false;
 
-  @Input() conf: IMAP;
-  @Input() map: Map;
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor() {
@@ -28,7 +26,7 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.map != null && this.conf != null && this._mapIsInit == false) {
+    if (this.wmMapMap != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._mapIsInit = true;
       let highlightFeatureId = null;
       this._highlightLayer = new VectorLayer({
@@ -38,9 +36,9 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
         style: () => getLineStyle('#CA1551'),
         zIndex: SELECTED_TRACK_ZINDEX - 1,
       });
-      this.map.addLayer(this._highlightLayer);
-      this.map.on('pointermove', (e: any) => {
-        let added = this.map.forEachFeatureAtPixel(
+      this.wmMapMap.addLayer(this._highlightLayer);
+      this.wmMapMap.on('pointermove', (e: any) => {
+        let added = this.wmMapMap.forEachFeatureAtPixel(
           e.pixel,
           (f: RenderFeature, l: VectorTileLayer) => {
             if (f.getType != null) {
@@ -48,7 +46,7 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
               const featureId = feature.getProperties().id;
               if (l.getOpacity() === 1 && l.getProperties().high) {
                 if (highlightFeatureId != featureId) {
-                  this.map.getViewport().style.cursor = 'pointer';
+                  this.wmMapMap.getViewport().style.cursor = 'pointer';
                   this._highlightLayer.getSource().clear();
                   this._highlightLayer.getSource().addFeature(toFeature(f));
                   highlightFeatureId = featureId;
@@ -60,10 +58,10 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
           {hitTolerance: 30},
         );
         if (added) {
-          this.map.getViewport().style.cursor = 'pointer';
+          this.wmMapMap.getViewport().style.cursor = 'pointer';
         } else {
           this._highlightLayer.getSource().clear();
-          this.map.getViewport().style.cursor = '';
+          this.wmMapMap.getViewport().style.cursor = '';
         }
       });
     }

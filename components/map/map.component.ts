@@ -43,7 +43,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _debounceFitTimer = null;
   private _view: View;
 
-  @Input() conf: IMAP;
+  @Input() wmMapConf: IMAP;
   @Input() padding: number[];
   @Input() reset;
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
@@ -81,11 +81,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (
-      changes.conf != null &&
-      changes.conf.currentValue != null &&
-      changes.conf.previousValue == null
+      changes.wmMapConf != null &&
+      changes.wmMapConf.currentValue != null &&
+      changes.wmMapConf.previousValue == null
     ) {
-      this._initMap(this.conf);
+      this._initMap(this.wmMapConf);
     }
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();

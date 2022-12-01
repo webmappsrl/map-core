@@ -50,8 +50,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _trackLayer: VectorLayer<VectorSource>;
   private _popoverRef: any;
 
-  @Input() conf: IMAP;
-  @Input() layer;
   @Input() track;
   @Input() trackElevationChartElements: any;
   constructor(
@@ -62,9 +60,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     super();
   }
   drawTrack(trackgeojson: any): void {
-    const isFlowLine = this.conf.flow_line_quote_show || false;
-    const orangeTreshold = this.conf.flow_line_quote_orange || 800;
-    const redTreshold = this.conf.flow_line_quote_red || 1500;
+    const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
+    const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
+    const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
     const geojson: any = this._getGeoJson(trackgeojson);
 
     if (isFlowLine) {
@@ -85,7 +83,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       zIndex: SELECTED_TRACK_ZINDEX,
     });
 
-    this.map.addLayer(this._trackLayer);
+    this.wmMapMap.addLayer(this._trackLayer);
   }
 
   private _initPopover(): void {
@@ -102,22 +100,27 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         changes.track.currentValue != null &&
         changes.track.previousValue.properties.id != changes.track.currentValue.properties.id) ??
       false;
-    if (this.track == null || this.map == null || resetCondition) {
+    if (this.track == null || this.wmMapMap == null || resetCondition) {
       this._resetView();
       this._initTrack = false;
     }
-    if (this.conf != null && this.track != null && this.map != null && this._initTrack === false) {
+    if (
+      this.wmMapConf != null &&
+      this.track != null &&
+      this.wmMapMap != null &&
+      this._initTrack === false
+    ) {
       this._init();
       this._initTrack = true;
     }
-    if (this.track != null && this.map != null && this.trackElevationChartElements != null) {
+    if (this.track != null && this.wmMapMap != null && this.trackElevationChartElements != null) {
       if (this._popoverRef != null) {
         const altitude = this.trackElevationChartElements?.location.altitude || undefined;
         this._popoverRef.instance.message$.next(
           getFlowPopoverText(
             altitude,
-            this.conf.flow_line_quote_orange,
-            this.conf.flow_line_quote_red,
+            this.wmMapConf.flow_line_quote_orange,
+            this.wmMapConf.flow_line_quote_red,
           ),
         );
       }
@@ -127,14 +130,14 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this.trackElevationChartElements?.track,
       );
     }
-    if (this.map != null && changes.track != null) {
+    if (this.wmMapMap != null && changes.track != null) {
       const ext = this._trackFeatures[0].getGeometry().getExtent() ?? undefined;
       if (ext) {
         const optOptions = {
           duration: 500,
-          padding: this.padding ?? undefined,
+          padding: this.wmMapPadding ?? undefined,
         };
-        this.map.getView().fit(ext, optOptions);
+        this.wmMapMap.getView().fit(ext, optOptions);
       }
     }
   }
@@ -174,7 +177,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
           updateWhileInteracting: false,
           zIndex: POINTER_TRACK_ZINDEX,
         });
-        this.map.addLayer(this._elevationChartLayer);
+        this.wmMapMap.addLayer(this._elevationChartLayer);
       }
 
       if (location) {
@@ -210,12 +213,12 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this._elevationChartSource.clear();
       }
 
-      this.map.render();
-    } else if (this._elevationChartSource && this.map) {
+      this.wmMapMap.render();
+    } else if (this._elevationChartSource && this.wmMapMap) {
       this._elevationChartPoint = undefined;
       this._elevationChartTrack = undefined;
       this._elevationChartSource.clear();
-      this.map.render();
+      this.wmMapMap.render();
     }
   }
 
@@ -244,7 +247,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       }),
     });
 
-    this.map.addLayer(this._startEndLayer);
+    this.wmMapMap.addLayer(this._startEndLayer);
     this.drawTrack(this.track);
   }
 
@@ -252,18 +255,18 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._elevationChartLayer != null) {
       this._elevationChartSource.removeFeature(this._elevationChartPoint);
       this._elevationChartSource.clear();
-      this.map.removeLayer(this._elevationChartLayer);
+      this.wmMapMap.removeLayer(this._elevationChartLayer);
       this._elevationChartLayer = undefined;
       this._elevationChartPoint = undefined;
       this._elevationChartTrack = undefined;
       this.trackElevationChartElements = undefined;
     }
     if (this._startEndLayer != null) {
-      this.map.removeLayer(this._startEndLayer);
+      this.wmMapMap.removeLayer(this._startEndLayer);
       this._startEndLayer = undefined;
     }
     if (this._trackLayer != null) {
-      this.map.removeLayer(this._trackLayer);
+      this.wmMapMap.removeLayer(this._trackLayer);
       this._trackLayer = undefined;
     }
     if (this._popoverRef != null) {

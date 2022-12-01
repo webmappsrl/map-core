@@ -27,8 +27,6 @@ export class WmMapLayerProgressBarDirective
   private _mapIsInit = false;
   private _vectorTiles: VectorTileLayer[] = [];
 
-  @Input() conf: IMAP;
-  @Input() map: Map;
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(private _elRef: ElementRef, private _renderer: Renderer2) {
@@ -36,9 +34,9 @@ export class WmMapLayerProgressBarDirective
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.map != null && this.conf != null && this._mapIsInit == false) {
+    if (this.wmMapMap != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._mapIsInit = true;
-      this._vectorTiles = this.map
+      this._vectorTiles = this.wmMapMap
         .getLayers()
         .getArray()
         .filter(l => l instanceof VectorTileLayer) as VectorTileLayer[];
@@ -80,7 +78,7 @@ export class WmMapLayerProgressBarDirective
   }
 
   private _updateMap(): void {
-    this.map.updateSize();
+    this.wmMapMap.updateSize();
   }
 
   private _updateProgressBar(): void {

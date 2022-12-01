@@ -35,11 +35,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
 
-  @Input() set dataLayerUrls(urls: IDATALAYER) {
+  @Input() set wmMapLayerDataLayerUrls(urls: IDATALAYER) {
     this._dataLayerUrls = urls;
   }
 
-  @Input() set disableLayers(disable: boolean) {
+  @Input() set wmMapLayerDisableLayers(disable: boolean) {
     if (this._highVectorTileLayer != null) {
       this._highVectorTileLayer.setVisible(!disable);
     }
@@ -56,15 +56,13 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-  @Input() set layer(l: ILAYER) {
+  @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
       this.fitView(l.bbox);
     }
   }
 
-  @Input() conf: IMAP;
-  @Input() map: Map;
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(private _cdr: ChangeDetectorRef) {
@@ -79,20 +77,20 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.map != null && this.conf != null && this._mapIsInit == false) {
-      this._initLayer(this.conf);
+    if (this.wmMapMap != null && this.wmMapConf != null && this._mapIsInit == false) {
+      this._initLayer(this.wmMapConf);
       this._mapIsInit = true;
-      this.map.on('moveend', () => {
+      this.wmMapMap.on('moveend', () => {
         this._resolutionLayerSwitcher();
       });
-      this.map.on('movestart', () => {
+      this.wmMapMap.on('movestart', () => {
         setTimeout(() => {
           this._resolutionLayerSwitcher();
         }, 500);
       });
-      this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      this.wmMapMap.on('click', (evt: MapBrowserEvent<UIEvent>) => {
         try {
-          this.map.forEachFeatureAtPixel(
+          this.wmMapMap.forEachFeatureAtPixel(
             evt.pixel,
             function (clickedFeature) {
               const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
@@ -117,11 +115,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _initLayer(map: IMAP) {
     this._initializeDataLayers(map);
     initInteractions().forEach(interaction => {
-      this.map.addInteraction(interaction);
+      this.wmMapMap.addInteraction(interaction);
     });
     this._resolutionLayerSwitcher();
 
-    this.map.updateSize();
+    this.wmMapMap.updateSize();
   }
 
   /**
@@ -133,9 +131,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._lowVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.low,
       f => {
-        return styleLowFn.bind({currentLayer: this._currentLayer, conf: this.conf, map: this.map})(
-          f,
-        );
+        return styleLowFn.bind({
+          currentLayer: this._currentLayer,
+          conf: this.wmMapConf,
+          map: this.wmMapMap,
+        })(f);
       },
       lowTileLoadFn,
       true,
@@ -145,8 +145,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       f => {
         return styleHighFn.bind({
           currentLayer: this._currentLayer,
-          conf: this.conf,
-          map: this.map,
+          conf: this.wmMapConf,
+          map: this.wmMapMap,
         })(f);
       },
       tileLoadFn,
@@ -154,14 +154,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     );
     this._lowVectorTileLayer.setProperties({'high': false});
     this._highVectorTileLayer.setProperties({'high': true});
-    this.map.addLayer(this._lowVectorTileLayer);
-    this.map.addLayer(this._highVectorTileLayer);
+    this.wmMapMap.addLayer(this._lowVectorTileLayer);
+    this.wmMapMap.addLayer(this._highVectorTileLayer);
     this._resolutionLayerSwitcher();
   }
 
   private _resolutionLayerSwitcher(): void {
     if (this._highVectorTileLayer != null && this._lowVectorTileLayer != null) {
-      const currentZoom = this.map.getView().getZoom();
+      const currentZoom = this.wmMapMap.getView().getZoom();
 
       if (currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL) {
         this._highVectorTileLayer.setOpacity(1);

@@ -4,14 +4,14 @@ import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import Map from 'ol/Map';
 import {FitOptions} from 'ol/View';
-
+import {IMAP} from '../types/model';
 import {extentFromLonLat} from '../utils';
 
 @Directive()
 export abstract class WmMapBaseDirective {
-  @Input() map: Map;
-  @Input() padding: number[];
-
+  @Input() wmMapMap: Map;
+  @Input() wmMapPadding: number[];
+  @Input() wmMapConf: IMAP;
   /**
    *
    *
@@ -20,13 +20,13 @@ export abstract class WmMapBaseDirective {
    * @memberof WmMapBaseDirective
    */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    if (this.map != null) {
-      const view = this.map.getView();
+    if (this.wmMapMap != null) {
+      const view = this.wmMapMap.getView();
       if (view != null) {
         if (optOptions == null) {
           optOptions = {
             duration: 500,
-            padding: this.padding ?? undefined,
+            padding: this.wmMapPadding ?? undefined,
           };
         }
         view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
