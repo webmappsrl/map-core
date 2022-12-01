@@ -44,8 +44,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _view: View;
 
   @Input() wmMapConf: IMAP;
-  @Input() padding: number[];
-  @Input() reset;
+  @Input() wmMapPadding: number[];
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
@@ -145,7 +144,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       minZoom: conf.minZoom,
       projection: 'EPSG:3857',
       constrainOnlyCenter: true,
-      padding: this.padding,
+      padding: this.wmMapPadding,
     });
 
     if (conf.bbox) {
