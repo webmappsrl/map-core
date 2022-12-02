@@ -26,7 +26,13 @@ import {defaults as defaultInteractions} from 'ol/interaction.js';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
-import {DEF_XYZ_URL, initExtent, scaleMinWidth, scaleUnits} from '../../readonly/constants';
+import {
+  DEF_MAP_ROTATION_DURATION,
+  DEF_XYZ_URL,
+  initExtent,
+  scaleMinWidth,
+  scaleUnits,
+} from '../../readonly/constants';
 import {extentFromLonLat} from '../../utils/ol';
 import {IMAP} from '../../types/model';
 import TileLayer from 'ol/layer/Tile';
@@ -48,11 +54,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
+  @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
   customTrackEnabled$: Observable<boolean>;
   map: Map;
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
+  mapDegrees: number;
   tileLayers: TileLayer<XYZ>[] = [];
 
   constructor(private _cdr: ChangeDetectorRef) {}
@@ -75,7 +83,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.map.updateSize();
-    }, 100);
+    }, 200);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -89,6 +97,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
     }
+  }
+
+  public orientNorth() {
+    this._view.animate({
+      duration: DEF_MAP_ROTATION_DURATION,
+      rotation: 0,
+    });
   }
 
   private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
@@ -177,6 +192,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     setTimeout(() => {
       this.map$.next(this.map);
     }, 0);
+    this.map.on('postrender', () => {
+      const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
+      if (degree != this.mapDegrees) {
+        this.wmMapRotateEVT$.emit(degree);
+      }
+      this.mapDegrees = degree;
+    });
   }
 
   private _reset(): void {

@@ -12,3 +12,4 @@ export const CLUSTER_DISTANCE: number = 60;
 export const scaleUnits = 'metric';
 export const scaleMinWidth = 50;
 export const SWITCH_RESOLUTION_ZOOM_LEVEL = 10;
+export const DEF_MAP_ROTATION_DURATION: number = 400;

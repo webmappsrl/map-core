@@ -1,14 +1,16 @@
-import {WmMapPopover} from './../components/popover/popover.map';
 import {
   ComponentFactoryResolver,
   Directive,
   ElementRef,
+  Host,
   Input,
   OnChanges,
   SimpleChanges,
   ViewContainerRef,
 } from '@angular/core';
-
+import {WmMapComponent} from '../components';
+import {WmMapPopover} from './../components/popover/popover.map';
+import {PinchRotate} from 'ol/interaction';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
@@ -30,7 +32,7 @@ import {
   startIconHtml,
 } from '../readonly';
 import {ILocation} from '../types/location';
-import {ILineString, IMAP} from '../types/model';
+import {ILineString} from '../types/model';
 import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
 import {getFlowPopoverText} from '../utils/popover';
 
@@ -44,21 +46,24 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _elevationChartTrack: Feature<LineString>;
   private _endFeature: Feature<Geometry>;
   private _initTrack = false;
+  private _popoverRef: any;
   private _startEndLayer: VectorLayer<VectorSource>;
   private _startFeature: Feature<Geometry>;
   private _trackFeatures: Feature<Geometry>[];
   private _trackLayer: VectorLayer<VectorSource>;
-  private _popoverRef: any;
 
   @Input() track;
   @Input() trackElevationChartElements: any;
+
   constructor(
     private element: ElementRef,
     private viewContainerRef: ViewContainerRef,
     private componentFactoryResolver: ComponentFactoryResolver,
+    @Host() private _mapCmp: WmMapComponent,
   ) {
     super();
   }
+
   drawTrack(trackgeojson: any): void {
     const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
@@ -84,13 +89,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     });
 
     this.wmMapMap.addLayer(this._trackLayer);
-  }
-
-  private _initPopover(): void {
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(WmMapPopover);
-    this._popoverRef = this.viewContainerRef.createComponent(componentFactory);
-    const host = this.element.nativeElement;
-    host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -131,17 +129,20 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       );
     }
     if (this.wmMapMap != null && changes.track != null) {
-      const ext = this._trackFeatures[0].getGeometry().getExtent() ?? undefined;
-      if (ext) {
-        const optOptions = {
-          duration: 500,
-          padding: this.wmMapPadding ?? undefined,
-        };
-        this.wmMapMap.getView().fit(ext, optOptions);
-      }
     }
   }
-  private _updatePopover(altitude: number): void {}
+
+  /**
+   * Center the current map view to the current physical location
+   */
+  private _centerMapToTrack() {
+    if (this._trackLayer) {
+      this._mapCmp.fitView(this._trackLayer.getSource().getExtent(), {
+        padding: [120, 20, 470, 20],
+      });
+    }
+  }
+
   private _drawTemporaryLocationFeature(location?: ILocation, track?: any): void {
     if (location) {
       if (!this._elevationChartSource) {
@@ -249,6 +250,15 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
     this.wmMapMap.addLayer(this._startEndLayer);
     this.drawTrack(this.track);
+    this.wmMapMap.getInteractions().extend([new PinchRotate()]);
+    this._centerMapToTrack();
+  }
+
+  private _initPopover(): void {
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(WmMapPopover);
+    this._popoverRef = this.viewContainerRef.createComponent(componentFactory);
+    const host = this.element.nativeElement;
+    host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
   }
 
   private _resetView(): void {
@@ -271,6 +281,22 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     }
     if (this._popoverRef != null) {
       this._popoverRef.instance.message$.next(null);
+    }
+  }
+
+  private _zoomToExtent(): void {
+    if (this._trackFeatures && this._trackFeatures.length > 0) {
+      setTimeout(() => {
+        const ext = this._trackLayer.getSource().getExtent();
+        if (ext) {
+          const optOptions = {
+            duration: 0,
+            maxZoom: this.wmMapMap.getView().getConstrainedZoom(13),
+          };
+          this.wmMapMap.getView().fit(ext, optOptions);
+          this.wmMapMap.updateSize();
+        }
+      }, 300);
     }
   }
 }

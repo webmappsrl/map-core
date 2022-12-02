@@ -29,6 +29,20 @@ export abstract class WmMapBaseDirective {
             padding: this.wmMapPadding ?? undefined,
           };
         }
+        view.fit(geometryOrExtent as any, optOptions);
+      }
+    }
+  }
+  fitViewFromLonLat(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
+    if (this.wmMapMap != null) {
+      const view = this.wmMapMap.getView();
+      if (view != null) {
+        if (optOptions == null) {
+          optOptions = {
+            duration: 500,
+            padding: this.wmMapPadding ?? undefined,
+          };
+        }
         view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
       }
     }

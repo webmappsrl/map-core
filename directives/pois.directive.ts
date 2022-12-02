@@ -54,12 +54,20 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   @Input() wmMapPoisPois: any;
   @Input() onClick: EventEmitter<MapBrowserEvent<UIEvent>>;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
-
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (
+      changes.wmMapMap != null &&
+      changes.wmMapMap.previousValue == null &&
+      changes.wmMapMap.currentValue != null &&
+      this._isInit === false
+    ) {
+      this._initDirective();
+      this._renderPois();
+    }
     if (changes.wmMapPoisPoi) {
       if (this.wmMapMap != null) {
         this._setPoi(this.wmMapPoisPoi);
@@ -121,15 +129,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         }
       });
     }
-    if (
-      changes.wmMapMap != null &&
-      changes.wmMapMap.previousValue == null &&
-      changes.wmMapMap.currentValue != null &&
-      this._isInit === false
-    ) {
-      this._initDirective();
-      this._renderPois();
-    }
+
     if (
       (changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.firstChange === false) ||
       changes.WmMapPoisUnselectPoi != null

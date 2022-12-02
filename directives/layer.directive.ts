@@ -59,7 +59,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
-      this.fitView(l.bbox);
+      this.fitViewFromLonLat(l.bbox);
     }
   }
 

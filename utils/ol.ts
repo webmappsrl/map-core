@@ -1,7 +1,6 @@
-import {IGeojsonGeneric} from './../types/model';
-import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
-import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import {Feature, MapBrowserEvent} from 'ol';
+import SelectCluster from 'ol-ext/interaction/SelectCluster';
+import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
 import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
 import {buffer, Extent} from 'ol/extent';
@@ -13,22 +12,23 @@ import {DefaultsOptions} from 'ol/interaction/defaults';
 import VectorLayer from 'ol/layer/Vector';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
-import {fromLonLat, transform, transformExtent} from 'ol/proj';
-import {Cluster, Vector} from 'ol/source';
+import {fromLonLat, toLonLat, transform, transformExtent} from 'ol/proj';
+import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import VectorTileSource from 'ol/source/VectorTile';
-import {Circle, Fill, Icon, Stroke, Style, Text} from 'ol/style';
+import {getDistance} from 'ol/sphere';
+import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
 import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
 
-import {TRACK_ZINDEX} from '../readonly';
+import * as localforage from 'localforage';
+import convexHull from 'ol-ext/geom/ConvexHull';
+import Polygon from 'ol/geom/Polygon';
+import {LoadFunction} from 'ol/Tile';
+import {ALERT_POI_RADIUS, TRACK_ZINDEX} from '../readonly';
 import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from '../readonly/constants';
 import {ILocation} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
-import * as localforage from 'localforage';
-import {LoadFunction} from 'ol/Tile';
 import {fromHEXToColor, getClusterStyle} from './styles';
-import convexHull from 'ol-ext/geom/ConvexHull';
-import Polygon from 'ol/geom/Polygon';
 /**
  * set all interaction of  map active.
  * [map](https://compodoc.app/guides/getting-started.html)
@@ -560,4 +560,30 @@ export function changedLayer(layer: VectorLayer<any>): void {
     layer.getSource().changed();
     layer.changed();
   }
+}
+
+export function calculateNearestPoint(
+  location: ILocation,
+  layer: VectorLayer<VectorSource>,
+  alertPoiRadius = ALERT_POI_RADIUS,
+): Feature<Geometry> | null {
+  const feature: VectorSource<Geometry> = layer?.getSource();
+  if (feature) {
+    const coord: Coordinate = [location.longitude, location.latitude];
+    const nFeature = feature.getClosestFeatureToCoordinate(coord);
+    if (nFeature != null) {
+      const nFeatureCoords = nFeature.getGeometry();
+      const distanceFromUser = getDistance(
+        coord,
+        toLonLat((nFeatureCoords as Point).getCoordinates()),
+      );
+      if (distanceFromUser > alertPoiRadius) {
+        return null;
+      }
+      const oldProperties = nFeature.getProperties();
+      nFeature.setProperties({...oldProperties, ...{distance_from_user: distanceFromUser}});
+      return nFeature;
+    }
+  }
+  return null;
 }

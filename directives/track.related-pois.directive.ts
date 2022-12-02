@@ -27,6 +27,7 @@ import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
 import {IGeojsonFeature, IMAP, PoiMarker} from '../types/model';
 import {
   addFeatureToLayer,
+  calculateNearestPoint,
   createCanvasForHtml,
   createLayer,
   downloadBase64Img,
@@ -68,7 +69,7 @@ export class wmMapTrackRelatedPoisDirective
       }
     });
   }
-
+  @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.wmMapMap.removeLayer(this._selectedPoiLayer);
@@ -84,6 +85,9 @@ export class wmMapTrackRelatedPoisDirective
 
   @Input() track;
   @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+  @Input() wmMapPositioncurrentLocation: Location;
+  @Output() wmMapTrackRelatedPoisNearestPoiEvt: EventEmitter<Feature<Geometry>> =
+    new EventEmitter();
 
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
@@ -108,7 +112,24 @@ export class wmMapTrackRelatedPoisDirective
       this._initPois === false
     ) {
       this._addPoisMarkers(this.track.properties.related_pois);
+      calculateNearestPoint(
+        this.wmMapPositioncurrentLocation as any,
+        this._poisLayer,
+        this.wmMapTrackRelatedPoisAlertPoiRadius,
+      );
       this._initPois = true;
+    }
+
+    if (
+      changes.wmMapPositioncurrentLocation &&
+      changes.wmMapPositioncurrentLocation.currentValue != null
+    ) {
+      const currentLocation = changes.wmMapPositioncurrentLocation.currentValue;
+      const nearestPoi = calculateNearestPoint(currentLocation, this._poisLayer);
+      if (nearestPoi != null) {
+        ((nearestPoi.getStyle() as any).getImage() as any).setScale(1.2);
+      }
+      this.wmMapTrackRelatedPoisNearestPoiEvt.emit(nearestPoi);
     }
   }
 
