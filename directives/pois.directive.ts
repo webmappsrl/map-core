@@ -1,3 +1,4 @@
+import {SelectCluster} from 'ol-ext/interaction/SelectCluster';
 import {
   Directive,
   EventEmitter,
@@ -34,7 +35,6 @@ import {
   createLayer,
   intersectionBetweenArrays,
   nearestFeatureOfCluster,
-  selectCluster,
 } from '../utils';
 
 const PADDING = [0, 0, 250, 0];
@@ -46,14 +46,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _isInit = false;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
+  private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
 
   @Input() WmMapPoisUnselectPoi: boolean;
+  @Input() onClick: EventEmitter<MapBrowserEvent<UIEvent>>;
   @Input() wmMapPoisFilters: any[] = [];
   @Input() wmMapPoisPoi: number | 'reset';
   @Input() wmMapPoisPois: any;
-  @Input() onClick: EventEmitter<MapBrowserEvent<UIEvent>>;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
+
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
   }
@@ -79,17 +81,21 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     }
     if (changes.onClick && changes.onClick.firstChange) {
       this._onClickSub = this.onClick.subscribe(event => {
+        this.wmMapMap.removeInteraction(this._selectCluster);
+        this._selectCluster = createHull(this.wmMapMap);
         clearLayer(this._selectedPoiLayer);
         try {
-          if (this.wmMapMap.getView().getZoom() === this.wmMapMap.getView().getMaxZoom()) {
-            selectCluster.setActive(true);
-          } else {
-            selectCluster.setActive(false);
-          }
           this._poisClusterLayer.getFeatures(event.pixel).then(features => {
             if (features.length > 0) {
               setCurrentCluster(features[0]);
               const clusterMembers = features[0].get('features');
+              if (
+                this.wmMapMap.getView().getZoom() === this.wmMapMap.getView().getMaxZoom() ||
+                clusterMembers.length > 4
+              ) {
+                this.wmMapMap.removeInteraction(this._selectCluster);
+                this._selectCluster = createHull(this.wmMapMap);
+              }
               this._hullClusterLayer.setStyle(clusterHullStyle);
               if (clusterMembers.length > 1) {
                 // Calculate the extent of the cluster members.
@@ -98,20 +104,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
                   extend(extent, feature.getGeometry().getExtent()),
                 );
                 const view = this.wmMapMap.getView();
-                if (view.getZoom() === view.getMaxZoom()) {
-                  selectCluster.setActive(true);
-                }
-                setTimeout(() => {
-                  // Zoom to the extent of the cluster members.
-                  view.fit(extent, {duration: 500, padding: PADDING});
+                if (clusterMembers.length > 4) {
                   setTimeout(() => {
-                    if (view.getZoom() === view.getMaxZoom()) {
-                      selectCluster.setActive(true);
-                    }
-                  }, 200);
-                }, 400);
+                    // Zoom to the extent of the cluster members.
+                    view.fit(extent, {duration: 500, padding: PADDING});
+                  }, 400);
+                }
               } else {
-                selectCluster.setActive(true);
+                this._selectCluster.setActive(true);
                 const poiFeature = nearestFeatureOfCluster(
                   this._poisClusterLayer,
                   event,
@@ -127,6 +127,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         } catch (e) {
           console.log(e);
         }
+        this._selectCluster.getFeatures().on(['add'], e => {
+          var c = e.element.get('features');
+
+          if (c.length === 1) {
+            const poi = c[0].getProperties();
+            this._selectIcon(poi);
+          }
+        });
       });
     }
 
@@ -153,7 +161,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]): void {
     clearLayer(this._poisClusterLayer);
-    clearLayer(selectCluster);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     const featureSource = clusterSource.getSource();
     featureSource.clear();
@@ -255,17 +262,17 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     this._isInit = true;
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
     this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
-    createHull(this.wmMapMap);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     this._hullClusterLayer = new VectorLayer({
       style: clusterHullStyle,
       source: clusterSource,
     });
+    this._selectCluster = createHull(this.wmMapMap);
     this._checkZoom(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._hullClusterLayer);
     this.wmMapMap.addLayer(this._selectedPoiLayer);
-    selectCluster.getFeatures().on(['add'], e => {
+    this._selectCluster.getFeatures().on(['add'], e => {
       var c = e.element.get('features');
 
       if (
@@ -354,7 +361,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _setPoi(id: number | 'reset'): void {
-    selectCluster.setActive(false);
+    this._selectCluster.setActive(false);
     if (id != 'reset' && id > -1) {
       const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
       setTimeout(() => {

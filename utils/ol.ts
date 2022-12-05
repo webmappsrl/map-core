@@ -55,7 +55,6 @@ export function addFeatureToLayer(
     layer.getSource().addFeature(feature);
   }
 }
-export let selectCluster = null;
 
 /**
  * Create a circle Feature<Point> in lonLat coordinate.
@@ -111,7 +110,7 @@ export function createCluster(
   return clusterLayer;
 }
 
-export function createHull(map: Map) {
+export function createHull(map: Map): SelectCluster {
   var img = new Circle({
     radius: 5,
     stroke: new Stroke({
@@ -130,7 +129,7 @@ export function createHull(map: Map) {
       width: 1,
     }),
   });
-  selectCluster = new SelectCluster({
+  const selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
     pointRadius: 34,
     circleMaxObjects: 20,
@@ -190,8 +189,8 @@ export function createHull(map: Map) {
       }
     },
   });
-  selectCluster.setActive(false);
   map.addInteraction(selectCluster);
+  return selectCluster;
 }
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   const excludedIcn = ['theme_ucvs'];
