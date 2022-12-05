@@ -1,4 +1,3 @@
-import {SelectCluster} from 'ol-ext/interaction/SelectCluster';
 import {
   Directive,
   EventEmitter,
@@ -9,6 +8,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
+import {SelectCluster} from 'ol-ext/interaction/SelectCluster';
 import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -26,7 +26,7 @@ import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
-import {IGeojsonFeature, IGeojsonGeneric, IMAP} from '../types/model';
+import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {
   changedLayer,
   clearLayer,

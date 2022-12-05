@@ -50,6 +50,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _view: View;
 
   @Input() wmMapConf: IMAP;
+  @Input() wmMapTarget = 'ol-map';
   @Input() wmMapPadding: number[];
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
@@ -183,7 +184,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       interactions: this._initDefaultInteractions(),
       layers: this.tileLayers,
       moveTolerance: 3,
-      target: 'ol-map',
+      target: this.wmMapTarget,
     });
 
     this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
