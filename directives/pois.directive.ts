@@ -145,11 +145,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       clearLayer(this._selectedPoiLayer);
     }
     const filtersCondition =
-      changes.wmMapPoisFilters != null &&
-      changes.wmMapPoisFilters.previousValue != null &&
-      changes.wmMapPoisFilters.previousValue.length != 0 &&
-      changes.wmMapPoisFilters.currentValue != null &&
-      changes.wmMapPoisFilters.currentValue.length != 0;
+      changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
     if (this.wmMapMap != null && (filtersCondition || changes.wmMapPoisPois != null)) {
       this._renderPois();
     }
@@ -293,11 +289,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
           clearLayer(this._poisClusterLayer);
           changedLayer(this._poisClusterLayer);
         }
-        const selectedFeatures = this.wmMapPoisPois.features.filter(
-          p =>
-            intersectionBetweenArrays(p.properties.taxonomyIdentifiers, this.wmMapPoisFilters)
-              .length > 0,
-        );
+        const selectedFeatures = this.wmMapPoisPois.features.filter(p => {
+          const intersection = intersectionBetweenArrays(
+            p.properties.taxonomyIdentifiers,
+            this.wmMapPoisFilters,
+          );
+
+          return intersection.length > 0;
+        });
         this._addPoisFeature(selectedFeatures);
       } else {
         this._addPoisFeature(this.wmMapPoisPois.features);
@@ -361,8 +360,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   private _setPoi(id: number | 'reset'): void {
-    this._selectCluster.setActive(false);
     if (id != 'reset' && id > -1) {
+      this._selectCluster.setActive(false);
       const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
       setTimeout(() => {
         this._selectIcon(currentPoi);

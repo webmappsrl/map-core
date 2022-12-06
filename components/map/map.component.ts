@@ -50,8 +50,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _view: View;
 
   @Input() wmMapConf: IMAP;
-  @Input() wmMapTarget = 'ol-map';
   @Input() wmMapPadding: number[];
+  @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
@@ -190,9 +190,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
       this.clickEVT$.emit(evt);
     });
-    setTimeout(() => {
-      this.map$.next(this.map);
-    }, 0);
     this.map.on('postrender', () => {
       const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
       if (degree != this.mapDegrees) {
@@ -200,6 +197,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       }
       this.mapDegrees = degree;
     });
+    setTimeout(() => {
+      this.map$.next(this.map);
+    }, 0);
   }
 
   private _reset(): void {
