@@ -164,7 +164,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
 
     if (conf.bbox) {
-      this.fitView(this._centerExtent);
+      this.fitView(this._centerExtent, {
+        maxZoom: conf.defZoom,
+      });
     }
 
     this.tileLayers = this._buildTileLayers(conf.tiles);
