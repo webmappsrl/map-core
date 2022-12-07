@@ -23,6 +23,7 @@ import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {Interaction} from 'ol/interaction';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
+import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
@@ -33,9 +34,8 @@ import {
   scaleMinWidth,
   scaleUnits,
 } from '../../readonly/constants';
-import {extentFromLonLat} from '../../utils/ol';
 import {IMAP} from '../../types/model';
-import TileLayer from 'ol/layer/Tile';
+import {extentFromLonLat} from '../../utils/ol';
 
 @Component({
   selector: 'wm-map',
@@ -83,6 +83,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => {
+      this._view.setZoom(this.wmMapConf.defZoom);
       this.map.updateSize();
     }, 200);
   }
@@ -161,12 +162,15 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       projection: 'EPSG:3857',
       constrainOnlyCenter: true,
       padding: this.wmMapPadding,
+      extent: this._centerExtent,
+      showFullExtent: true,
     });
 
     if (conf.bbox) {
       this.fitView(this._centerExtent, {
         maxZoom: conf.defZoom,
       });
+      this._cdr.detectChanges();
     }
 
     this.tileLayers = this._buildTileLayers(conf.tiles);
@@ -198,7 +202,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         this.wmMapRotateEVT$.emit(degree);
       }
       this.mapDegrees = degree;
+      this.map.updateSize();
     });
+
     setTimeout(() => {
       this.map$.next(this.map);
     }, 0);
