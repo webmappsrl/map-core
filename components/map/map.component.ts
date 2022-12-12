@@ -50,7 +50,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _view: View;
 
   @Input() wmMapConf: IMAP;
-  @Input() wmMapPadding: number[];
+  @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
@@ -98,6 +98,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
+    }
+    if (changes.wmMapPadding && this._view != null) {
+      this._view.fit(this._centerExtent, {
+        padding: this.wmMapPadding,
+        maxZoom: this._view.getZoom(),
+      });
     }
   }
 

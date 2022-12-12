@@ -567,7 +567,7 @@ export function calculateNearestPoint(
   alertPoiRadius = ALERT_POI_RADIUS,
 ): Feature<Geometry> | null {
   const feature: VectorSource<Geometry> = layer?.getSource();
-  if (feature) {
+  if (feature && location) {
     const coord: Coordinate = [location.longitude, location.latitude];
     const nFeature = feature.getClosestFeatureToCoordinate(coord);
     if (nFeature != null) {
