@@ -89,14 +89,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             if (features.length > 0) {
               setCurrentCluster(features[0]);
               const clusterMembers = features[0].get('features');
-              if (
-                this.wmMapMap.getView().getZoom() === this.wmMapMap.getView().getMaxZoom() ||
-                clusterMembers.length > 4
-              ) {
+              if (clusterMembers.length > 4) {
                 this.wmMapMap.removeInteraction(this._selectCluster);
                 this._selectCluster = createHull(this.wmMapMap);
               }
-              this._hullClusterLayer.setStyle(clusterHullStyle);
               if (clusterMembers.length > 1) {
                 // Calculate the extent of the cluster members.
                 const extent = createEmpty();
@@ -271,10 +267,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     this._selectCluster.getFeatures().on(['add'], e => {
       var c = e.element.get('features');
 
-      if (
-        c.length === 1 &&
-        this.wmMapMap.getView().getZoom() === this.wmMapMap.getView().getMaxZoom()
-      ) {
+      if (c.length === 1) {
         const poi = c[0].getProperties();
         this._selectIcon(poi);
       }

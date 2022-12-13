@@ -83,9 +83,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => {
-      this._view.setZoom(this.wmMapConf.defZoom);
-      this.map.updateSize();
-    }, 200);
+      if (this._view != null) {
+        this._view.setZoom(this.wmMapConf.defZoom);
+        this.map.updateSize();
+      }
+    }, 400);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
