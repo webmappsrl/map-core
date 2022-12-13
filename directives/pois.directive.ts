@@ -89,7 +89,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
             if (features.length > 0) {
               setCurrentCluster(features[0]);
               const clusterMembers = features[0].get('features');
-              if (clusterMembers.length > 4) {
+              if (
+                clusterMembers.length > 4 &&
+                this.wmMapMap.getView().getZoom() != this.wmMapMap.getView().getMaxZoom()
+              ) {
                 this.wmMapMap.removeInteraction(this._selectCluster);
                 this._selectCluster = createHull(this.wmMapMap);
               }
