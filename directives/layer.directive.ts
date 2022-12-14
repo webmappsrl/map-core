@@ -35,6 +35,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
 
+  @Input() set jidoUpdateTime(time: number) {
+    const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
+    if (time != undefined && time != +storedJidoVersion) {
+      clearStorage();
+      localStorage.setItem(`JIDO_UPDATE_TIME`, `${time}`);
+    }
+  }
+
   @Input() set wmMapLayerDataLayerUrls(urls: IDATALAYER) {
     this._dataLayerUrls = urls;
   }
@@ -45,14 +53,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
     if (this._lowVectorTileLayer != null) {
       this._lowVectorTileLayer.setVisible(!disable);
-    }
-  }
-
-  @Input() set jidoUpdateTime(time: number) {
-    const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
-    if (time != undefined && time != +storedJidoVersion) {
-      clearStorage();
-      localStorage.setItem(`JIDO_UPDATE_TIME`, `${time}`);
     }
   }
 
