@@ -14,11 +14,14 @@
       </a>
     </div>
   </div>
-  <div class="wm-fab-buttons">
-    <ng-content select="[bottom-right]"></ng-content>
+  <div class="top-left">
+    <ng-content select="[top-left]"></ng-content>
   </div>
-  <div class="top">
+  <div class="top-right">
     <wm-map-controls [tileLayers]="tileLayers"></wm-map-controls>
     <ng-content select="[top-right]"></ng-content>
+  </div>
+  <div class="bottom-right">
+    <ng-content select="[bottom-right]"></ng-content>
   </div>
 </div>

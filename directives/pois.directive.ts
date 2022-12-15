@@ -129,7 +129,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
         this._selectCluster.getFeatures().on(['add'], e => {
           var c = e.element.get('features');
 
-          if (c.length === 1) {
+          if (c != null && c.length === 1) {
             const poi = c[0].getProperties();
             this._selectIcon(poi);
           }

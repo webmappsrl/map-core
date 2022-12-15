@@ -143,50 +143,53 @@ export function createHull(map: Map): SelectCluster {
     },
     style: function (f, res) {
       var cluster = f.get('features');
-      if (cluster.length > 1) {
-        var s = [getClusterStyle(f, res)];
-        if (convexHull) {
-          var coords = [];
-          for (let i = 0; i < cluster.length; i++)
-            coords.push(cluster[i].getGeometry().getFirstCoordinate());
-          var chull = convexHull(coords);
-          s.push(
-            new Style({
-              stroke: new Stroke({color: 'rgba(0,0,192,0.5)', width: 2}),
-              fill: new Fill({color: 'rgba(0,0,192,0.3)'}),
-              geometry: new Polygon([chull]),
-              zIndex: 1,
-            }),
-          );
-        }
-        return s;
-      } else {
-        const selectedFeature = cluster[0];
-        const prop = selectedFeature.getProperties().properties;
-        const color = prop.color || 'darkorange';
-        const namedPoiColor = fromHEXToColor[color] || 'darkorange';
-        if (prop.svgIcon != null) {
-          const src = `data:image/svg+xml;utf8,${prop.svgIcon
-            .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
-            .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
-          return new Style({
-            image: new Icon({
-              anchor: [0.5, 0.5],
-              scale: 1,
-              src,
-            }),
-          });
+      if (cluster != null) {
+        if (cluster.length > 1) {
+          var s = [getClusterStyle(f, res)];
+          if (convexHull) {
+            var coords = [];
+            for (let i = 0; i < cluster.length; i++)
+              coords.push(cluster[i].getGeometry().getFirstCoordinate());
+            var chull = convexHull(coords);
+            s.push(
+              new Style({
+                stroke: new Stroke({color: 'rgba(0,0,192,0.5)', width: 2}),
+                fill: new Fill({color: 'rgba(0,0,192,0.3)'}),
+                geometry: new Polygon([chull]),
+                zIndex: 1,
+              }),
+            );
+          }
+          return s;
         } else {
-          const icn = getIcnFromTaxonomies(prop.taxonomyIdentifiers);
-          return new Style({
-            image: new Icon({
-              anchor: [0.5, 0.5],
-              scale: 0.5,
-              src: `${ICN_PATH}/${icn}_selected.png`,
-            }),
-          });
+          const selectedFeature = cluster[0];
+          const prop = selectedFeature.getProperties().properties;
+          const color = prop.color || 'darkorange';
+          const namedPoiColor = fromHEXToColor[color] || 'darkorange';
+          if (prop.svgIcon != null) {
+            const src = `data:image/svg+xml;utf8,${prop.svgIcon
+              .replaceAll(`<circle fill="${'darkorange'}"`, '<circle fill="white" ')
+              .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
+            return new Style({
+              image: new Icon({
+                anchor: [0.5, 0.5],
+                scale: 1,
+                src,
+              }),
+            });
+          } else {
+            const icn = getIcnFromTaxonomies(prop.taxonomyIdentifiers);
+            return new Style({
+              image: new Icon({
+                anchor: [0.5, 0.5],
+                scale: 0.5,
+                src: `${ICN_PATH}/${icn}_selected.png`,
+              }),
+            });
+          }
         }
       }
+
     },
   });
   map.addInteraction(selectCluster);

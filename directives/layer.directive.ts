@@ -35,6 +35,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
 
+  private _opacity = 1;
+
   @Input() set jidoUpdateTime(time: number) {
     const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
     if (time != undefined && time != +storedJidoVersion) {
@@ -63,6 +65,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  @Input() set wmMapLayerOpacity(opacity: boolean) {
+    this._opacity = opacity ? 0.5 : 1;
+    this._resolutionLayerSwitcher();
+  }
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(private _cdr: ChangeDetectorRef) {
@@ -135,6 +141,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
           map: this.wmMapMap,
+          opacity: this.wmMapLayerOpacity,
         })(f);
       },
       lowTileLoadFn,
@@ -164,11 +171,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       const currentZoom = this.wmMapMap.getView().getZoom();
 
       if (currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL) {
-        this._highVectorTileLayer.setOpacity(1);
+        this._highVectorTileLayer.setOpacity(this._opacity);
         this._lowVectorTileLayer.setOpacity(0);
       } else {
         this._highVectorTileLayer.setOpacity(0);
-        this._lowVectorTileLayer.setOpacity(1);
+        this._lowVectorTileLayer.setOpacity(this._opacity);
       }
     }
     this._cdr.markForCheck();

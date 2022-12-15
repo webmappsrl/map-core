@@ -6,7 +6,7 @@ wm-map {
   .map-container {
     flex-grow: 1;
     height: 100%;
-    .wm-fab-buttons {
+    .bottom-right {
       position: absolute;
       right: 22px;
       bottom: 40px;
@@ -15,7 +15,7 @@ wm-map {
       flex-wrap: nowrap;
       justify-content: flex-start;
       align-content: stretch;
-      align-items: flex-start;
+      align-items: center;
       z-index: 2;
       > * {
         order: 0;
@@ -24,9 +24,27 @@ wm-map {
         margin-bottom: 10px;
       }
     }
-    .top {
+    .top-right {
       position: absolute;
       right: 22px;
+      top: 30px;
+      z-index: 2;
+      display: inline-flex;
+      flex-direction: row-reverse;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-content: stretch;
+      align-items: flex-start;
+      > * {
+        order: 0;
+        flex: 0 1 auto;
+        align-self: auto;
+        margin-left: 10px;
+      }
+    }
+    .top-left {
+      position: absolute;
+      left: 22px;
       top: 30px;
       z-index: 2;
       display: inline-flex;
