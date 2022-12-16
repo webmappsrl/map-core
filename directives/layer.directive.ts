@@ -34,7 +34,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _highVectorTileLayer: VectorTileLayer;
   private _lowVectorTileLayer: VectorTileLayer;
   private _mapIsInit = false;
-
   private _opacity = 1;
 
   @Input() set jidoUpdateTime(time: number) {
@@ -69,6 +68,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._opacity = opacity ? 0.3 : 1;
     this._resolutionLayerSwitcher();
   }
+
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(private _cdr: ChangeDetectorRef) {
