@@ -66,7 +66,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   @Input() set wmMapLayerOpacity(opacity: boolean) {
-    this._opacity = opacity ? 0.5 : 1;
+    this._opacity = opacity ? 0.3 : 1;
     this._resolutionLayerSwitcher();
   }
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
