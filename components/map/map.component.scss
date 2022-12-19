@@ -24,6 +24,17 @@ wm-map {
         align-self: auto;
         margin-bottom: 10px;
       }
+      ion-fab {
+        position: relative;
+        width:42px;
+
+      }
+      ion-fab-button,.wm-btn-track-recording {
+        height: 42px;
+        width:42px;
+        margin: 0 0 16px 10px;
+      }
+
     }
     .top-right {
       position: absolute;
