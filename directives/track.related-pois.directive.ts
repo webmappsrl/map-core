@@ -85,6 +85,7 @@ export class wmMapTrackRelatedPoisDirective
     if (id === -1 && this._selectedPoiLayer != null) {
       this.wmMapMap.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
+      this.relatedPoiEvt.next(null);
     } else {
       const currentPoi = this._poiMarkers.find(p => +p.id === +id);
 
@@ -333,6 +334,7 @@ export class wmMapTrackRelatedPoisDirective
       this.wmMapMap.render();
     }
     this._poiMarkers = [];
+    this.relatedPoiEvt.emit(null);
   }
 
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
