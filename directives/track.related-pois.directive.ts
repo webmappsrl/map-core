@@ -8,7 +8,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {Subscription} from 'rxjs';
+import {Subscription, BehaviorSubject} from 'rxjs';
 
 import Feature from 'ol/Feature';
 import Geometry from 'ol/geom/Geometry';
@@ -48,8 +48,15 @@ export class wmMapTrackRelatedPoisDirective
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poiMarkers: PoiMarker[] = [];
   private _poisLayer: VectorLayer<VectorSource>;
+  private _relatedPois: IGeojsonFeature[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
+
+  @Input() set next(d) {
+    if (this._selectedPoiLayer != null) {
+      this.wmMapMap.removeLayer(this._selectedPoiLayer);
+    }
+  }
 
   @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
     this._onClickSub = clickEVT$.subscribe(event => {
@@ -58,8 +65,12 @@ export class wmMapTrackRelatedPoisDirective
         const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
         if (poiFeature) {
           this.wmMapMap.getInteractions().forEach(i => i.setActive(false));
+          console.log(poiFeature);
           const currentID = +poiFeature.getId() || -1;
+          this.currentRelatedPoi$.next(this._getPoi(currentID));
+          this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
           this.poiClick.emit(currentID);
+          this.setPoi = currentID;
           setTimeout(() => {
             this.wmMapMap.getInteractions().forEach(i => i.setActive(true));
           }, 1200);
@@ -69,36 +80,47 @@ export class wmMapTrackRelatedPoisDirective
       }
     });
   }
-  @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
+
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.wmMapMap.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     } else {
       const currentPoi = this._poiMarkers.find(p => +p.id === +id);
+
       if (currentPoi != null) {
         this._fitView(currentPoi.icon.getGeometry() as any);
         this._selectCurrentPoi(currentPoi);
+        this.currentRelatedPoi$.next(this._getPoi(+id));
+        this.relatedPoiEvt.next(this.currentRelatedPoi$.value);
       }
     }
   }
 
   @Input() track;
-  @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
   @Input() wmMapPositioncurrentLocation: Location;
+  @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
+  @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+  @Output('related-poi') relatedPoiEvt: EventEmitter<any> = new EventEmitter<any>();
   @Output() wmMapTrackRelatedPoisNearestPoiEvt: EventEmitter<Feature<Geometry>> =
     new EventEmitter();
+
+  currentRelatedPoi$: BehaviorSubject<IGeojsonFeature> =
+    new BehaviorSubject<IGeojsonFeature | null>(null);
 
   constructor(@Host() private _mapCmp: WmMapComponent) {
     super();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     const resetCondition =
       (changes.track &&
         changes.track.previousValue != null &&
         changes.track.currentValue != null &&
-        changes.track.previousValue.properties.id != changes.track.currentValue.properties.id) ??
+        (changes.track.previousValue.properties.id != changes.track.currentValue.properties.id ||
+          (changes.track.previousValue == null &&
+            changes.track.currentValue.properties.id != null))) ??
       false;
     if (this.track == null || this.wmMapMap == null || resetCondition) {
       this._resetView();
@@ -111,7 +133,9 @@ export class wmMapTrackRelatedPoisDirective
       this.wmMapMap != null &&
       this._initPois === false
     ) {
-      this._addPoisMarkers(this.track.properties.related_pois);
+      this._resetView();
+      this._relatedPois = this.track.properties.related_pois;
+      this._addPoisMarkers(this._relatedPois);
       calculateNearestPoint(
         this.wmMapPositioncurrentLocation as any,
         this._poisLayer,
@@ -135,6 +159,23 @@ export class wmMapTrackRelatedPoisDirective
 
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
+  }
+
+  poiNext(): void {
+    const currentID = this.currentRelatedPoi$.value.properties.id;
+    const currentPosition = this._relatedPois.map(f => f.properties.id).indexOf(currentID);
+    const nextId =
+      this._relatedPois[(currentPosition + 1) % this._relatedPois.length].properties.id;
+    this.setPoi = nextId;
+  }
+
+  poiPrev(): void {
+    const currentID = this.currentRelatedPoi$.value.properties.id;
+    const currentPosition = this._relatedPois.map(f => f.properties.id).indexOf(currentID);
+    const prevId =
+      this._relatedPois[(currentPosition + this._relatedPois.length - 1) % this._relatedPois.length]
+        .properties.id;
+    this.setPoi = prevId;
   }
 
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
@@ -274,6 +315,11 @@ export class wmMapTrackRelatedPoisDirective
     this._mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
+  private _getPoi(id: number): any {
+    const poi = this._relatedPois.find(p => p.properties.id === id);
+    return poi;
+  }
+
   private _resetView(): void {
     if (this.wmMapMap != null && this._poisLayer != null) {
       this.wmMapMap.removeLayer(this._poisLayer);
@@ -286,6 +332,7 @@ export class wmMapTrackRelatedPoisDirective
     if (this.wmMapMap != null) {
       this.wmMapMap.render();
     }
+    this._poiMarkers = [];
   }
 
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
