@@ -78,7 +78,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     this._debounceFitTimer = setTimeout(() => {
       this._view.fit(geometryOrExtent, optOptions);
       this._debounceFitTimer = null;
-    }, 200);
+    }, 500);
   }
 
   ngAfterViewInit(): void {
