@@ -35,6 +35,7 @@ import {
   removeFeatureFromLayer,
 } from '../utils';
 import VectorSource from 'ol/source/Vector';
+import {preventDefault, stopPropagation} from 'ol/events/Event';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -64,8 +65,9 @@ export class wmMapTrackRelatedPoisDirective
         this._deselectCurrentPoi();
         const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
         if (poiFeature) {
+          preventDefault(event);
+          stopPropagation(event);
           this.wmMapMap.getInteractions().forEach(i => i.setActive(false));
-          console.log(poiFeature);
           const currentID = +poiFeature.getId() || -1;
           this.currentRelatedPoi$.next(this._getPoi(currentID));
           this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
@@ -114,7 +116,6 @@ export class wmMapTrackRelatedPoisDirective
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     const resetCondition =
       (changes.track &&
         changes.track.previousValue != null &&
