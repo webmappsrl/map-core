@@ -37,7 +37,7 @@ import {
   nearestFeatureOfCluster,
 } from '../utils';
 
-const PADDING = [0, 0, 250, 0];
+const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
 })
