@@ -100,7 +100,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
             evt.pixel,
             function (clickedFeature) {
               const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-              if (clickedFeatureId > -1 && this._highVectorTileLayer.getOpacity() === 1) {
+              if (
+                clickedFeatureId > -1 &&
+                this._highVectorTileLayer.getOpacity() === 1 &&
+                clickedFeature.getType() != null
+              ) {
                 this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
               }
               return true;

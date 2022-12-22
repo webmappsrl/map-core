@@ -40,6 +40,7 @@ export class WmMapOverlayDirective extends WmMapBaseDirective implements OnChang
         }),
         zIndex: 1,
       });
+      baseVector.setOpacity(0.8);
       this.wmMapMap.addLayer(baseVector);
     }
   }

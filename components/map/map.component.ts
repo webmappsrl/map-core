@@ -220,6 +220,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   private _reset(): void {
     if (this._view != null) {
+      this._view.animate({
+        duration: 0,
+        rotation: 0,
+      });
       this._view.fit(this._centerExtent);
     }
   }
