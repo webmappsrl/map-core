@@ -26,15 +26,13 @@ wm-map {
       }
       ion-fab {
         position: relative;
-        width:42px;
-
       }
-      ion-fab-button,.wm-btn-track-recording {
+      ion-fab-button,
+      .wm-btn-track-recording {
         height: 42px;
-        width:42px;
+        width: 42px;
         margin: 0 0 16px 10px;
       }
-
     }
     .top-right {
       position: absolute;
@@ -83,7 +81,7 @@ wm-map {
       position: absolute;
       bottom: 0;
       left: 0;
-      width:100px;
+      width: 100px;
       z-index: 1;
     }
     #webmapp-map-attribution-container {
