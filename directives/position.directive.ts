@@ -167,7 +167,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
       }
       return 0;
     } catch (e) {
-      console.log('ERRORERRORERRORERRORERRORERROR', e);
+      console.log('position error', e);
       return 0;
     }
   }
