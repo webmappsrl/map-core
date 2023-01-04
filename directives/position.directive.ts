@@ -60,9 +60,10 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     zIndex: POSITION_ZINDEX,
   });
 
+  @Input() wmMapPositionCenter;
   @Input() wmMapPositioncurrentLocation: Location;
   @Input() wmMapPositionfocus;
-  @Input() wmMapPositionCenter;
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.wmMapMap && changes.wmMapMap.currentValue != null) {
       this.wmMapMap.addLayer(this._locationLayer);
@@ -114,6 +115,11 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     this._bgCurrentLocSub.unsubscribe();
   }
 
+  private _centerPosition() {
+    const point = this._updateGeometry(this._currentLocation);
+    this._followLocation(point);
+  }
+
   private _degreesToRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
   }
@@ -129,6 +135,12 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
       };
     }
     this.wmMapMap.getView().fit(geometryOrExtent, optOptions);
+  }
+
+  private _followLocation(point: Point): void {
+    this._fitView(point);
+    const runningAvg = this._runningAvg(this._currentLocation.bearing);
+    this._rotate(-runningAvg, 500);
   }
 
   private _radiansToDegrees(radians): number {
@@ -179,20 +191,9 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     }
   }
 
-  private _centerPosition() {
-    const point = this._updateGeometry(this._currentLocation);
-    this._followLocation(point);
-  }
-
   private _updateGeometry(loc: Location): Point {
     const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
     this._locationFeature.setGeometry(point);
     return point;
-  }
-
-  private _followLocation(point: Point): void {
-    this._fitView(point);
-    const runningAvg = this._runningAvg(this._currentLocation.bearing);
-    this._rotate(-runningAvg, 500);
   }
 }
