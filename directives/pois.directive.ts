@@ -61,6 +61,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     if (
       changes.wmMapMap != null &&
       changes.wmMapMap.previousValue == null &&
@@ -72,10 +73,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
     }
     if (changes.wmMapPoisPoi) {
       if (this.wmMapMap != null) {
-        this._setPoi(this.wmMapPoisPoi);
+        this.setPoi(this.wmMapPoisPoi);
       } else {
         setTimeout(() => {
-          this._setPoi(this.wmMapPoisPoi);
+          this.setPoi(this.wmMapPoisPoi);
         }, 300);
       }
     }
@@ -152,6 +153,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
+  }
+
+  setPoi(id: number | 'reset'): void {
+    if (id != 'reset' && id > -1) {
+      this._selectCluster.setActive(false);
+      const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
+      setTimeout(() => {
+        this._selectIcon(currentPoi);
+      }, 200);
+    }
   }
 
   private _addPoisFeature(poiCollection: IGeojsonFeature[]): void {
@@ -352,16 +363,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
 
       this._fitView(geometry as any);
       this.currentPoiEvt.emit(currentPoi);
-    }
-  }
-
-  private _setPoi(id: number | 'reset'): void {
-    if (id != 'reset' && id > -1) {
-      this._selectCluster.setActive(false);
-      const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
-      setTimeout(() => {
-        this._selectIcon(currentPoi);
-      }, 200);
     }
   }
 }
