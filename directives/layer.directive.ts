@@ -22,6 +22,7 @@ import {
   lowTileLoadFn,
   styleLowFn,
   styleHighFn,
+  getColorFromLayer,
 } from '../utils';
 import {IMAP} from '../types/model';
 
@@ -69,6 +70,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._resolutionLayerSwitcher();
   }
 
+  @Output() colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(private _cdr: ChangeDetectorRef) {
@@ -100,12 +102,16 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
             evt.pixel,
             function (clickedFeature) {
               const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+              const clickedLayerId =
+                JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
               if (
                 clickedFeatureId > -1 &&
                 this._highVectorTileLayer.getOpacity() === 1 &&
                 clickedFeature.getType() != null
               ) {
                 this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+                this.colorSelectedFromLayerEVT.emit(color);
               }
               return true;
             }.bind(this),
