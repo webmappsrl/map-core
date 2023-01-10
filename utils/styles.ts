@@ -115,9 +115,22 @@ export function styleJsonFn(vectorLayerUrl: string) {
   };
 }
 
+/**
+ * @description
+ * This is a JavaScript function that creates and returns an array of ol.style.Style objects that are used to style a line feature in an OpenLayers map.
+ * The function takes an optional parameter color which is a string representing the color of the line. If no color is passed, the default color is set to '255, 177, 0', which is a yellow color.
+ * The function then checks if the first character of the color string is '#', which indicates that the color is in hex format. If that's the case, it converts the hex color to RGB format.
+ * The function then creates two ol.style.Style objects and sets their properties.
+ * The first style has a white stroke with double the width of the second style's stroke and a higher z-index, so it will be drawn above the second style. The second style has the color passed as an argument or default color and has a strokeWidth, lineDash set to empty array, lineCap to round and zIndex of 50. It creates an instance of ol.style.Stroke to set stroke property of ol.style.Style object.
+ * Finally, the function returns the array of ol.style.Style objects.
+ *
+ * @export
+ * @param {string} [color]
+ * @returns {*}  {Style[]}
+ */
 export function getLineStyle(color?: string): Style[] {
   const style: Style[] = [];
-  const strokeWidth: number = 3;
+  const strokeWidth: number = 6;
   const strokeOpacity: number = 1;
   const lineDash: Array<number> = [];
   const lineCap: CanvasLineCap = 'round';
