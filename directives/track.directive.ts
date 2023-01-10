@@ -54,6 +54,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   @Input() track;
   @Input() trackElevationChartElements: any;
+  @Input() wmMapTrackColor = '#caaf15';
 
   constructor(
     private element: ElementRef,
@@ -82,7 +83,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         features: this._trackFeatures,
       }),
       style: () =>
-        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle('#caaf15'),
+        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle(this.wmMapTrackColor),
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: SELECTED_TRACK_ZINDEX,
