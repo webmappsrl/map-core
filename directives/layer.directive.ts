@@ -23,6 +23,7 @@ import {
   styleLowFn,
   styleHighFn,
   getColorFromLayer,
+  fromNameToHEX,
 } from '../utils';
 import {IMAP} from '../types/model';
 
@@ -111,7 +112,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
               ) {
                 this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
                 const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
-                this.colorSelectedFromLayerEVT.emit(color);
+
+                this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
               }
               return true;
             }.bind(this),
