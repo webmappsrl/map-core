@@ -117,7 +117,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
-    return (
+    console.log(tiles)
+    const tilesMap = (
       tiles.map((tile, index) => {
         return new TileLayer({
           preload: Infinity,
@@ -136,6 +137,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         }),
       ]
     );
+    return tilesMap;
   }
 
   /**
@@ -144,6 +146,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
    * @returns the XYZ source to use
    */
   private _initBaseSource(tile: string): XYZ {
+    if (tile === '') {
+      return null;
+    }
     return new XYZ({
       url: tile,
       tileSize: [256, 256],
