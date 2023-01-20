@@ -61,7 +61,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     if (
       changes.wmMapMap != null &&
       changes.wmMapMap.previousValue == null &&
