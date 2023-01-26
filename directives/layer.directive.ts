@@ -184,9 +184,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
       if (currentZoom > SWITCH_RESOLUTION_ZOOM_LEVEL) {
         this._highVectorTileLayer.setOpacity(this._opacity);
-        this._lowVectorTileLayer.setOpacity(0);
+        this._highVectorTileLayer.setVisible(true);
+        this._lowVectorTileLayer.setVisible(false);
       } else {
-        this._highVectorTileLayer.setOpacity(0);
+        this._highVectorTileLayer.setVisible(false);
+          this._lowVectorTileLayer.setVisible(true);
         this._lowVectorTileLayer.setOpacity(this._opacity);
       }
     }

@@ -492,14 +492,12 @@ export function initVectorTileLayer(
 
   const layer = new VectorTileLayer({
     zIndex: TRACK_ZINDEX,
-    preload: preload ? Infinity : 0,
     renderMode: 'vector',
-    renderBuffer: 512,
+    renderBuffer: 2048,
     source: new VectorTileSource({
       format: new MVT(),
       url: url,
-      overlaps: true,
-      tileSize: 128,
+      overlaps: false,
       tileLoadFunction: tileLoadFn,
     }),
     style: styleFn,
