@@ -1,8 +1,9 @@
+import {startIconHtml, endIconHtml} from './../readonly/icons';
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
 import {FeatureLike} from 'ol/Feature';
-import {Polygon} from 'ol/geom';
-import {Circle, Fill, Text} from 'ol/style';
+import {Point, Polygon} from 'ol/geom';
+import {Circle, Fill, RegularShape, Text} from 'ol/style';
 import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
@@ -282,6 +283,7 @@ export function clusterHullStyle(cluster) {
 
 export function styleCoreFn(feature: FeatureLike) {
   const properties = feature.getProperties();
+  const geometry:any  = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties.layers);
   let strokeStyle: StrokeStyle = new StrokeStyle();
 
@@ -307,13 +309,51 @@ export function styleCoreFn(feature: FeatureLike) {
   };
   handlingStrokeStyleWidth(opt);
 
-  let style = new Style({
+  let styles = [new Style({
     stroke: strokeStyle,
-    zIndex: this.TRACK_ZINDEX,
-  });
-  return style;
+    zIndex: TRACK_ZINDEX + 1,
+  })];
+  if(this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom) {
+    styles = [...styles, ...buildStartEndIcons(geometry)];
+  }
+  return styles;
 }
 
+export function buildStartEndIcons(geometry): Style[] {
+  const start = [geometry[0],geometry[1]];
+  const end = [geometry[geometry.length -2],geometry[geometry.length -1]];
+
+  return [
+    new Style({
+      geometry: new Point(start),
+      image: new RegularShape({
+        fill: new Fill({
+         color: 'green'
+        }),
+        stroke: new Stroke({
+          color: 'white'
+         }),
+         points: 6,
+         radius: 6,
+      }),
+      zIndex: TRACK_ZINDEX + 2,}),
+      new Style({
+        geometry: new Point(end),
+        image: new RegularShape({
+          fill: new Fill({
+           color: 'red'
+          }),
+          stroke: new Stroke({
+            color: 'white'
+           }),
+           points: 6,
+           radius: 10,
+           angle: 0,
+        }),
+        zIndex: TRACK_ZINDEX + 1,
+      })
+  ]
+}
 export function styleLowFn(feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
@@ -352,11 +392,12 @@ export function styleFn(feature: FeatureLike) {
   };
   handlingStrokeStyleWidth(opt);
 
-  let style = new Style({
+  let styles = [new Style({
     stroke: strokeStyle,
     zIndex: TRACK_ZINDEX + 1,
-  });
-  return style;
+  })];
+
+  return styles;
 }
 
 export const fromNameToHEX = {

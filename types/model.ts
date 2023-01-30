@@ -215,5 +215,9 @@ export interface IMAP {
   minStrokeWidth: number;
   minZoom: number;
   pois?: any;
+  ref_on_track_min_zoom: number;
+  ref_on_track_show: boolean;
+  start_end_icons_min_zoom: number;
+  start_end_icons_show: boolean;
   tiles: {[name: string]: string}[];
 }

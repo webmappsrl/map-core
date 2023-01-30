@@ -248,6 +248,36 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
   return feature;
 }
 
+export function createIconFromHtmlAndGeometry(html: string, position: Coordinate): Style {
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const DOMURL = window.URL;
+  const img = new Image();
+  const svg = new Blob([html], {
+    type: 'image/svg+xml',
+  });
+  const url = DOMURL.createObjectURL(svg);
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0);
+    DOMURL.revokeObjectURL(url);
+  };
+  img.src = url;
+  img.crossOrigin == 'Anonymous';
+
+  const style = new Style({
+    geometry: new Point((position)),
+    image: new Icon({
+      anchor: [0.5, 0.5],
+      img: img,
+      imgSize: [32, 32],
+      opacity: 1,
+    }),
+    zIndex: 999999999,
+  });
+
+  return style;
+}
+
 /**
  * Transform a set of EPSG:3857 coordinates in [lon, lat](EPSG:4326)
  *
@@ -482,7 +512,7 @@ export function initInteractions(opt?: DefaultsOptions): Collection<Interaction>
  */
 export function initVectorTileLayer(
   url: any,
-  styleFn: (feature: FeatureLike) => Style,
+  styleFn: (feature: FeatureLike) => [Style]|Style,
   tileLoadFn: LoadFunction,
   preload = false,
 ): VectorTileLayer {
@@ -586,4 +616,13 @@ export function calculateNearestPoint(
     }
   }
   return null;
+}
+
+export function calculateRotation(first, second): number {
+  const firstX =first[0];
+  const firstY =first[1];
+  const secondX =second[0];
+  const secondY =second[1];
+  const temp = [firstX-secondX, firstY-secondY];
+  return Math.atan2(temp[0],temp[1]);
 }
