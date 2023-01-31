@@ -1,14 +1,13 @@
-import {startIconHtml, endIconHtml} from './../readonly/icons';
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
-import {FeatureLike} from 'ol/Feature';
-import {Point, Polygon} from 'ol/geom';
-import {Circle, Fill, RegularShape, Text} from 'ol/style';
-import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
+import { FeatureLike } from 'ol/Feature';
+import { Point, Polygon } from 'ol/geom';
+import { Circle, Fill, RegularShape, Text } from 'ol/style';
+import { default as Stroke, default as StrokeStyle } from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
-import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
-import {ILAYER} from '../types/layer';
+import { DEF_LINE_COLOR, TRACK_ZINDEX } from '../readonly';
+import { ILAYER } from '../types/layer';
 
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
@@ -313,12 +312,38 @@ export function styleCoreFn(feature: FeatureLike) {
     stroke: strokeStyle,
     zIndex: TRACK_ZINDEX + 1,
   })];
-  if(this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom) {
+  if(this.conf.start_end_icons_show && this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom) {
     styles = [...styles, ...buildStartEndIcons(geometry)];
+  }
+  if(this.conf.ref_on_track_show && this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom) {
+    styles = [...styles, buildRefStyle.bind(this)(feature)];
   }
   return styles;
 }
+export function buildRefStyle(feature): Style {
+  const properties = feature.getProperties();
+  let text = new Text({
+    text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
+    font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
+    placement: 'point',
+    offsetY: 20,
+    rotateWithView: true,
+    overflow: true,
+    maxAngle: Math.PI / 16,
+    fill: new Fill({
+      color: this._defaultFeatureColor,
+    }),
+    stroke: new Stroke({
+      color: '#fff',
+      width: 4,
+    }),
+  });
 
+  return new Style({
+    zIndex: TRACK_ZINDEX + 1,
+    text,
+  });
+}
 export function buildStartEndIcons(geometry): Style[] {
   const start = [geometry[0],geometry[1]];
   const end = [geometry[geometry.length -2],geometry[geometry.length -1]];
