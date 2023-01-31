@@ -326,7 +326,6 @@ export function buildRefStyle(feature): Style {
     text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
     font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
     placement: 'point',
-    offsetY: 20,
     rotateWithView: true,
     overflow: true,
     maxAngle: Math.PI / 16,
