@@ -117,6 +117,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
+    console.log('init tile layers')
     const tilesMap = (
       tiles.map((tile, index) => {
         return new TileLayer({
