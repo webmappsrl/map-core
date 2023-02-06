@@ -8,7 +8,8 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {SelectCluster} from 'ol-ext/interaction/SelectCluster';
+import SelectCluster from 'ol-ext/interaction/SelectCluster';
+import Popup from 'ol-ext/overlay/popup';
 import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -48,6 +49,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
+  private _popupOverlay: Popup;
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() onClick: EventEmitter<MapBrowserEvent<UIEvent>>;
@@ -273,10 +275,22 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       source: clusterSource,
     });
     this._selectCluster = createHull(this.wmMapMap);
+    this._popupOverlay = new  Popup({
+      popupClass: "default anim", //"tooltips", "warning" "black" "default", "tips", "shadow",
+      closeBox: true,
+      positioning: 'auto',
+      onclose: ()=>{ clearLayer(this._selectedPoiLayer);},
+      autoPan: {
+        animation: {
+          duration: 100
+        }
+      }
+    });
     this._checkZoom(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._hullClusterLayer);
     this.wmMapMap.addLayer(this._selectedPoiLayer);
+    this.wmMapMap.addOverlay(this._popupOverlay);
     this._selectCluster.getFeatures().on(['add'], e => {
       var c = e.element.get('features');
 
@@ -360,8 +374,20 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       selectedPoiLayerSource.addFeature(iconFeature);
       selectedPoiLayerSource.changed();
 
-      this._fitView(geometry as any);
-      this.currentPoiEvt.emit(currentPoi);
+      //this._fitView(geometry as any);
+      const l =localStorage.getItem('wm-lang')??'it';
+      let name = currentPoi.properties.name;
+      if(typeof name === 'object') {
+        if(name[l] != null) {
+          name = name[l];
+        } else {
+          name = name[Object.keys(name)[0]];
+        }
+        
+      }
+      const content = `<h1>${name}</h1>`;
+      this._popupOverlay.show((currentPoi.geometry as any).getCoordinates(),content);
+    //  this.currentPoiEvt.emit(currentPoi);
     }
   }
 }
