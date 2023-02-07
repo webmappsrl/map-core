@@ -8,7 +8,8 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {SelectCluster} from 'ol-ext/interaction/SelectCluster';
+import SelectCluster from 'ol-ext/interaction/SelectCluster';
+import Popup from 'ol-ext/overlay/popup';
 import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
@@ -42,10 +43,12 @@ const PADDING = [80, 80, 80, 80];
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
+  private _currentPoi: any;
   private _hullClusterLayer: VectorLayer<Cluster>;
   private _isInit = false;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poisClusterLayer: VectorLayer<Cluster>;
+  private _popupOverlay: Popup;
   private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
 
@@ -111,15 +114,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
                 }
               } else {
                 this._selectCluster.setActive(true);
-                const poiFeature = nearestFeatureOfCluster(
-                  this._poisClusterLayer,
-                  event,
-                  this.wmMapMap,
-                );
-                if (poiFeature) {
-                  const poi: IGeojsonFeature = poiFeature.getProperties() as any;
-                  this._selectIcon(poi);
-                }
               }
             }
           });
@@ -273,10 +267,24 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       source: clusterSource,
     });
     this._selectCluster = createHull(this.wmMapMap);
+    this._popupOverlay = new Popup({
+      popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
+      closeBox: true,
+      positioning: 'auto',
+      onclose: () => {
+        clearLayer(this._selectedPoiLayer);
+      },
+      autoPan: {
+        animation: {
+          duration: 100,
+        },
+      },
+    });
     this._checkZoom(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._poisClusterLayer);
     this.wmMapMap.addLayer(this._hullClusterLayer);
     this.wmMapMap.addLayer(this._selectedPoiLayer);
+    this.wmMapMap.addOverlay(this._popupOverlay);
     this._selectCluster.getFeatures().on(['add'], e => {
       var c = e.element.get('features');
 
@@ -313,6 +321,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
   private _selectIcon(currentPoi: IGeojsonGeneric): void {
     clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
+      this._currentPoi = currentPoi;
       const icn = this._getIcnFromTaxonomies(currentPoi.properties.taxonomyIdentifiers);
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();
       let geometry = null;
@@ -359,9 +368,39 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges,
       iconFeature.setId(currentPoi.properties.id);
       selectedPoiLayerSource.addFeature(iconFeature);
       selectedPoiLayerSource.changed();
+      const poiInteraction = this.wmMapConf.pois.poi_interaction ?? 'popup';
+      switch (poiInteraction) {
+        case 'no_interaction':
+          break;
+        case 'popup':
+        default:
+          this._fitView(geometry as any);
+          this.currentPoiEvt.emit(currentPoi);
+          break;
+        case 'tooltip':
+        case 'tooltip_popup':
+          const l = localStorage.getItem('wm-lang') ?? 'it';
+          let name = currentPoi.properties.name;
+          if (typeof name === 'object') {
+            if (name[l] != null) {
+              name = name[l];
+            } else {
+              name = name[Object.keys(name)[0]];
+            }
+          }
 
-      this._fitView(geometry as any);
-      this.currentPoiEvt.emit(currentPoi);
+          let content = `<h2>${name}</h2>`;
+          (window as any).details = () => {
+            this.currentPoiEvt.emit(currentPoi);
+            this._fitView(geometry as any);
+            this._popupOverlay.hide();
+          };
+          if (poiInteraction === 'tooltip_popup') {
+            content += `<p onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></p>`;
+          }
+          this._popupOverlay.show((currentPoi.geometry as any).getCoordinates(), content);
+          break;
+      }
     }
   }
 }

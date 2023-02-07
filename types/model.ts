@@ -214,10 +214,22 @@ export interface IMAP {
   maxZoom: number;
   minStrokeWidth: number;
   minZoom: number;
-  pois?: any;
+  pois?: IPOI;
   ref_on_track_min_zoom: number;
   ref_on_track_show: boolean;
   start_end_icons_min_zoom: number;
   start_end_icons_show: boolean;
   tiles: {[name: string]: string}[];
+}
+export interface IPOI {
+  apppoisApiLayer: boolean;
+  poiIconRadius: string;
+  poiIconZoom: string;
+  poiLabelMinZoom: string;
+  poiMaxRadius: string;
+  poiMinRadius: string;
+  poiMinZoom: string;
+  poi_interaction: 'no_interaction' | 'tooltip' | 'popup' | 'tooltip_popup';
+  skipRouteIndexDownload: boolean;
+  taxonomies: any;
 }
