@@ -59,30 +59,6 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
-  @Input() set onClick(event: MapBrowserEvent<UIEvent>) {
-    try {
-      if (event != null) {
-        this._deselectCurrentPoi();
-        const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
-        if (poiFeature) {
-          preventDefault(event);
-          stopPropagation(event);
-          this.wmMapMap.getInteractions().forEach(i => i.setActive(false));
-          const currentID = +poiFeature.getId() || -1;
-          this.currentRelatedPoi$.next(this._getPoi(currentID));
-          this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
-          this.poiClick.emit(currentID);
-          this.setPoi = currentID;
-          setTimeout(() => {
-            this.wmMapMap.getInteractions().forEach(i => i.setActive(true));
-          }, 1200);
-        }
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.wmMapMap.removeLayer(this._selectedPoiLayer);
