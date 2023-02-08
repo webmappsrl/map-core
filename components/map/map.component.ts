@@ -117,25 +117,23 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
-    const tilesMap = (
-      tiles.map((tile, index) => {
-        return new TileLayer({
-          preload: Infinity,
-          source: this._initBaseSource(Object.values(tile)[0]),
-          visible: index === 0,
-          zIndex: index,
-          className: Object.keys(tile)[0],
-        });
-      }) ?? [
-        new TileLayer({
-          preload: Infinity,
-          source: this._initBaseSource(DEF_XYZ_URL),
-          visible: true,
-          zIndex: 0,
-          className: 'webmapp',
-        }),
-      ]
-    );
+    const tilesMap = tiles.map((tile, index) => {
+      return new TileLayer({
+        preload: Infinity,
+        source: this._initBaseSource(Object.values(tile)[0]),
+        visible: index === 0,
+        zIndex: index,
+        className: Object.keys(tile)[0],
+      });
+    }) ?? [
+      new TileLayer({
+        preload: Infinity,
+        source: this._initBaseSource(DEF_XYZ_URL),
+        visible: true,
+        zIndex: 0,
+        className: 'webmapp',
+      }),
+    ];
     return tilesMap;
   }
 
@@ -204,9 +202,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       target: this.wmMapTarget,
     });
 
-    this.map.on('singleclick', (evt: MapBrowserEvent<UIEvent>) => {
-      this.clickEVT$.emit(evt);
-    });
     this.map.on('postrender', () => {
       const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
       if (degree != this.mapDegrees) {
