@@ -59,9 +59,9 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
-  @Input() set onClick(clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>>) {
-    this._onClickSub = clickEVT$.subscribe(event => {
-      try {
+  @Input() set onClick(event: MapBrowserEvent<UIEvent>) {
+    try {
+      if (event != null) {
         this._deselectCurrentPoi();
         const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
         if (poiFeature) {
@@ -77,10 +77,10 @@ export class wmMapTrackRelatedPoisDirective
             this.wmMapMap.getInteractions().forEach(i => i.setActive(true));
           }, 1200);
         }
-      } catch (e) {
-        console.log(e);
       }
-    });
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   @Input('poi') set setPoi(id: number | 'reset') {
@@ -156,6 +156,25 @@ export class wmMapTrackRelatedPoisDirective
         ((nearestPoi.getStyle() as any).getImage() as any).setScale(1.2);
       }
       this.wmMapTrackRelatedPoisNearestPoiEvt.emit(nearestPoi);
+    }
+    if (
+      changes.wmMapMap != null &&
+      changes.wmMapMap.previousValue == null &&
+      changes.wmMapMap.currentValue != null
+    ) {
+      this.wmMapMap.on('click', event => {
+        this._deselectCurrentPoi();
+        const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
+        if (poiFeature) {
+          preventDefault(event);
+          stopPropagation(event);
+          const currentID = +poiFeature.getId() || -1;
+          this.currentRelatedPoi$.next(this._getPoi(currentID));
+          this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
+          this.poiClick.emit(currentID);
+          this.setPoi = currentID;
+        }
+      });
     }
   }
 
