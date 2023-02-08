@@ -110,7 +110,7 @@ export function createCluster(
   return clusterLayer;
 }
 
-export function createHull(map: Map): SelectCluster {
+export function createHull(): SelectCluster {
   var img = new Circle({
     radius: 5,
     stroke: new Stroke({
@@ -189,10 +189,8 @@ export function createHull(map: Map): SelectCluster {
           }
         }
       }
-
     },
   });
-  map.addInteraction(selectCluster);
   return selectCluster;
 }
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
@@ -265,7 +263,7 @@ export function createIconFromHtmlAndGeometry(html: string, position: Coordinate
   img.crossOrigin == 'Anonymous';
 
   const style = new Style({
-    geometry: new Point((position)),
+    geometry: new Point(position),
     image: new Icon({
       anchor: [0.5, 0.5],
       img: img,
@@ -512,7 +510,7 @@ export function initInteractions(opt?: DefaultsOptions): Collection<Interaction>
  */
 export function initVectorTileLayer(
   url: any,
-  styleFn: (feature: FeatureLike) => [Style]|Style,
+  styleFn: (feature: FeatureLike) => [Style] | Style,
   tileLoadFn: LoadFunction,
   preload = false,
 ): VectorTileLayer {
@@ -619,10 +617,10 @@ export function calculateNearestPoint(
 }
 
 export function calculateRotation(first, second): number {
-  const firstX =first[0];
-  const firstY =first[1];
-  const secondX =second[0];
-  const secondY =second[1];
-  const temp = [firstX-secondX, firstY-secondY];
-  return Math.atan2(temp[0],temp[1]);
+  const firstX = first[0];
+  const firstY = first[1];
+  const secondX = second[0];
+  const secondY = second[1];
+  const temp = [firstX - secondX, firstY - secondY];
+  return Math.atan2(temp[0], temp[1]);
 }

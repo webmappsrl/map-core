@@ -210,7 +210,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       style: clusterHullStyle,
       source: clusterSource,
     });
-    this._selectCluster = createHull(this.wmMapMap);
+    this._selectCluster = createHull();
+    this.wmMapMap.addInteraction(this._selectCluster);
     this._popupOverlay = new Popup({
       popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
       closeBox: true,
@@ -236,18 +237,27 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         if (features.length > 0) {
           setCurrentCluster(features[0]);
           const clusterMembers = features[0].get('features');
+          this._selectCluster.getFeatures().on(['add'], e => {
+            var c = e.element.get('features');
+            if (c != null && c.length === 1) {
+              const poi = c[0].getProperties();
+              this._selectIcon(poi);
+            }
+          });
           if (
             clusterMembers.length > 4 &&
             this.wmMapMap.getView().getZoom() != this.wmMapMap.getView().getMaxZoom()
           ) {
             this.wmMapMap.removeInteraction(this._selectCluster);
-            this._selectCluster = createHull(this.wmMapMap);
+            this._selectCluster = createHull();
+            this.wmMapMap.addInteraction(this._selectCluster);
           }
           if (clusterMembers.length > 1) {
             // Calculate the extent of the cluster members.
             const extent = createEmpty();
             clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
             const view = this.wmMapMap.getView();
+            this._selectCluster.setActive(true);
             if (clusterMembers.length > 4) {
               setTimeout(() => {
                 // Zoom to the extent of the cluster members.
@@ -262,7 +272,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             );
             if (poiFeature) {
               const poi: IGeojsonFeature = poiFeature.getProperties() as any;
-              console.log('setto iconaaa');
               this._selectIcon(poi);
             }
           }
@@ -276,6 +285,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._selectIcon(poi);
         }
       });
+      this._selectCluster.changed();
+      this._poisClusterLayer.changed();
+      const clusterSource: Cluster = this._poisClusterLayer.getSource();
+      const featureSource = clusterSource.getSource();
+      clusterSource.changed();
+      featureSource.changed();
+      this._hullClusterLayer.changed();
     });
   }
 
