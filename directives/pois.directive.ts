@@ -59,6 +59,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     if (
       changes.wmMapMap != null &&
       changes.wmMapMap.previousValue == null &&
@@ -86,7 +87,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     const filtersCondition =
       changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
-    if (this.wmMapMap != null && filtersCondition && changes.wmMapPoisPois?.currentValue != null) {
+    if (this.wmMapMap != null && (filtersCondition || changes.wmMapPoisPois != null)) {
       this._renderPois();
     }
   }
