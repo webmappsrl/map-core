@@ -121,31 +121,23 @@ export function createHull(): SelectCluster {
       color: 'rgba(0,255,255,0.3)',
     }),
   });
-  var style = new Style({
-    image: img,
-    // Draw a link beetween points (or not)
-    stroke: new Stroke({
-      color: '#fff',
-      width: 1,
-    }),
-  });
+
   const selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
     pointRadius: 34,
-    circleMaxObjects: 20,
-    // spiral: false,
+    circleMaxObjects: 4,
+    maxObjects: 4,
+    spiral: false,
     autoClose: true,
     animate: true,
     name: 'selectCluster',
     // Feature style when it springs apart
-    featureStyle: function () {
-      return [style];
-    },
     style: function (f, res) {
       var cluster = f.get('features');
+      console.log(cluster);
       if (cluster != null) {
         if (cluster.length > 1) {
-          var s = [getClusterStyle(f, res)];
+          var s = [];
           if (convexHull) {
             var coords = [];
             for (let i = 0; i < cluster.length; i++)
@@ -175,15 +167,6 @@ export function createHull(): SelectCluster {
                 anchor: [0.5, 0.5],
                 scale: 1,
                 src,
-              }),
-            });
-          } else {
-            const icn = getIcnFromTaxonomies(prop.taxonomyIdentifiers);
-            return new Style({
-              image: new Icon({
-                anchor: [0.5, 0.5],
-                scale: 0.5,
-                src: `${ICN_PATH}/${icn}_selected.png`,
               }),
             });
           }

@@ -231,84 +231,32 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.wmMapMap.addLayer(this._selectedPoiLayer);
     this.wmMapMap.addOverlay(this._popupOverlay);
 
+    this._selectCluster.getFeatures().on(['add'], e => {
+      var c = e.element.get('features');
+      if (c != null && c.length === 1) {
+        const poi = c[0].getProperties();
+        this._selectIcon(poi);
+      }
+    });
+
     this.wmMapMap.on('click', (event: MapBrowserEvent<UIEvent>) => {
       this._poisClusterLayer.getFeatures(event.pixel).then(features => {
-        clearLayer(this._selectedPoiLayer);
         if (features.length > 0) {
-          setCurrentCluster(features[0]);
           const clusterMembers = features[0].get('features');
-          this._selectCluster.getFeatures().on(['add'], e => {
-            var c = e.element.get('features');
-            if (c != null && c.length === 1) {
-              const poi = c[0].getProperties();
-              this._selectIcon(poi);
-            }
-          });
-          if (
-            clusterMembers.length > 4 &&
-            this.wmMapMap.getView().getZoom() != this.wmMapMap.getView().getMaxZoom()
-          ) {
-            this.wmMapMap.removeInteraction(this._selectCluster);
-            this._selectCluster = createHull();
-            this.wmMapMap.addInteraction(this._selectCluster);
-          }
-          if (clusterMembers.length > 1) {
-            // Calculate the extent of the cluster members.
-            const extent = createEmpty();
-            clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
-            const view = this.wmMapMap.getView();
-            this._selectCluster.setActive(true);
-            this._selectCluster.getFeatures().on(['add'], e => {
-              var c = e.element.get('features');
-              if (c != null && c.length === 1) {
-                const poi = c[0].getProperties();
-                this._selectIcon(poi);
-              }
-            });
-            if (clusterMembers.length > 4) {
-              setTimeout(() => {
-                // Zoom to the extent of the cluster members.
-                view.fit(extent, {duration: 500, padding: PADDING});
-              }, 400);
-            }
-          } else {
-            const poiFeature = nearestFeatureOfCluster(
-              this._poisClusterLayer,
-              event,
-              this.wmMapMap,
-            );
-            if (poiFeature) {
-              const poi: IGeojsonFeature = poiFeature.getProperties() as any;
-              this._selectIcon(poi);
-            }
-          }
-        } else {
-          const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.wmMapMap);
-          if (poiFeature) {
-            const poi: IGeojsonFeature = poiFeature.getProperties() as any;
-            this._selectIcon(poi);
+          if (clusterMembers.length > 4) {
+            setTimeout(() => {
+              // Zoom to the extent of the cluster members.
+              const view = this.wmMapMap.getView();
+              const extent = createEmpty();
+              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
+              view.fit(extent, {duration: 500, padding: PADDING});
+            }, 400);
           }
         }
       });
-
-      this._selectCluster.getFeatures().on(['add'], e => {
-        var c = e.element.get('features');
-        if (c != null && c.length === 1) {
-          const poi = c[0].getProperties();
-          this._selectIcon(poi);
-        }
-      });
-      this._selectCluster.changed();
-      this._poisClusterLayer.changed();
-      const clusterSource: Cluster = this._poisClusterLayer.getSource();
-      const featureSource = clusterSource.getSource();
-      clusterSource.changed();
-      featureSource.changed();
-      this._hullClusterLayer.changed();
     });
   }
 
-  //@Log({prefix: 'map.directive'})
   private _renderPois(): void {
     if (this.wmMapPoisPois != null) {
       if (this.wmMapPoisFilters.length > 0) {
