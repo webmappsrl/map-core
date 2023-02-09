@@ -258,6 +258,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
             const view = this.wmMapMap.getView();
             this._selectCluster.setActive(true);
+            this._selectCluster.getFeatures().on(['add'], e => {
+              var c = e.element.get('features');
+              if (c != null && c.length === 1) {
+                const poi = c[0].getProperties();
+                this._selectIcon(poi);
+              }
+            });
             if (clusterMembers.length > 4) {
               setTimeout(() => {
                 // Zoom to the extent of the cluster members.
@@ -274,6 +281,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               const poi: IGeojsonFeature = poiFeature.getProperties() as any;
               this._selectIcon(poi);
             }
+          }
+        } else {
+          const poiFeature = nearestFeatureOfCluster(this._poisClusterLayer, event, this.wmMapMap);
+          if (poiFeature) {
+            const poi: IGeojsonFeature = poiFeature.getProperties() as any;
+            this._selectIcon(poi);
           }
         }
       });
