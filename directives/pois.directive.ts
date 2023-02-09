@@ -18,7 +18,7 @@ import {fromLonLat} from 'ol/proj';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
-import {clusterHullStyle, fromHEXToColor, setCurrentCluster} from './../utils/styles';
+import {clusterHullStyle, fromHEXToColor} from './../utils/styles';
 
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
@@ -33,7 +33,6 @@ import {
   createHull,
   createLayer,
   intersectionBetweenArrays,
-  nearestFeatureOfCluster,
 } from '../utils';
 
 const PADDING = [80, 80, 80, 80];
@@ -186,11 +185,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (optOptions == null) {
       optOptions = {
         maxZoom: this.wmMapMap.getView().getMaxZoom() - 1,
-        duration: 1000,
+        duration: 500,
         padding: PADDING,
       };
     }
-    this._mapCmp.fitView(geometryOrExtent, optOptions);
+    this.wmMapMap.getView().fit(geometryOrExtent, optOptions);
   }
 
   private _getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
@@ -236,6 +235,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       if (c != null && c.length === 1) {
         const poi = c[0].getProperties();
         this._selectIcon(poi);
+        this._selectCluster.clear();
       }
     });
 
@@ -283,7 +283,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
       this._currentPoi = currentPoi;
-      const icn = this._getIcnFromTaxonomies(currentPoi.properties.taxonomyIdentifiers);
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();
       let geometry = null;
 
@@ -297,15 +296,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       } else {
         geometry = currentPoi.geometry;
       }
-      const iconFeature = new Feature({type: 'icon', geometry});
-      let iconStyle = new Style({
-        image: new Icon({
-          anchor: [0.5, 0.5],
-          scale: 0.5,
-          src: `${ICN_PATH}/${icn}_selected.png`,
-        }),
-      });
+
       if (currentPoi.properties != null && currentPoi.properties.svgIcon != null) {
+        const iconFeature = new Feature({type: 'icon', geometry});
         const properties = currentPoi.properties || null;
         const taxonomy = properties.taxonomy || null;
         const poyType = taxonomy.poi_type || null;
@@ -315,7 +308,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           ? properties.color
           : '#ff8c00';
         const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
-        iconStyle = new Style({
+        let iconStyle = new Style({
+          zIndex: 200,
+
           image: new Icon({
             anchor: [0.5, 0.5],
             scale: 1,
@@ -324,11 +319,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`,
           }),
         });
+        iconFeature.setStyle(iconStyle);
+        iconFeature.setId(currentPoi.properties.id);
+        selectedPoiLayerSource.addFeature(iconFeature);
+        selectedPoiLayerSource.changed();
       }
-      iconFeature.setStyle(iconStyle);
-      iconFeature.setId(currentPoi.properties.id);
-      selectedPoiLayerSource.addFeature(iconFeature);
-      selectedPoiLayerSource.changed();
+
       const poiInteraction = this.wmMapConf.pois.poi_interaction ?? 'popup';
       switch (poiInteraction) {
         case 'no_interaction':

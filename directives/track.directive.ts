@@ -288,20 +288,4 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       this._popoverRef.instance.message$.next(null);
     }
   }
-
-  private _zoomToExtent(): void {
-    if (this._trackFeatures && this._trackFeatures.length > 0) {
-      setTimeout(() => {
-        const ext = this._trackLayer.getSource().getExtent();
-        if (ext) {
-          const optOptions = {
-            duration: 0,
-            maxZoom: this.wmMapMap.getView().getConstrainedZoom(13),
-          };
-          this.wmMapMap.getView().fit(ext, optOptions);
-          this.wmMapMap.updateSize();
-        }
-      }, 300);
-    }
-  }
 }

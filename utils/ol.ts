@@ -134,7 +134,6 @@ export function createHull(): SelectCluster {
     // Feature style when it springs apart
     style: function (f, res) {
       var cluster = f.get('features');
-      console.log(cluster);
       if (cluster != null) {
         if (cluster.length > 1) {
           var s = [];
