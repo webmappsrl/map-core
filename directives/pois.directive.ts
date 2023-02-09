@@ -87,7 +87,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     const filtersCondition =
       changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
-    if (this.wmMapMap != null && (filtersCondition || changes.wmMapPoisPois != null)) {
+    if (this.wmMapMap != null && filtersCondition && changes.wmMapPoisPois?.currentValue != null) {
       this._renderPois();
     }
   }
