@@ -184,7 +184,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
       optOptions = {
-        maxZoom: this.wmMapMap.getView().getMaxZoom() - 1,
+        maxZoom: this.wmMapMap.getView().getMaxZoom() - 4,
         duration: 500,
         padding: PADDING,
       };
