@@ -267,6 +267,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               view.fit(extent, {duration: 500, padding: PADDING});
             }, 400);
           }
+          if (clusterMembers.length === 1) {
+            const poi = clusterMembers[0].getProperties();
+            this._selectIcon(poi);
+            this._selectCluster.clear();
+          }
         }
       });
     });
@@ -352,6 +357,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         case 'tooltip':
         case 'tooltip_popup':
           const l = localStorage.getItem('wm-lang') ?? 'it';
+          console.log(l);
           let nameObj = this._cleanObj(currentPoi.properties.name);
           let name = nameObj;
           if (typeof nameObj != 'string') {
