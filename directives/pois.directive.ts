@@ -34,7 +34,6 @@ import {
   createLayer,
   intersectionBetweenArrays,
 } from '../utils';
-
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
@@ -178,6 +177,22 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         layer.setVisible(false);
       }
     }
+  }
+
+  private _cleanObj(
+    val: {[key: string]: string | null} | string,
+  ): {[key: string]: string | null} | string {
+    if (typeof val === 'string') {
+      return val;
+    }
+    const res = {};
+    const keys = Object.keys(val);
+    keys.forEach(key => {
+      if (val[key] != null && val[key] !== '') {
+        res[key] = val[key];
+      }
+    });
+    return res;
   }
 
   //@Log({prefix: 'map.directive'})
@@ -337,12 +352,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         case 'tooltip':
         case 'tooltip_popup':
           const l = localStorage.getItem('wm-lang') ?? 'it';
-          let name = currentPoi.properties.name;
-          if (typeof name === 'object') {
-            if (name[l] != null) {
-              name = name[l];
+          let nameObj = this._cleanObj(currentPoi.properties.name);
+          let name = nameObj;
+          if (typeof nameObj != 'string') {
+            if (nameObj[l] != null) {
+              name = nameObj[l];
             } else {
-              name = name[Object.keys(name)[0]];
+              name = nameObj[Object.keys(name)[0]];
             }
           }
 
