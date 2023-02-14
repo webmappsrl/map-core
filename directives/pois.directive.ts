@@ -377,7 +377,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           if (poiInteraction === 'tooltip_popup') {
             content += `<p onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></p>`;
           }
-          this._popupOverlay.show((currentPoi.geometry as any).getCoordinates(), content);
+          const coordinates = (currentPoi.geometry as any).getCoordinates
+            ? (currentPoi.geometry as any).getCoordinates()
+            : fromLonLat([
+                (currentPoi.geometry as any).coordinates[0],
+                (currentPoi.geometry as any).coordinates[1],
+              ]);
+          this._popupOverlay.show(coordinates, content);
           break;
       }
     }
