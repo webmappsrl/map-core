@@ -358,7 +358,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         case 'tooltip_popup':
           this._fitView(geometry as any);
           const l = localStorage.getItem('wm-lang') ?? 'it';
-          console.log(l);
           let nameObj = this._cleanObj(currentPoi.properties.name);
           let name = nameObj;
           if (typeof nameObj != 'string') {
@@ -368,16 +367,23 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               name = nameObj[Object.keys(name)[0]];
             }
           }
-
-          let content = `<h2>${name}</h2>`;
+          let content = '<ion-card>';
+          if (currentPoi?.properties?.feature_image?.url) {
+            content += `<div class="img-cnt"><img src='${currentPoi.properties.feature_image.url}'/></div>`;
+          }
+          content += `
+          <ion-card-content>
+              ${name}
+          </ion-card-content>`;
           (window as any).details = () => {
             this.currentPoiEvt.emit(currentPoi);
             this._fitView(geometry as any);
             this._popupOverlay.hide();
           };
           if (poiInteraction === 'tooltip_popup') {
-            content += `<p onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></p>`;
+            content += `<ion-button fill="clear" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
           }
+          content += '</ion-card>';
           const coordinates = (currentPoi.geometry as any).getCoordinates
             ? (currentPoi.geometry as any).getCoordinates()
             : fromLonLat([
