@@ -1,14 +1,6 @@
-import {POSITION_ZINDEX} from '../readonly';
-import {BehaviorSubject, Subscription, from} from 'rxjs';
-import {
-  Directive,
-  EventEmitter,
-  Input,
-  OnDestroy,
-  Output,
-  OnChanges,
-  SimpleChanges,
-} from '@angular/core';
+import {locationIconHtml, POSITION_ZINDEX} from '../readonly';
+import {BehaviorSubject, Subscription} from 'rxjs';
+import {Directive, Input, OnDestroy, OnChanges, SimpleChanges} from '@angular/core';
 
 import {Feature} from 'ol';
 import {FitOptions} from 'ol/View';
@@ -19,7 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
-import {circularPolygon} from '../utils/ol';
+import {circularPolygon, createIconFeatureFromHtml} from '../utils/ol';
 interface Bearing {
   cos: number;
   sin: number;
@@ -57,8 +49,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     source: new VectorSource({
       features: [this._featureAccuracy],
     }),
-
-    zIndex: POSITION_ZINDEX + 10,
+    zIndex: POSITION_ZINDEX - 10,
   });
   private _layerLocation = new VectorLayer({
     source: new VectorSource({
