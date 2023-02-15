@@ -1,4 +1,4 @@
-import {locationIconHtml, POSITION_ZINDEX} from '../readonly';
+import {POSITION_ZINDEX} from '../readonly';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import {Directive, Input, OnDestroy, OnChanges, SimpleChanges} from '@angular/core';
 
@@ -11,7 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
-import {circularPolygon, createIconFeatureFromHtml} from '../utils/ol';
+import {circularPolygon} from '../utils/ol';
 interface Bearing {
   cos: number;
   sin: number;
