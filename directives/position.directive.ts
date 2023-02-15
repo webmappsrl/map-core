@@ -19,11 +19,13 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
+import {circularPolygon} from '../utils/ol';
 interface Bearing {
   cos: number;
   sin: number;
 }
 interface Location {
+  accuracy: number;
   altitude: number;
   bearing: number;
   latitude: number;
@@ -37,25 +39,33 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   private _bgCurrentLocSub: Subscription = Subscription.EMPTY;
   private _bgLocSub: Subscription = Subscription.EMPTY;
   private _currentLocation: Location;
+  private _featureAccuracy = new Feature();
+  private _featureLocation = new Feature();
   private _focus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private _lastBearings: Bearing[] = [];
-  private _locationArrowIcon = new Icon({
-    src: 'map-core/assets/location-icon-arrow.png',
-    scale: 0.4,
-    size: [125, 125],
-  });
-  private _locationFeature = new Feature();
-  private _locationIcon = new Icon({
+  private _iconLocation = new Icon({
     src: 'map-core/assets/location-icon.png',
     scale: 0.4,
     size: [125, 125],
   });
-  private _locationLayer = new VectorLayer({
+  private _iconLocationArrow = new Icon({
+    src: 'map-core/assets/location-icon-arrow.png',
+    scale: 0.4,
+    size: [125, 125],
+  });
+  private _lastBearings: Bearing[] = [];
+  private _layerAccuracy = new VectorLayer({
     source: new VectorSource({
-      features: [this._locationFeature],
+      features: [this._featureAccuracy],
+    }),
+
+    zIndex: POSITION_ZINDEX + 10,
+  });
+  private _layerLocation = new VectorLayer({
+    source: new VectorSource({
+      features: [this._featureLocation],
     }),
     style: new Style({
-      image: this._locationIcon,
+      image: this._iconLocation,
     }),
     zIndex: POSITION_ZINDEX,
   });
@@ -66,12 +76,13 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.wmMapMap && changes.wmMapMap.currentValue != null) {
-      this.wmMapMap.addLayer(this._locationLayer);
+      this.wmMapMap.addLayer(this._layerLocation);
+      this.wmMapMap.addLayer(this._layerAccuracy);
       if (this._currentLocation != null) {
         this._setPositionByLocation(this._currentLocation);
       }
       this.wmMapMap.render();
-      this._locationLayer.getSource().changed();
+      this._layerLocation.getSource().changed();
     }
     if (
       changes.wmMapPositioncurrentLocation != null &&
@@ -89,21 +100,21 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
       const val = changes.wmMapPositionfocus.currentValue;
       this._focus$.next(val);
       if (val === true) {
-        this._locationLayer.setStyle(
+        this._layerLocation.setStyle(
           new Style({
-            image: this._locationArrowIcon,
+            image: this._iconLocationArrow,
           }),
         );
         this.wmMapMap.getView().setZoom(this.wmMapMap.getView().getZoom() + 1);
         this._setPositionByLocation(this._currentLocation);
       } else {
-        this._locationLayer.setStyle(
+        this._layerLocation.setStyle(
           new Style({
-            image: this._locationIcon,
+            image: this._iconLocation,
           }),
         );
       }
-      this._locationLayer.getSource().changed();
+      this._layerLocation.getSource().changed();
       if (this.wmMapMap != null) {
         this.wmMapMap.render();
       }
@@ -193,7 +204,9 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
 
   private _updateGeometry(loc: Location): Point {
     const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
-    this._locationFeature.setGeometry(point);
+    const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy * 4);
+    this._featureLocation.setGeometry(point);
+    this._featureAccuracy.setGeometry(geometry);
     return point;
   }
 }

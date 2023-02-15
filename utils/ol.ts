@@ -3,7 +3,7 @@ import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
 import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
-import {buffer, Extent} from 'ol/extent';
+import {buffer, extend, Extent} from 'ol/extent';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
 import {Geometry, Point} from 'ol/geom';
@@ -16,7 +16,7 @@ import {fromLonLat, toLonLat, transform, transformExtent} from 'ol/proj';
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import VectorTileSource from 'ol/source/VectorTile';
-import {getDistance} from 'ol/sphere';
+import {getDistance, offset} from 'ol/sphere';
 import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
 import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
 
@@ -605,4 +605,60 @@ export function calculateRotation(first, second): number {
   const secondY = second[1];
   const temp = [firstX - secondX, firstY - secondY];
   return Math.atan2(temp[0], temp[1]);
+}
+
+/**
+ * Create an approximation of a circle on the surface of a sphere.
+ * @param {import("../coordinate.js").Coordinate} center Center (`[lon, lat]` in degrees).
+ * @param {number} radius The great-circle distance from the center to
+ *     the polygon vertices in meters.
+ * @param {number} [n] Optional number of vertices for the resulting
+ *     polygon. Default is `32`.
+ * @param {number} [sphereRadius] Optional radius for the sphere (defaults to
+ *     the Earth's mean radius using the WGS84 ellipsoid).
+ * @return {Polygon} The "circular" polygon.
+ * @api
+ */
+export function circularPolygon(center, radius, n?, sphereRadius?) {
+  n = n ? n : 32;
+  /** @type {Array<number>} */
+  const flatCoordinates = [];
+  for (let i = 0; i < n; ++i) {
+    const of = offset(center, radius, (2 * Math.PI * i) / n, sphereRadius);
+    arrayExtend(flatCoordinates, fromLonLat(of));
+  }
+  flatCoordinates.push(flatCoordinates[0], flatCoordinates[1]);
+  return new Polygon(flatCoordinates, 'XY', [flatCoordinates.length]);
+}
+
+/**
+ * Converts radians to to degrees.
+ *
+ * @param {number} angleInRadians Angle in radians.
+ * @return {number} Angle in degrees.
+ */
+export function toDegrees(angleInRadians) {
+  return (angleInRadians * 180) / Math.PI;
+}
+
+/**
+ * Converts degrees to radians.
+ *
+ * @param {number} angleInDegrees Angle in degrees.
+ * @return {number} Angle in radians.
+ */
+export function toRadians(angleInDegrees) {
+  return (angleInDegrees * Math.PI) / 180;
+}
+/**
+ * @param {Array<VALUE>} arr The array to modify.
+ * @param {!Array<VALUE>|VALUE} data The elements or arrays of elements to add to arr.
+ * @template VALUE
+ */
+export function arrayExtend(arr, data) {
+  const extension = Array.isArray(data) ? data : [data];
+  const length = extension.length;
+  for (let i = 0; i < length; i++) {
+    arr[arr.length] = extension[i];
+  }
 }
