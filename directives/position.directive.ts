@@ -195,7 +195,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
 
   private _updateGeometry(loc: Location): Point {
     const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
-    const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy * 4);
+    const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy);
     this._featureLocation.setGeometry(point);
     this._featureAccuracy.setGeometry(geometry);
     return point;

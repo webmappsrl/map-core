@@ -1,3 +1,4 @@
+import {offset} from 'ol/sphere';
 import {
   Directive,
   EventEmitter,
@@ -229,7 +230,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._popupOverlay = new Popup({
       popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
       closeBox: true,
-      positioning: 'auto',
+      offset: [0, -16],
+      positioning: 'bottom-center',
       onclose: () => {
         clearLayer(this._selectedPoiLayer);
       },
@@ -345,7 +347,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         selectedPoiLayerSource.changed();
       }
 
-      const poiInteraction = this.wmMapConf.pois.poi_interaction ?? 'popup';
+      const poiInteraction = this.wmMapConf.pois.poi_interaction ?? 'tooltip';
       switch (poiInteraction) {
         case 'no_interaction':
           break;
@@ -381,7 +383,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             this._popupOverlay.hide();
           };
           if (poiInteraction === 'tooltip_popup') {
-            content += `<ion-button fill="clear" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
+            content += `<ion-button  expand="block" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
           }
           content += '</ion-card>';
           const coordinates = (currentPoi.geometry as any).getCoordinates
