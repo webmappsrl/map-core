@@ -47,6 +47,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _popupOverlay: Popup;
   private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
+  private _olFeatures = [];
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapPoisFilters: any[] = [];
@@ -66,7 +67,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._isInit === false
     ) {
       this._initDirective();
-      this._renderPois();
     }
     if (changes.wmMapPoisPoi) {
       if (this.wmMapMap != null) {
@@ -76,6 +76,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this.setPoi(this.wmMapPoisPoi);
         }, 300);
       }
+    }
+    if (changes.wmMapPoisPois) {
+      this._renderPois();
     }
 
     if (
@@ -87,7 +90,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     const filtersCondition =
       changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
     if (this.wmMapMap != null && (filtersCondition || changes.wmMapPoisPois != null)) {
-      this._renderPois();
+      this._updatePois();
     }
   }
 
@@ -98,6 +101,29 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       setTimeout(() => {
         this._selectIcon(currentPoi);
       }, 200);
+    }
+  }
+
+  private _updatePois(): void {
+    console.log('update pois');
+    if (this._poisClusterLayer != null) {
+      const clusterSource: Cluster = this._poisClusterLayer.getSource();
+      const featureSource = clusterSource.getSource();
+      featureSource.clear();
+      if (this.wmMapPoisFilters.length > 0) {
+        const featuresToAdd = this._olFeatures.filter(f => {
+          const p = f.getProperties().properties;
+          const intersection = intersectionBetweenArrays(
+            p.taxonomyIdentifiers,
+            this.wmMapPoisFilters,
+          );
+          return intersection.length > 0;
+        });
+        featureSource.addFeatures(featuresToAdd);
+      } else {
+        featureSource.addFeatures(this._olFeatures);
+      }
+      featureSource.changed();
     }
   }
 
@@ -161,7 +187,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         clusterSource.changed();
       }
     }
-
+    this._olFeatures = featureSource.getFeatures();
     this.wmMapMap.on('moveend', e => {
       this._checkZoom(this._poisClusterLayer);
     });
@@ -280,22 +306,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _renderPois(): void {
+    console.log('render pois');
     if (this.wmMapPoisPois != null) {
-      if (this.wmMapPoisFilters.length > 0) {
-        if (this._poisClusterLayer != null) {
-          clearLayer(this._poisClusterLayer);
-          changedLayer(this._poisClusterLayer);
-        }
-        const selectedFeatures = this.wmMapPoisPois.features.filter(p => {
-          const intersection = intersectionBetweenArrays(
-            p.properties.taxonomyIdentifiers,
-            this.wmMapPoisFilters,
-          );
-
-          return intersection.length > 0;
-        });
-        this._addPoisFeature(selectedFeatures);
-      } else {
+      {
         this._addPoisFeature(this.wmMapPoisPois.features);
       }
     }
