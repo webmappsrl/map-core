@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Directive,
   EventEmitter,
   Host,
@@ -52,7 +53,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() wmMapPoisPois: any;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(@Host() private _mapCmp: WmMapComponent) {
+  constructor(private _cdr: ChangeDetectorRef) {
     super();
   }
 
@@ -164,6 +165,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._olFeatures = featureSource.getFeatures();
     this.wmMapMap.on('moveend', e => {
       this._checkZoom(this._poisClusterLayer);
+    });
+    this.wmMapMap.on('pointermove', evt => {
+      var pixel = this.wmMapMap.getEventPixel(evt.originalEvent);
+      var hit = this.wmMapMap.hasFeatureAtPixel(pixel);
+      this.wmMapMap.getViewport().style.cursor = hit ? 'pointer' : '';
     });
   }
 
@@ -379,7 +385,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._popupOverlay.show(coordinates, content);
           setTimeout(() => {
             this.wmMapMap.updateSize();
-          }, 300);
+            this._cdr.detectChanges();
+          }, 500);
           break;
       }
     }
