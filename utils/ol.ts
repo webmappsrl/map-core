@@ -197,7 +197,7 @@ export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
 }
 
 export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature {
-  const canvas = <HTMLCanvasElement>document.getElementById('ol-map');
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const DOMURL = window.URL;
   const img = new Image();
