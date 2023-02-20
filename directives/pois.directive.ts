@@ -2,7 +2,6 @@ import {
   ChangeDetectorRef,
   Directive,
   EventEmitter,
-  Host,
   Input,
   OnChanges,
   Output,
@@ -24,7 +23,6 @@ import {clusterHullStyle, fromHEXToColor} from './../utils/styles';
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from '.';
-import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {
@@ -94,7 +92,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   setPoi(id: number | 'reset'): void {
     if (id != 'reset' && id > -1 && this.wmMapPoisPois != null) {
-      this._selectCluster.setActive(false);
       const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
       setTimeout(() => {
         this._selectIcon(currentPoi);
@@ -258,7 +255,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       if (c != null && c.length === 1) {
         const poi = c[0].getProperties();
         this._selectIcon(poi);
-        this._selectCluster.clear();
       }
     });
 
@@ -278,7 +274,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           if (clusterMembers.length === 1) {
             const poi = clusterMembers[0].getProperties();
             this._selectIcon(poi);
-            this._selectCluster.clear();
           }
         }
       });
@@ -411,6 +406,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         featureSource.addFeatures(this._olFeatures);
       }
       featureSource.changed();
+      clusterSource.changed();
+      this._poisClusterLayer.changed();
+      this._cdr.detectChanges();
     }
   }
 }
