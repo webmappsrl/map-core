@@ -43,11 +43,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _currentPoi: any;
   private _hullClusterLayer: VectorLayer<Cluster>;
   private _isInit = false;
+  private _olFeatures = [];
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _popupOverlay: Popup;
   private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
-  private _olFeatures = [];
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapPoisFilters: any[] = [];
@@ -101,29 +101,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       setTimeout(() => {
         this._selectIcon(currentPoi);
       }, 200);
-    }
-  }
-
-  private _updatePois(): void {
-    console.log('update pois');
-    if (this._poisClusterLayer != null) {
-      const clusterSource: Cluster = this._poisClusterLayer.getSource();
-      const featureSource = clusterSource.getSource();
-      featureSource.clear();
-      if (this.wmMapPoisFilters.length > 0) {
-        const featuresToAdd = this._olFeatures.filter(f => {
-          const p = f.getProperties().properties;
-          const intersection = intersectionBetweenArrays(
-            p.taxonomyIdentifiers,
-            this.wmMapPoisFilters,
-          );
-          return intersection.length > 0;
-        });
-        featureSource.addFeatures(featuresToAdd);
-      } else {
-        featureSource.addFeatures(this._olFeatures);
-      }
-      featureSource.changed();
     }
   }
 
@@ -394,6 +371,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             this.currentPoiEvt.emit(currentPoi);
             this._fitView(geometry as any);
             this._popupOverlay.hide();
+            this.wmMapMap.updateSize();
           };
           if (poiInteraction === 'tooltip_popup') {
             content += `<ion-button  expand="block" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
@@ -409,6 +387,29 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._popupOverlay.show(coordinates, content);
           break;
       }
+    }
+  }
+
+  private _updatePois(): void {
+    console.log('update pois');
+    if (this._poisClusterLayer != null) {
+      const clusterSource: Cluster = this._poisClusterLayer.getSource();
+      const featureSource = clusterSource.getSource();
+      featureSource.clear();
+      if (this.wmMapPoisFilters.length > 0) {
+        const featuresToAdd = this._olFeatures.filter(f => {
+          const p = f.getProperties().properties;
+          const intersection = intersectionBetweenArrays(
+            p.taxonomyIdentifiers,
+            this.wmMapPoisFilters,
+          );
+          return intersection.length > 0;
+        });
+        featureSource.addFeatures(featuresToAdd);
+      } else {
+        featureSource.addFeatures(this._olFeatures);
+      }
+      featureSource.changed();
     }
   }
 }
