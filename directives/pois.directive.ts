@@ -371,7 +371,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             this.currentPoiEvt.emit(currentPoi);
             this._fitView(geometry as any);
             this._popupOverlay.hide();
-            this.wmMapMap.updateSize();
           };
           if (poiInteraction === 'tooltip_popup') {
             content += `<ion-button  expand="block" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
@@ -385,6 +384,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               ]);
           this._fitView(coordinates);
           this._popupOverlay.show(coordinates, content);
+          this.wmMapMap.updateSize();
           break;
       }
     }
