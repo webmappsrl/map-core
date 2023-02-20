@@ -81,13 +81,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }, 500);
   }
 
-  resetRotation(): void {
-    this._view.animate({
-      duration: 0,
-      rotation: 0,
-    });
-  }
-
   ngAfterViewInit(): void {
     setTimeout(() => {
       if (this._view != null) {
@@ -119,6 +112,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   public orientNorth() {
     this._view.animate({
       duration: DEF_MAP_ROTATION_DURATION,
+      rotation: 0,
+    });
+  }
+
+  resetRotation(): void {
+    this._view.animate({
+      duration: 0,
       rotation: 0,
     });
   }

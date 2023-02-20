@@ -76,6 +76,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (changes.wmMapPoisPois) {
       setTimeout(() => {
         this._renderPois();
+        this._updatePois();
       }, 100);
     }
 
