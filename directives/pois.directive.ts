@@ -1,4 +1,3 @@
-import {offset} from 'ol/sphere';
 import {
   Directive,
   EventEmitter,
@@ -28,7 +27,6 @@ import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {
-  changedLayer,
   clearLayer,
   createCluster,
   createHull,
@@ -40,7 +38,6 @@ const PADDING = [80, 80, 80, 80];
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {
-  private _currentPoi: any;
   private _hullClusterLayer: VectorLayer<Cluster>;
   private _isInit = false;
   private _olFeatures = [];
@@ -283,18 +280,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _renderPois(): void {
-    console.log('render pois');
     if (this.wmMapPoisPois != null) {
-      {
-        this._addPoisFeature(this.wmMapPoisPois.features);
-      }
+      this._addPoisFeature(this.wmMapPoisPois.features);
     }
   }
 
   private _selectIcon(currentPoi: IGeojsonGeneric): void {
     clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
-      this._currentPoi = currentPoi;
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();
       let geometry = null;
 
@@ -393,7 +386,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _updatePois(): void {
-    console.log('update pois');
     if (this._poisClusterLayer != null) {
       const clusterSource: Cluster = this._poisClusterLayer.getSource();
       const featureSource = clusterSource.getSource();
