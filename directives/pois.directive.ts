@@ -384,7 +384,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               ]);
           this._fitView(coordinates);
           this._popupOverlay.show(coordinates, content);
-          this.wmMapMap.updateSize();
+          setTimeout(() => {
+            this.wmMapMap.updateSize();
+          }, 300);
           break;
       }
     }
