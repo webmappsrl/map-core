@@ -329,6 +329,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         iconFeature.setId(currentPoi.properties.id);
         selectedPoiLayerSource.addFeature(iconFeature);
         selectedPoiLayerSource.changed();
+        this._selectCluster.clear();
       }
 
       const poiInteraction = this.wmMapConf.pois.poi_interaction ?? 'tooltip';
@@ -380,6 +381,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._popupOverlay.show(coordinates, content);
           setTimeout(() => {
             this.wmMapMap.updateSize();
+            this.wmMapMap.setTarget('ol-map');
+            this.wmMapMap.changed();
             this._cdr.detectChanges();
           }, 500);
           break;
