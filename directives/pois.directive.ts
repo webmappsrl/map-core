@@ -341,12 +341,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           break;
         case 'popup':
         default:
-          this._fitView(geometry as any);
           this.currentPoiEvt.emit(currentPoi);
           break;
         case 'tooltip':
         case 'tooltip_popup':
-          this._fitView(geometry as any);
           const l = localStorage.getItem('wm-lang') ?? 'it';
           let nameObj = this._cleanObj(currentPoi.properties.name);
           let name = nameObj;
@@ -380,7 +378,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
                 (currentPoi.geometry as any).coordinates[0],
                 (currentPoi.geometry as any).coordinates[1],
               ]);
-          this._fitView(coordinates);
           this._popupOverlay.show(coordinates, content);
           setTimeout(() => {
             this.wmMapMap.updateSize();
@@ -390,6 +387,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }, 500);
           break;
       }
+      this.wmMapMap.once('rendercomplete', () => {
+        this._fitView(geometry as any);
+      });
     }
   }
 
