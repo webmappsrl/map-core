@@ -1,6 +1,6 @@
 import {POSITION_ZINDEX} from '../readonly';
 import {BehaviorSubject, Subscription} from 'rxjs';
-import {Directive, Input, OnDestroy, OnChanges, SimpleChanges} from '@angular/core';
+import {Directive, Input, OnDestroy, OnChanges, SimpleChanges, Host, OnInit} from '@angular/core';
 
 import {Feature} from 'ol';
 import {FitOptions} from 'ol/View';
@@ -12,6 +12,7 @@ import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
 import {circularPolygon} from '../utils/ol';
+import {WmMapComponent} from '../components';
 interface Bearing {
   cos: number;
   sin: number;
@@ -27,7 +28,10 @@ interface Location {
 @Directive({
   selector: '[wmMapPosition]',
 })
-export class WmMapPositionDirective extends WmMapBaseDirective implements OnDestroy, OnChanges {
+export class WmMapPositionDirective
+  extends WmMapBaseDirective
+  implements OnDestroy, OnChanges, OnInit
+{
   private _bgCurrentLocSub: Subscription = Subscription.EMPTY;
   private _bgLocSub: Subscription = Subscription.EMPTY;
   private _currentLocation: Location;
@@ -64,17 +68,19 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   @Input() wmMapPositionCenter;
   @Input() wmMapPositioncurrentLocation: Location;
   @Input() wmMapPositionfocus;
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.wmMapMap && changes.wmMapMap.currentValue != null) {
-      this.wmMapMap.addLayer(this._layerLocation);
-      this.wmMapMap.addLayer(this._layerAccuracy);
-      if (this._currentLocation != null) {
-        this._setPositionByLocation(this._currentLocation);
-      }
-      this.wmMapMap.render();
-      this._layerLocation.getSource().changed();
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
+  }
+  ngOnInit(): void {
+    this.mapCmp.map.addLayer(this._layerLocation);
+    this.mapCmp.map.addLayer(this._layerAccuracy);
+    if (this._currentLocation != null) {
+      this._setPositionByLocation(this._currentLocation);
     }
+    this.mapCmp.map.render();
+    this._layerLocation.getSource().changed();
+  }
+  ngOnChanges(changes: SimpleChanges): void {
     if (
       changes.wmMapPositioncurrentLocation != null &&
       changes.wmMapPositioncurrentLocation.currentValue != null
@@ -96,7 +102,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
             image: this._iconLocationArrow,
           }),
         );
-        this.wmMapMap.getView().setZoom(this.wmMapMap.getView().getZoom() + 1);
+        this.mapCmp.map.getView().setZoom(this.mapCmp.map.getView().getZoom() + 1);
         this._setPositionByLocation(this._currentLocation);
       } else {
         this._layerLocation.setStyle(
@@ -106,8 +112,8 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
         );
       }
       this._layerLocation.getSource().changed();
-      if (this.wmMapMap != null) {
-        this.wmMapMap.render();
+      if (this.mapCmp.map != null) {
+        this.mapCmp.map.render();
       }
     }
   }
@@ -128,15 +134,15 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
 
   private _fitView(geometryOrExtent: Point, optOptions?: FitOptions): void {
     if (optOptions == null) {
-      const size = this.wmMapMap.getSize();
+      const size = this.mapCmp.map.getSize();
       const height = size != null && size.length > 0 ? size[1] : 0;
       optOptions = {
-        maxZoom: this.wmMapMap.getView().getZoom(),
+        maxZoom: this.mapCmp.map.getView().getZoom(),
         duration: 500,
         size,
       };
     }
-    this.wmMapMap.getView().fit(geometryOrExtent, optOptions);
+    this.mapCmp.map.getView().fit(geometryOrExtent, optOptions);
   }
 
   private _followLocation(point: Point): void {
@@ -145,12 +151,8 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     this._rotate(-runningAvg, 500);
   }
 
-  private _radiansToDegrees(radians): number {
-    return radians * (180 / Math.PI);
-  }
-
   private _rotate(bearing: number, duration?: number): void {
-    this.wmMapMap.getView().animate({
+    this.mapCmp.map.getView().animate({
       rotation: bearing,
       duration: duration ? duration : 0,
     });

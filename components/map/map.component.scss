@@ -37,7 +37,8 @@ wm-map {
     .top-right {
       position: absolute;
       right: 22px;
-      top: 30px;
+      top: calc(10px + constant(safe-area-inset-top));
+      top: calc(10px + env(safe-area-inset-top));
       z-index: 2;
       display: inline-flex;
       flex-direction: row-reverse;
@@ -55,7 +56,8 @@ wm-map {
     .top-left {
       position: absolute;
       left: 22px;
-      top: 30px;
+      top: constant(safe-area-inset-top, 30px); // for ios 11.1
+      top: env(safe-area-inset-top, 30px); // for ios 11.2 and onwards
       z-index: 2;
       display: inline-flex;
       flex-direction: row-reverse;

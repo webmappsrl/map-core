@@ -60,9 +60,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     private element: ElementRef,
     private viewContainerRef: ViewContainerRef,
     private componentFactoryResolver: ComponentFactoryResolver,
-    @Host() private _mapCmp: WmMapComponent,
+    @Host() mapCmp: WmMapComponent,
   ) {
-    super();
+    super(mapCmp);
   }
 
   drawTrack(trackgeojson: any): void {
@@ -89,7 +89,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       zIndex: SELECTED_TRACK_ZINDEX,
     });
 
-    this.wmMapMap.addLayer(this._trackLayer);
+    this.mapCmp.map.addLayer(this._trackLayer);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -99,20 +99,20 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         changes.track.currentValue != null &&
         changes.track.previousValue.properties.id != changes.track.currentValue.properties.id) ??
       false;
-    if (this.track == null || this.wmMapMap == null || resetCondition) {
+    if (this.track == null || this.mapCmp.map == null || resetCondition) {
       this._resetView();
       this._initTrack = false;
     }
     if (
       this.wmMapConf != null &&
       this.track != null &&
-      this.wmMapMap != null &&
+      this.mapCmp.map != null &&
       this._initTrack === false
     ) {
       this._init();
       this._initTrack = true;
     }
-    if (this.track != null && this.wmMapMap != null && this.trackElevationChartElements != null) {
+    if (this.track != null && this.mapCmp.map != null && this.trackElevationChartElements != null) {
       if (this._popoverRef != null) {
         const altitude = this.trackElevationChartElements?.location.altitude || undefined;
         this._popoverRef.instance.message$.next(
@@ -129,7 +129,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this.trackElevationChartElements?.track,
       );
     }
-    if (this.wmMapMap != null && changes.track != null) {
+    if (this.mapCmp.map != null && changes.track != null) {
     }
   }
 
@@ -140,7 +140,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._trackLayer) {
       const ext = this._trackLayer.getSource().getExtent();
       if (ext) {
-        this.wmMapMap.getView().fit(this._trackLayer.getSource().getExtent(), {
+        this.mapCmp.map.getView().fit(this._trackLayer.getSource().getExtent(), {
           padding: [80, 80, 80, 80],
           duration: 500,
         });
@@ -183,7 +183,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
           updateWhileInteracting: false,
           zIndex: POINTER_TRACK_ZINDEX,
         });
-        this.wmMapMap.addLayer(this._elevationChartLayer);
+        this.mapCmp.map.addLayer(this._elevationChartLayer);
       }
 
       if (location) {
@@ -219,18 +219,18 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this._elevationChartSource.clear();
       }
 
-      this.wmMapMap.render();
-    } else if (this._elevationChartSource && this.wmMapMap) {
+      this.mapCmp.map.render();
+    } else if (this._elevationChartSource && this.mapCmp.map) {
       this._elevationChartPoint = undefined;
       this._elevationChartTrack = undefined;
       this._elevationChartSource.clear();
-      this.wmMapMap.render();
+      this.mapCmp.map.render();
     }
   }
 
   private _getGeoJson(trackgeojson: any): any {
-    if (trackgeojson?.geoJson) {
-      return trackgeojson.geoJson;
+    if (trackgeojson?.geojson) {
+      return trackgeojson.geojson;
     }
     if (trackgeojson?.geometry) {
       return trackgeojson.geometry;
@@ -252,10 +252,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         features: [this._startFeature, this._endFeature],
       }),
     });
-
-    this.wmMapMap.addLayer(this._startEndLayer);
+    this.mapCmp.map.addLayer(this._startEndLayer);
     this.drawTrack(this.track);
-    this.wmMapMap.getInteractions().extend([new PinchRotate()]);
+    this.mapCmp.map.getInteractions().extend([new PinchRotate()]);
     this._centerMapToTrack();
   }
 
@@ -270,18 +269,18 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._elevationChartLayer != null) {
       this._elevationChartSource.removeFeature(this._elevationChartPoint);
       this._elevationChartSource.clear();
-      this.wmMapMap.removeLayer(this._elevationChartLayer);
+      this.mapCmp.map.removeLayer(this._elevationChartLayer);
       this._elevationChartLayer = undefined;
       this._elevationChartPoint = undefined;
       this._elevationChartTrack = undefined;
       this.trackElevationChartElements = undefined;
     }
     if (this._startEndLayer != null) {
-      this.wmMapMap.removeLayer(this._startEndLayer);
+      this.mapCmp.map.removeLayer(this._startEndLayer);
       this._startEndLayer = undefined;
     }
     if (this._trackLayer != null) {
-      this.wmMapMap.removeLayer(this._trackLayer);
+      this.mapCmp.map.removeLayer(this._trackLayer);
       this._trackLayer = undefined;
     }
     if (this._popoverRef != null) {

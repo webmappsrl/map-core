@@ -2,19 +2,17 @@ import {
   Directive,
   ElementRef,
   EventEmitter,
-  Input,
   OnChanges,
   OnInit,
   Output,
   Renderer2,
+  Host,
   SimpleChanges,
 } from '@angular/core';
-
+import {WmMapComponent} from '../components';
 import VectorTileLayer from 'ol/layer/VectorTile';
-import Map from 'ol/Map';
 
 import {WmMapBaseDirective} from '.';
-import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapLayerProgessBar]',
@@ -29,14 +27,18 @@ export class WmMapLayerProgressBarDirective
 
   @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
-  constructor(private _elRef: ElementRef, private _renderer: Renderer2) {
-    super();
+  constructor(
+    private _elRef: ElementRef,
+    private _renderer: Renderer2,
+    @Host() mapCmp: WmMapComponent,
+  ) {
+    super(mapCmp);
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.wmMapMap != null && this.wmMapConf != null && this._mapIsInit == false) {
+    if (this.mapCmp.map != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._mapIsInit = true;
-      this._vectorTiles = this.wmMapMap
+      this._vectorTiles = this.mapCmp.map
         .getLayers()
         .getArray()
         .filter(l => l instanceof VectorTileLayer) as VectorTileLayer[];
@@ -76,11 +78,29 @@ export class WmMapLayerProgressBarDirective
     this._renderer.setStyle(this._ionProgress, 'width', '0%');
     this._renderer.appendChild(this._elRef.nativeElement.parentNode, this._ionProgress);
   }
-
+  /**
+   * @description
+   * This is a private method named _updateMap() that takes no parameters and returns nothing (void).
+   * It calls the updateSize() method on the map object of the mapCmp property.
+   * @private
+   * @memberof WmMapLayerProgressBarDirective
+   */
   private _updateMap(): void {
-    this.wmMapMap.updateSize();
+    this.mapCmp.map.updateSize();
   }
-
+  /**
+   * @description
+   * This function updates a progress bar.
+   * It first filters the vector tiles to find the one that is visible and has an opacity of 1.
+   * It then gets the properties of this vector tile, which includes 'loaded' and 'loading'.
+   * The range is calculated by dividing loaded by loading and multiplying it by 100.
+   * The width of the progress bar is set to this range.
+   * If loaded is equal to loading, the color of the progress bar is set to success and it becomes hidden after 1 second.
+   * Otherwise, the color is set to primary and it remains visible.
+   * Finally, this function calls an updateMap() function.
+   * @private
+   * @memberof WmMapLayerProgressBarDirective
+   */
   private _updateProgressBar(): void {
     const currentVectorTile = this._vectorTiles.filter(
       vf => vf.getVisible() == true && vf.getOpacity() === 1,

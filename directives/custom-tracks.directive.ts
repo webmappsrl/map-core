@@ -1,4 +1,4 @@
-import {Directive, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
+import {Directive, EventEmitter, Host, Input, OnInit, Output} from '@angular/core';
 import {BehaviorSubject, Subject} from 'rxjs';
 
 import {Coordinate} from 'ol/coordinate';
@@ -12,14 +12,15 @@ import VectorSource from 'ol/source/Vector';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 
-import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from '.';
+import {WmMapComponent} from '../components';
+import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {createCircleFeature, getLineStyle} from '../utils';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
 })
-export class WmMapCustomTracksDirective extends WmMapBaseDirective implements OnChanges {
+export class WmMapCustomTracksDirective extends WmMapBaseDirective implements OnInit {
   private _customPoiLayer: VectorLayer<VectorSource>;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
@@ -45,20 +46,14 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
 
   reset$ = new Subject();
 
-  constructor() {
-    super();
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnInit(): void {
     this.reset$.next(void 0);
-    if (
-      changes.wmMapMap != null &&
-      changes.wmMapMap.previousValue == null &&
-      changes.wmMapMap.currentValue !== null
-    ) {
-      this._loadSavedTracks();
-      this._initLayer();
-    }
+    this._loadSavedTracks();
+    this._initLayer();
   }
 
   private _clear(): void {
@@ -70,6 +65,15 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
     }
   }
 
+  /**
+   * @description
+   * This code creates two layers, a customTrackLayer and a customPoiLayer, and adds them to the map.
+   * The customTrackLayer is created with a VectorSource and GeoJSON format, and it has a style of '#CA1551' and an updateWhileAnimating/Interacting set to true.
+   * The zIndex is set to 0. The customPoiLayer is created with the same source as the customPoiSource and its zIndex is set to 1100.
+   * Finally, both layers are added to the map.
+   * @private
+   * @memberof WmMapCustomTracksDirective
+   */
   private _initLayer(): void {
     if (!this._customTrackLayer) {
       this._customTrackLayer = new VectorLayer({
@@ -82,19 +86,28 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
         zIndex: 0,
       });
       this._customTrackLayer.getSource().addFeatures(this._savedTracks$.value);
-      if (this.wmMapMap != null) {
-        this.wmMapMap.addLayer(this._customTrackLayer);
+      if (this.mapCmp.map != null) {
+        this.mapCmp.map.addLayer(this._customTrackLayer);
       }
 
-      this.wmMapMap.getRenderer();
+      this.mapCmp.map.getRenderer();
     }
     this._customPoiLayer = new VectorLayer({
       zIndex: 1100,
       source: this._customPoiSource,
     });
-    this.wmMapMap.addLayer(this._customPoiLayer);
+    this.mapCmp.map.addLayer(this._customPoiLayer);
   }
 
+  /**
+   * @description
+   * This code is a private method that loads saved tracks from local storage.
+   * It checks if the local storage item 'wm-saved-tracks' exists and if it does, it parses the JSON data and creates an array of features.
+   * For each feature, it sets its properties, id, and creates a start and end coordinate using toLonLat() and createCircleFeature().
+   * Finally, it updates the savedTracks$ subject with the localSavedTracks array.
+   * @private
+   * @memberof WmMapCustomTracksDirective
+   */
   private _loadSavedTracks(): void {
     const stringedLocalSavedTracks = localStorage.getItem('wm-saved-tracks');
     if (stringedLocalSavedTracks != null) {

@@ -1,10 +1,11 @@
 import {BehaviorSubject} from 'rxjs';
-import {Directive, Input, OnChanges, SimpleChanges} from '@angular/core';
+import {Directive, Host, Input, OnChanges, SimpleChanges} from '@angular/core';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from './base.directive';
 import GeoJSON from 'ol/format/GeoJSON';
 import {Fill, Stroke, Style} from 'ol/style';
+import {WmMapComponent} from '../components';
 @Directive({
   selector: '[wmMapOverlay]',
 })
@@ -20,9 +21,11 @@ export class WmMapOverlayDirective extends WmMapBaseDirective implements OnChang
   @Input('wmMapOverlayUrl') set url(url: string) {
     this._url$.next(url);
   }
-
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
+  }
   ngOnChanges(_: SimpleChanges): void {
-    if (this.wmMapMap != null && this._mapIsInit == false && this._enabled$.value === true) {
+    if (this.mapCmp.map != null && this._mapIsInit == false && this._enabled$.value === true) {
       this._mapIsInit = true;
       const baseVector = new VectorLayer({
         source: new VectorSource({
@@ -41,7 +44,7 @@ export class WmMapOverlayDirective extends WmMapBaseDirective implements OnChang
         zIndex: 1,
       });
       baseVector.setOpacity(0.8);
-      this.wmMapMap.addLayer(baseVector);
+      this.mapCmp.map.addLayer(baseVector);
     }
   }
 }

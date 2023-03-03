@@ -1,14 +1,13 @@
 import {
-  ChangeDetectorRef,
   Directive,
   EventEmitter,
+  Host,
   Input,
   OnChanges,
   Output,
   SimpleChanges,
 } from '@angular/core';
 import VectorTileLayer from 'ol/layer/VectorTile';
-import Map from 'ol/Map';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import * as localforage from 'localforage';
 import {WmMapBaseDirective} from '.';
@@ -26,6 +25,7 @@ import {
   fromNameToHEX,
 } from '../utils';
 import {IMAP} from '../types/model';
+import {WmMapComponent} from '../components';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -73,11 +73,13 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._resolutionLayerSwitcher();
   }
 
-  @Output() colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
-  @Output() trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
+  @Output()
+  colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
+  @Output()
+  trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
-  constructor(private _cdr: ChangeDetectorRef) {
-    super();
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
     localforage.config({
       name: 'JIDO',
       version: 1.0,
@@ -88,20 +90,20 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.wmMapMap != null && this.wmMapConf != null && this._mapIsInit == false) {
+    if (this.mapCmp.map != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._initLayer(this.wmMapConf);
       this._mapIsInit = true;
-      this.wmMapMap.on('moveend', () => {
+      this.mapCmp.map.on('moveend', () => {
         this._resolutionLayerSwitcher();
       });
-      this.wmMapMap.on('movestart', () => {
+      this.mapCmp.map.on('movestart', () => {
         setTimeout(() => {
           this._resolutionLayerSwitcher();
         }, 500);
       });
-      this.wmMapMap.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
         try {
-          this.wmMapMap.forEachFeatureAtPixel(
+          this.mapCmp.map.forEachFeatureAtPixel(
             evt.pixel,
             function (clickedFeature) {
               const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
@@ -132,20 +134,35 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  /**
+   *  @format
+   * @description
+   * This code is used to initialize the layers of a map.
+   * It takes in an IMAP object and initializes the data layers, adds interactions, and sets up a resolution layer switcher.
+   * Finally, it updates the size of the map.
+   * @private
+   * @param {IMAP} map
+   * @memberof WmMapLayerDirective
+   */
   private _initLayer(map: IMAP) {
     this._initializeDataLayers(map);
     initInteractions().forEach(interaction => {
-      this.wmMapMap.addInteraction(interaction);
+      this.mapCmp.map.addInteraction(interaction);
     });
     this._resolutionLayerSwitcher();
 
-    this.wmMapMap.updateSize();
+    this.mapCmp.map.updateSize();
   }
 
   /**
-   * Create the layers containing the map interactive data
-   *
-   * @returns the array of created layers
+   * @description
+   * This code is used to initialize data layers on a map.
+   * It creates two vector tile layers, one low and one high, using the functions initVectorTileLayer and styleLowFn/styleHighFn.
+   * The low layer is given the property 'high' set to false, while the high layer is given the property 'high' set to true.
+   * Finally, both layers are added to the map and the resolution layer switcher is called.
+   * @private
+   * @param {IMAP} map
+   * @memberof WmMapLayerDirective
    */
   private _initializeDataLayers(map: IMAP): void {
     this._lowVectorTileLayer = initVectorTileLayer(
@@ -154,7 +171,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         return styleLowFn.bind({
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
-          map: this.wmMapMap,
+          map: this.mapCmp.map,
           opacity: this.wmMapLayerOpacity,
         })(f);
       },
@@ -167,38 +184,57 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         return styleHighFn.bind({
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
-          map: this.wmMapMap,
+          map: this.mapCmp.map,
         })(f);
       },
       tileLoadFn,
       true,
     );
-    this._lowVectorTileLayer.setProperties({'high': false});
-    this._highVectorTileLayer.setProperties({'high': true});
-    this.wmMapMap.addLayer(this._lowVectorTileLayer);
-    this.wmMapMap.addLayer(this._highVectorTileLayer);
+    this._lowVectorTileLayer.setProperties({
+      'high': false,
+    });
+    this._highVectorTileLayer.setProperties({
+      'high': true,
+    });
+    this.mapCmp.map.addLayer(this._lowVectorTileLayer);
+    this.mapCmp.map.addLayer(this._highVectorTileLayer);
     this._resolutionLayerSwitcher();
   }
 
+  /**
+   * @description
+   * This function is used to switch between two vector tile layers based on the current zoom level.
+   * It checks if the two vector tile layers are not null and if they are not disabled.
+   * If the current zoom level is less than the preload zoom level,
+   * it sets the high vector tile layer to be invisible and sets the low vector tile layer to be visible with an opacity set by this._opacity.
+   * If the current zoom level is between the preload and switch resolution zoom levels,
+   * it sets both layers to be visible with the high vector tile layer having an opacity of 0
+   * and the low vector tile layer having an opacity set by this._opacity.
+   * If the current zoom level is greater than or equal to the switch resolution zoom level,
+   * it sets both layers to be visible with only the high vector tile layer having an opacity set by this._opacity.
+   * If they are disabled, both layers are set to be invisible.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
   private _resolutionLayerSwitcher(): void {
     if (this._highVectorTileLayer != null && this._lowVectorTileLayer != null) {
-      const currentZoom = this.wmMapMap.getView().getZoom();
+      const currentZoom = this.mapCmp.map.getView().getZoom();
       const preload = SWITCH_RESOLUTION_ZOOM_LEVEL - 2;
-      if(this._disabled === false)  {
-        if(currentZoom < preload) {
+      if (this._disabled === false) {
+        if (currentZoom < preload) {
           this._highVectorTileLayer.setVisible(false);
           this._lowVectorTileLayer.setVisible(true);
           this._lowVectorTileLayer.setOpacity(this._opacity);
-        } else if(preload < currentZoom && currentZoom < SWITCH_RESOLUTION_ZOOM_LEVEL ) {
+        } else if (preload < currentZoom && currentZoom < SWITCH_RESOLUTION_ZOOM_LEVEL) {
           this._highVectorTileLayer.setOpacity(0);
           this._highVectorTileLayer.setVisible(true);
           this._lowVectorTileLayer.setVisible(true);
           this._lowVectorTileLayer.setOpacity(this._opacity);
-        } else  {
+        } else {
           this._highVectorTileLayer.setOpacity(this._opacity);
           this._highVectorTileLayer.setVisible(true);
           this._lowVectorTileLayer.setVisible(false);
-        } 
+        }
       } else {
         this._highVectorTileLayer.setVisible(false);
         this._lowVectorTileLayer.setVisible(false);
@@ -206,6 +242,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  /**
+   * @description
+   * This code is a private method called _updateMap() that is used to update the map.
+   * It does this by calling the changed() method on two vector tile layers,
+   * this._lowVectorTileLayer and this._highVectorTileLayer.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
   private _updateMap(): void {
     this._lowVectorTileLayer.changed();
     this._highVectorTileLayer.changed();

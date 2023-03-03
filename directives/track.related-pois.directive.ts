@@ -5,6 +5,7 @@ import {
   Input,
   OnChanges,
   OnDestroy,
+  OnInit,
   Output,
   SimpleChanges,
 } from '@angular/core';
@@ -14,8 +15,6 @@ import Feature from 'ol/Feature';
 import Geometry from 'ol/geom/Geometry';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
-import Map from 'ol/Map';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
@@ -24,7 +23,7 @@ import {FitOptions} from 'ol/View';
 import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
-import {IGeojsonFeature, IMAP, PoiMarker} from '../types/model';
+import {IGeojsonFeature, PoiMarker} from '../types/model';
 import {
   addFeatureToLayer,
   calculateNearestPoint,
@@ -42,7 +41,7 @@ import {preventDefault, stopPropagation} from 'ol/events/Event';
 })
 export class wmMapTrackRelatedPoisDirective
   extends WmMapBaseDirective
-  implements OnChanges, OnDestroy
+  implements OnChanges, OnInit, OnDestroy
 {
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
@@ -55,13 +54,13 @@ export class wmMapTrackRelatedPoisDirective
 
   @Input() set next(d) {
     if (this._selectedPoiLayer != null) {
-      this.wmMapMap.removeLayer(this._selectedPoiLayer);
+      this.mapCmp.map.removeLayer(this._selectedPoiLayer);
     }
   }
 
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
-      this.wmMapMap.removeLayer(this._selectedPoiLayer);
+      this.mapCmp.map.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
       this.relatedPoiEvt.next(null);
     } else {
@@ -87,10 +86,24 @@ export class wmMapTrackRelatedPoisDirective
   currentRelatedPoi$: BehaviorSubject<IGeojsonFeature> =
     new BehaviorSubject<IGeojsonFeature | null>(null);
 
-  constructor(@Host() private _mapCmp: WmMapComponent) {
-    super();
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
   }
-
+  ngOnInit(): void {
+    this.mapCmp.map.on('click', event => {
+      this._deselectCurrentPoi();
+      const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.mapCmp.map);
+      if (poiFeature) {
+        preventDefault(event);
+        stopPropagation(event);
+        const currentID = +poiFeature.getId() || -1;
+        this.currentRelatedPoi$.next(this._getPoi(currentID));
+        this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
+        this.poiClick.emit(currentID);
+        this.setPoi = currentID;
+      }
+    });
+  }
   ngOnChanges(changes: SimpleChanges): void {
     const resetCondition =
       (changes.track &&
@@ -100,7 +113,7 @@ export class wmMapTrackRelatedPoisDirective
           (changes.track.previousValue == null &&
             changes.track.currentValue.properties.id != null))) ??
       false;
-    if (this.track == null || this.wmMapMap == null || resetCondition) {
+    if (this.track == null || this.mapCmp.map == null || resetCondition) {
       this._resetView();
       this._initPois = false;
     }
@@ -108,7 +121,7 @@ export class wmMapTrackRelatedPoisDirective
       this.track != null &&
       this.track.properties != null &&
       this.track.properties.related_pois != null &&
-      this.wmMapMap != null &&
+      this.mapCmp.map != null &&
       this._initPois === false
     ) {
       this._resetView();
@@ -132,25 +145,6 @@ export class wmMapTrackRelatedPoisDirective
         ((nearestPoi.getStyle() as any).getImage() as any).setScale(1.2);
       }
       this.wmMapTrackRelatedPoisNearestPoiEvt.emit(nearestPoi);
-    }
-    if (
-      changes.wmMapMap != null &&
-      changes.wmMapMap.previousValue == null &&
-      changes.wmMapMap.currentValue != null
-    ) {
-      this.wmMapMap.on('click', event => {
-        this._deselectCurrentPoi();
-        const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.wmMapMap);
-        if (poiFeature) {
-          preventDefault(event);
-          stopPropagation(event);
-          const currentID = +poiFeature.getId() || -1;
-          this.currentRelatedPoi$.next(this._getPoi(currentID));
-          this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
-          this.poiClick.emit(currentID);
-          this.setPoi = currentID;
-        }
-      });
     }
   }
 
@@ -177,7 +171,7 @@ export class wmMapTrackRelatedPoisDirective
 
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
     this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX);
-    this.wmMapMap.addLayer(this._poisLayer);
+    this.mapCmp.map.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
       if (!poiCollection?.find(x => x.properties.id + '' === ov.id)) {
@@ -295,21 +289,21 @@ export class wmMapTrackRelatedPoisDirective
 
   private _deselectCurrentPoi(): void {
     if (this._selectedPoiMarker != null) {
-      this.wmMapMap.removeLayer(this._selectedPoiLayer);
+      this.mapCmp.map.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     }
   }
 
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
-      const size = this.wmMapMap.getSize();
+      const size = this.mapCmp.map.getSize();
       optOptions = {
-        maxZoom: this.wmMapMap.getView().getZoom(),
+        maxZoom: this.mapCmp.map.getView().getZoom(),
         duration: 500,
         size,
       };
     }
-    this._mapCmp.fitView(geometryOrExtent, optOptions);
+    this.mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
   private _getPoi(id: number): any {
@@ -318,16 +312,16 @@ export class wmMapTrackRelatedPoisDirective
   }
 
   private _resetView(): void {
-    if (this.wmMapMap != null && this._poisLayer != null) {
-      this.wmMapMap.removeLayer(this._poisLayer);
+    if (this.mapCmp.map != null && this._poisLayer != null) {
+      this.mapCmp.map.removeLayer(this._poisLayer);
       this._poisLayer = undefined;
     }
-    if (this.wmMapMap != null && this._selectedPoiLayer != null) {
-      this.wmMapMap.removeLayer(this._selectedPoiLayer);
+    if (this.mapCmp.map != null && this._selectedPoiLayer != null) {
+      this.mapCmp.map.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
     }
-    if (this.wmMapMap != null) {
-      this.wmMapMap.render();
+    if (this.mapCmp.map != null) {
+      this.mapCmp.map.render();
     }
     this._poiMarkers = [];
     this.relatedPoiEvt.emit(null);
@@ -336,7 +330,7 @@ export class wmMapTrackRelatedPoisDirective
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
     this._deselectCurrentPoi();
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);
-    this.wmMapMap.addLayer(this._selectedPoiLayer);
+    this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this._selectedPoiMarker = poiMarker;
     const {marker} = await this._createPoiCanvasIcon(poiMarker.poi, null, true);
     addFeatureToLayer(this._selectedPoiLayer, marker.icon);
