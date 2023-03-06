@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -42,7 +43,7 @@ import {extentFromLonLat} from '../../utils/ol';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WmMapComponent implements OnChanges {
+export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
@@ -80,14 +81,11 @@ export class WmMapComponent implements OnChanges {
     }, 500);
   }
 
+  ngAfterViewInit(): void {
+    this._initMap(this.wmMapConf);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes.wmMapConf != null &&
-      changes.wmMapConf.currentValue != null &&
-      changes.wmMapConf.previousValue == null
-    ) {
-      this._initMap(this.wmMapConf);
-    }
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
     }

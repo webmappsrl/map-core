@@ -34,13 +34,13 @@ import {
   intersectionBetweenArrays,
 } from '../utils';
 import {WmMapComponent} from '../components';
+import {filter, take} from 'rxjs/operators';
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {
   private _hullClusterLayer: VectorLayer<Cluster>;
-  private _isInit = false;
   private _olFeatures = [];
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _popupOverlay: Popup;
@@ -55,12 +55,21 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
     super(mapCmp);
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this._initDirective();
+        this.mapCmp.map.once('rendercomplete', () => {
+          this._renderPois();
+          this._updatePois();
+        });
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.mapCmp.map != null && this._isInit === false) {
-      this._initDirective();
-    }
     if (changes.wmMapPoisPoi) {
       if (this.mapCmp.map != null) {
         this.setPoi(this.wmMapPoisPoi);
@@ -70,17 +79,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         }, 500);
       }
     }
-    if (
-      changes.wmMapPoisPois != null &&
-      changes.wmMapPoisPois.previousValue == null &&
-      changes.wmMapPoisPois.currentValue != null
-    ) {
-      this.mapCmp.map.once('rendercomplete', () => {
-        this._renderPois();
-        this._updatePois();
-      });
-    }
-
     if (
       (changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.firstChange === false) ||
       changes.WmMapPoisUnselectPoi != null
@@ -93,6 +91,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._updatePois();
     }
   }
+
   /**
    * @description
    * This function sets a Point of Interest (POI) on a map.
@@ -110,6 +109,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }, 200);
     }
   }
+
   /**
    * @description
    * This code adds a feature to a cluster layer on a map.
@@ -194,6 +194,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this.mapCmp.map.getViewport().style.cursor = hit ? 'pointer' : '';
     });
   }
+
   /**
    * @description
    * This function is used to check the zoom level of a VectorLayer and set its visibility accordingly.
@@ -218,6 +219,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }
     }
   }
+
   /**
    * @description
    * This function takes an object or a string as its argument and returns an object or a string.
@@ -267,6 +269,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     this.mapCmp.map.getView().fit(geometryOrExtent, optOptions);
   }
+
   /**
    * @description
    * This function takes an array of strings (taxonomyIdentifiers) as a parameter and returns a string.
@@ -284,23 +287,18 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     );
     return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
   }
+
   /**
    * @description
-   * This code is part of a private method called _initDirective().
-   * It is responsible for initializing the map with layers, interactions, and overlays.
-   * It starts by setting a boolean variable _isInit to true.
-   * Then it creates two layers, one for selected POIs and one for clusters of POIs.
-   * It also creates a cluster source from the cluster layer and a VectorLayer for the hull cluster layer with a style.
-   * A selectCluster interaction is added to the map and a popup overlay is created with certain parameters such as popupClass, closeBox, offset, positioning, onclose function, and autoPan animation.
-   * A 'click' event listener is then added to the map which checks if there are any features in the clicked pixel
-   * and if so it selects an icon or zooms into the extent of the cluster members depending on how many features are found.
-   * Finally, it adds all of these layers and overlays to the map and sets up an event listener
-   * for when rendercomplete occurs which then calls an updatePois() method after 500 milliseconds.
+   * This code initializes a directive for a map component.
+   * It creates and adds layers to the map, including a selected POI layer, a POI cluster layer, and a hull cluster layer.
+   * It also adds an interaction for selecting clusters and a popup overlay.
+   * When the map is clicked, it checks if there are any clusters present and zooms in if there are more than four members in the cluster.
+   * If there is only one member in the cluster, it selects the icon. Finally, it updates the POIs after the render is complete.
    * @private
    * @memberof WmMapPoisDirective
    */
   private _initDirective(): void {
-    this._isInit = true;
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
     this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
@@ -364,6 +362,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }, 500);
     });
   }
+
   /**
    * @description
    * This code is a private method called _renderPois()
@@ -377,6 +376,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._addPoisFeature(this.wmMapPoisPois.features);
     }
   }
+
   /**
    * @description
    * This code is used to select an icon for a point of interest (POI).
@@ -494,6 +494,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       });
     }
   }
+
   /**
    * @description
    * This function updates the POIs (points of interest) on a map.
