@@ -92,15 +92,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         filter(f => f != null),
         take(1),
       )
-      .subscribe(() => {
-        this._initMap(this.wmMapConf);
+      .subscribe(conf => {
+        this._initMap(conf);
       });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.wmMapConf.currentValue != null) {
-      this._initMap(this.wmMapConf);
-    }
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
     }
@@ -220,7 +217,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
 
     this.map$.next(this.map);
-    this._view.setZoom(this.wmMapConf.defZoom);
+    this._view.setZoom(conf.defZoom);
     this.map.updateSize();
     this.isInit$.next(true);
   }
