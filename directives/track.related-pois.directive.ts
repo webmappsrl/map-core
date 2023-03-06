@@ -5,7 +5,6 @@ import {
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
   Output,
   SimpleChanges,
 } from '@angular/core';
@@ -35,13 +34,14 @@ import {
 } from '../utils';
 import VectorSource from 'ol/source/Vector';
 import {preventDefault, stopPropagation} from 'ol/events/Event';
+import {filter, take} from 'rxjs/operators';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
 })
 export class wmMapTrackRelatedPoisDirective
   extends WmMapBaseDirective
-  implements OnChanges, OnInit, OnDestroy
+  implements OnChanges, OnDestroy
 {
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
@@ -88,22 +88,28 @@ export class wmMapTrackRelatedPoisDirective
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this.mapCmp.map.on('click', event => {
+          this._deselectCurrentPoi();
+          const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.mapCmp.map);
+          if (poiFeature) {
+            preventDefault(event);
+            stopPropagation(event);
+            const currentID = +poiFeature.getId() || -1;
+            this.currentRelatedPoi$.next(this._getPoi(currentID));
+            this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
+            this.poiClick.emit(currentID);
+            this.setPoi = currentID;
+          }
+        });
+      });
   }
-  ngOnInit(): void {
-    this.mapCmp.map.on('click', event => {
-      this._deselectCurrentPoi();
-      const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.mapCmp.map);
-      if (poiFeature) {
-        preventDefault(event);
-        stopPropagation(event);
-        const currentID = +poiFeature.getId() || -1;
-        this.currentRelatedPoi$.next(this._getPoi(currentID));
-        this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
-        this.poiClick.emit(currentID);
-        this.setPoi = currentID;
-      }
-    });
-  }
+
   ngOnChanges(changes: SimpleChanges): void {
     const resetCondition =
       (changes.track &&

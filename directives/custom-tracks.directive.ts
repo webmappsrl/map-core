@@ -1,4 +1,4 @@
-import {Directive, EventEmitter, Host, Input, OnInit, Output} from '@angular/core';
+import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {BehaviorSubject, Subject} from 'rxjs';
 
 import {Coordinate} from 'ol/coordinate';
@@ -16,11 +16,12 @@ import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {createCircleFeature, getLineStyle} from '../utils';
+import {filter, take} from 'rxjs/operators';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
 })
-export class WmMapCustomTracksDirective extends WmMapBaseDirective implements OnInit {
+export class WmMapCustomTracksDirective extends WmMapBaseDirective {
   private _customPoiLayer: VectorLayer<VectorSource>;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
@@ -48,12 +49,16 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective implements On
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
-  }
-
-  ngOnInit(): void {
-    this.reset$.next(void 0);
-    this._loadSavedTracks();
-    this._initLayer();
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this.reset$.next(void 0);
+        this._loadSavedTracks();
+        this._initLayer();
+      });
   }
 
   private _clear(): void {

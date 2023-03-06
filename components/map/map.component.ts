@@ -1,7 +1,5 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -44,7 +42,7 @@ import {extentFromLonLat} from '../../utils/ol';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WmMapComponent implements OnChanges, AfterViewInit {
+export class WmMapComponent implements OnChanges {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
@@ -59,12 +57,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
   customTrackEnabled$: Observable<boolean>;
+  isInit$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   map: Map;
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
   mapDegrees: number;
   tileLayers: TileLayer<XYZ>[] = [];
 
-  constructor(private _cdr: ChangeDetectorRef) {}
+  constructor() {}
 
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (optOptions == null) {
@@ -79,15 +78,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       this._view.fit(geometryOrExtent, optOptions);
       this._debounceFitTimer = null;
     }, 500);
-  }
-
-  ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (this._view != null) {
-        this._view.setZoom(this.wmMapConf.defZoom);
-        this.map.updateSize();
-      }
-    }, 400);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -109,7 +99,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
   }
 
-  public orientNorth() {
+  orientNorth(): void {
     this._view.animate({
       duration: DEF_MAP_ROTATION_DURATION,
       rotation: 0,
@@ -186,11 +176,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       this.fitView(this._centerExtent, {
         maxZoom: conf.defZoom,
       });
-      this._cdr.detectChanges();
     }
 
     this.tileLayers = this._buildTileLayers(conf.tiles);
-    this._cdr.detectChanges();
     this.map = new Map({
       view: this._view,
       controls: defaultControls({
@@ -218,9 +206,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       this.map.updateSize();
     });
 
-    setTimeout(() => {
-      this.map$.next(this.map);
-    }, 0);
+    this.map$.next(this.map);
+    this._view.setZoom(this.wmMapConf.defZoom);
+    this.map.updateSize();
+    this.isInit$.next(true);
   }
 
   private _reset(): void {

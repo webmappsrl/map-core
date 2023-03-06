@@ -7,6 +7,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
+import {take, filter} from 'rxjs/operators';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import * as localforage from 'localforage';
@@ -36,7 +37,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _disabled = false;
   private _highVectorTileLayer: VectorTileLayer;
   private _lowVectorTileLayer: VectorTileLayer;
-  private _mapIsInit = false;
   private _opacity = 1;
 
   @Input() set jidoUpdateTime(time: number) {
@@ -87,48 +87,49 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       storeName: 'xyz', // Should be alphanumeric, with underscores.
       description: 'tile vector tiles',
     });
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this._initLayer(this.wmMapConf);
+        this.mapCmp.map.on('moveend', () => {
+          this._resolutionLayerSwitcher();
+        });
+        this.mapCmp.map.on('movestart', () => {
+          this._resolutionLayerSwitcher();
+        });
+        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+          try {
+            this.mapCmp.map.forEachFeatureAtPixel(
+              evt.pixel,
+              function (clickedFeature) {
+                const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+                const clickedLayerId =
+                  JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+                if (
+                  clickedFeatureId > -1 &&
+                  this._highVectorTileLayer.getOpacity() === 1 &&
+                  clickedFeature.getType() != null
+                ) {
+                  this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                  const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+
+                  this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+                }
+                return true;
+              }.bind(this),
+              {
+                hitTolerance: 100,
+              },
+            );
+          } catch (_) {}
+        });
+      });
   }
 
   ngOnChanges(_: SimpleChanges): void {
-    if (this.mapCmp.map != null && this.wmMapConf != null && this._mapIsInit == false) {
-      this._initLayer(this.wmMapConf);
-      this._mapIsInit = true;
-      this.mapCmp.map.on('moveend', () => {
-        this._resolutionLayerSwitcher();
-      });
-      this.mapCmp.map.on('movestart', () => {
-        setTimeout(() => {
-          this._resolutionLayerSwitcher();
-        }, 500);
-      });
-      this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-        try {
-          this.mapCmp.map.forEachFeatureAtPixel(
-            evt.pixel,
-            function (clickedFeature) {
-              const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-              const clickedLayerId =
-                JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-              if (
-                clickedFeatureId > -1 &&
-                this._highVectorTileLayer.getOpacity() === 1 &&
-                clickedFeature.getType() != null
-              ) {
-                this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
-
-                this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-              }
-              return true;
-            }.bind(this),
-            {
-              hitTolerance: 100,
-            },
-          );
-        } catch (_) {}
-      });
-    }
-
     if (this._lowVectorTileLayer != null || this._highVectorTileLayer != null) {
       this._updateMap();
     }
