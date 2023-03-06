@@ -1,3 +1,4 @@
+import {filter, take} from 'rxjs/operators';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -47,8 +48,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
+  private _wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  @Input() wmMapConf: IMAP;
+  @Input() set wmMapConf(conf: IMAP) {
+    this._wmMapConf$.next(conf);
+  }
+
   @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
@@ -81,7 +86,16 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }, 500);
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void {
+    this._wmMapConf$
+      .pipe(
+        filter(f => f != null),
+        take(1),
+      )
+      .subscribe(() => {
+        this._initMap(this.wmMapConf);
+      });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.wmMapConf.currentValue != null) {
