@@ -35,6 +35,7 @@ import {
 } from '../utils';
 import {WmMapComponent} from '../components';
 import {filter, take} from 'rxjs/operators';
+import {BehaviorSubject} from 'rxjs';
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
@@ -46,11 +47,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _popupOverlay: Popup;
   private _selectCluster: SelectCluster;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
+  private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+  @Input() set wmMapPoisPois(pois: any) {
+    this._wmMapPoisPois.next(pois);
+  }
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapPoisFilters: any[] = [];
   @Input() wmMapPoisPoi: number | 'reset';
-  @Input() wmMapPoisPois: any;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
@@ -65,8 +70,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._initDirective();
         });
         this.mapCmp.map.once('rendercomplete', () => {
-          this._renderPois();
-          this._updatePois();
+          this._wmMapPoisPois
+            .pipe(
+              filter(f => f != null),
+              take(1),
+            )
+            .subscribe(conf => {
+              this._renderPois(conf);
+              this._updatePois();
+            });
         });
       });
   }
@@ -373,8 +385,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @private
    * @memberof WmMapPoisDirective
    */
-  private _renderPois(): void {
-    if (this.wmMapPoisPois != null) {
+  private _renderPois(inlineConf?: any): void {
+    if (inlineConf != null) {
+      this._addPoisFeature(inlineConf.features);
+    } else if (this.wmMapPoisPois != null) {
       this._addPoisFeature(this.wmMapPoisPois.features);
     }
   }
