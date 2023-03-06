@@ -81,11 +81,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }, 500);
   }
 
-  ngAfterViewInit(): void {
-    this._initMap(this.wmMapConf);
-  }
+  ngAfterViewInit(): void {}
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes.wmMapConf.currentValue != null) {
+      this._initMap(this.wmMapConf);
+    }
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
     }
