@@ -13,7 +13,7 @@ import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
 import {circularPolygon} from '../utils/ol';
 import {WmMapComponent} from '../components';
-import { filter, take } from 'rxjs/operators';
+import {filter, take} from 'rxjs/operators';
 interface Bearing {
   cos: number;
   sin: number;
@@ -73,19 +73,21 @@ export class WmMapPositionDirective
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
-    .pipe(
-      filter(f => f === true),
-      take(1),
-    )
-    .subscribe(() => {
-      this.mapCmp.map.addLayer(this._layerLocation);
-      this.mapCmp.map.addLayer(this._layerAccuracy);
-      if (this._currentLocation != null) {
-        this._setPositionByLocation(this._currentLocation);
-      }
-      this.mapCmp.map.render();
-      this._layerLocation.getSource().changed();
-    });
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this.mapCmp.map.once('rendercomplete', () => {
+          this.mapCmp.map.addLayer(this._layerLocation);
+          this.mapCmp.map.addLayer(this._layerAccuracy);
+          if (this._currentLocation != null) {
+            this._setPositionByLocation(this._currentLocation);
+          }
+          this.mapCmp.map.render();
+          this._layerLocation.getSource().changed();
+        });
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -131,8 +133,7 @@ export class WmMapPositionDirective
     this._bgCurrentLocSub.unsubscribe();
   }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   private _centerPosition() {
     const point = this._updateGeometry(this._currentLocation);

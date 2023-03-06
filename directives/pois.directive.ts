@@ -61,7 +61,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         take(1),
       )
       .subscribe(() => {
-        this._initDirective();
+        this.mapCmp.map.once('precompose', () => {
+          this._initDirective();
+        });
         this.mapCmp.map.once('rendercomplete', () => {
           this._renderPois();
           this._updatePois();

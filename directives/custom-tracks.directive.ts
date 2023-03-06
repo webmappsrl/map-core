@@ -55,9 +55,11 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
         take(1),
       )
       .subscribe(() => {
-        this.reset$.next(void 0);
-        this._loadSavedTracks();
-        this._initLayer();
+        this.mapCmp.map.once('rendercomplete', () => {
+          this.reset$.next(void 0);
+          this._loadSavedTracks();
+          this._initLayer();
+        });
       });
   }
 

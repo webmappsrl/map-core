@@ -62,104 +62,109 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         take(1),
       )
       .subscribe(() => {
-        this.reset$.next(void 0);
+        this.mapCmp.map.once('rendercomplete', () => {
+          this.reset$.next(void 0);
 
-        this._initializeCustomTrackLayer();
-        this._customTrack = {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: [],
-          },
-          properties: {
-            id: 'wm-current_record_track',
-            name: '',
-            color: 'rgba(226, 249, 0, 0.6)',
-          },
-        };
-        if (!this._graphHopperRoutingObj) {
-          this._graphHopperRoutingObj = new GraphHopperRouting({
-            vehicle: 'foot',
-            elevation: true,
-            instructions: false,
-          });
-          if (this.wmMapCustomTrackDrawTrackHost) {
-            this._graphHopperRoutingObj.host = this.wmMapCustomTrackDrawTrackHost;
-          }
-          this._graphHopperRoutingObj.defaults.profile = 'hike';
-        }
-        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          if (this._enabled$.value) {
-            stopPropagation(evt);
-            const oldCoordinates = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
-            if (oldCoordinates != null && oldCoordinates.length > 0) {
-              const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
-              this._customPoiSource.removeFeature(oldCoordinate);
-              const coords = toLonLat(
-                (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
-              );
-              this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
-            } else {
-              const lonLat = toLonLat(evt.coordinate);
-              this._customPoiSource.addFeature(createCircleFeature(lonLat));
-              this._points.push(lonLat);
+          this._initializeCustomTrackLayer();
+          this._customTrack = {
+            type: 'Feature',
+            geometry: {
+              type: 'LineString',
+              coordinates: [],
+            },
+            properties: {
+              id: 'wm-current_record_track',
+              name: '',
+              color: 'rgba(226, 249, 0, 0.6)',
+            },
+          };
+          if (!this._graphHopperRoutingObj) {
+            this._graphHopperRoutingObj = new GraphHopperRouting({
+              vehicle: 'foot',
+              elevation: true,
+              instructions: false,
+            });
+            if (this.wmMapCustomTrackDrawTrackHost) {
+              this._graphHopperRoutingObj.host = this.wmMapCustomTrackDrawTrackHost;
             }
-            this._customPoiSource.changed();
-            this._customPoiLayer.changed();
-            if (this._points.length > 1) {
-              this._graphHopperRoutingObj.doRequest({points: this._points}).then(
-                (res: GraphHopperResponse) => {
-                  this._customTrack.geometry = res.paths[0].points;
-                  this._customTrack.properties.ascent = res.paths[0].ascend
-                    ? Math.round(res.paths[0].ascend)
-                    : this._customTrack.properties.ascent;
-                  this._customTrack.properties.descent = res.paths[0].descend
-                    ? Math.round(res.paths[0].descend)
-                    : this._customTrack.properties.descent;
-                  this._customTrack.properties.distance = res.paths[0].distance
-                    ? res.paths[0].distance / 1000
-                    : this._customTrack.properties.distance;
-                  let time: number =
-                    res.paths[0].distance && res.paths[0].ascend
-                      ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
-                      : res.paths[0].time
-                      ? res.paths[0].time / (1000 * 60 * 60)
-                      : undefined;
+            this._graphHopperRoutingObj.defaults.profile = 'hike';
+          }
+          this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+            if (this._enabled$.value) {
+              stopPropagation(evt);
+              const oldCoordinates = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
+              if (oldCoordinates != null && oldCoordinates.length > 0) {
+                const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
+                this._customPoiSource.removeFeature(oldCoordinate);
+                const coords = toLonLat(
+                  (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
+                );
+                this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
+              } else {
+                const lonLat = toLonLat(evt.coordinate);
+                this._customPoiSource.addFeature(createCircleFeature(lonLat));
+                this._points.push(lonLat);
+              }
+              this._customPoiSource.changed();
+              this._customPoiLayer.changed();
+              if (this._points.length > 1) {
+                this._graphHopperRoutingObj.doRequest({points: this._points}).then(
+                  (res: GraphHopperResponse) => {
+                    this._customTrack.geometry = res.paths[0].points;
+                    this._customTrack.properties.ascent = res.paths[0].ascend
+                      ? Math.round(res.paths[0].ascend)
+                      : this._customTrack.properties.ascent;
+                    this._customTrack.properties.descent = res.paths[0].descend
+                      ? Math.round(res.paths[0].descend)
+                      : this._customTrack.properties.descent;
+                    this._customTrack.properties.distance = res.paths[0].distance
+                      ? res.paths[0].distance / 1000
+                      : this._customTrack.properties.distance;
+                    let time: number =
+                      res.paths[0].distance && res.paths[0].ascend
+                        ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
+                        : res.paths[0].time
+                        ? res.paths[0].time / (1000 * 60 * 60)
+                        : undefined;
 
-                  if (time !== undefined)
-                    this._customTrack.properties['duration:forward'] =
-                      Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
+                    if (time !== undefined)
+                      this._customTrack.properties['duration:forward'] =
+                        Math.floor(time) +
+                        ':' +
+                        ('0' + Math.round((time % 1) * 60)).slice(-2) +
+                        ' h';
 
-                  this._updateTrack();
-                  this._redrawPoints();
-                  this.currentCustomTrack.emit(this._customTrack);
-                },
-                (err: Error) => {
-                  console.warn(err);
-                  if (err.message.indexOf('Specify at least 2 points') !== -1) {
-                    this._customTrack.geometry.coordinates = [];
-                    this._customTrack.properties.ascent = undefined;
-                    this._customTrack.properties.descent = undefined;
-                    this._customTrack.properties.distance = undefined;
-                    this._customTrack.properties['duration:forward'] = undefined;
                     this._updateTrack();
-                  } else if (err.message.indexOf('Cannot find point') !== -1) {
-                    this._message(err.message);
-                    this._points.pop();
                     this._redrawPoints();
-                  }
-                },
-              );
-            } else {
-              this._customTrackLayer.getSource().clear();
+                    this.currentCustomTrack.emit(this._customTrack);
+                  },
+                  (err: Error) => {
+                    console.warn(err);
+                    if (err.message.indexOf('Specify at least 2 points') !== -1) {
+                      this._customTrack.geometry.coordinates = [];
+                      this._customTrack.properties.ascent = undefined;
+                      this._customTrack.properties.descent = undefined;
+                      this._customTrack.properties.distance = undefined;
+                      this._customTrack.properties['duration:forward'] = undefined;
+                      this._updateTrack();
+                    } else if (err.message.indexOf('Cannot find point') !== -1) {
+                      this._message(err.message);
+                      this._points.pop();
+                      this._redrawPoints();
+                    }
+                  },
+                );
+              } else {
+                this._customTrackLayer.getSource().clear();
+              }
             }
-          }
-        });
+          });
 
-        this._enabled$.subscribe(v => {
-          if (v === false) {
-            this._clear();
-          }
+          this._enabled$.subscribe(v => {
+            if (v === false) {
+              this._clear();
+            }
+          });
         });
       });
   }
