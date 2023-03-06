@@ -6,7 +6,7 @@ import {WmMapBaseDirective} from './base.directive';
 import GeoJSON from 'ol/format/GeoJSON';
 import {Fill, Stroke, Style} from 'ol/style';
 import {WmMapComponent} from '../components';
-import {filter, take} from 'rxjs/operators';
+import {filter, switchMap, take} from 'rxjs/operators';
 @Directive({
   selector: '[wmMapOverlay]',
 })
@@ -24,13 +24,15 @@ export class WmMapOverlayDirective extends WmMapBaseDirective {
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
-    this.mapCmp.isInit$
+    this._enabled$
       .pipe(
+        filter(e => e === true),
+        switchMap(() => this.mapCmp.isInit$),
         filter(f => f === true),
         take(1),
       )
       .subscribe(() => {
-        this.mapCmp.map.once('rendercomplete', () => {
+        this.mapCmp.map.once('precompose', () => {
           const baseVector = new VectorLayer({
             source: new VectorSource({
               format: new GeoJSON(),
