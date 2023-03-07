@@ -116,8 +116,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @memberof WmMapPoisDirective
    */
   setPoi(id: number | 'reset'): void {
-    if (id != 'reset' && id > -1 && this.wmMapPoisPois != null) {
-      const currentPoi = this.wmMapPoisPois.features.find(p => +p.properties.id === +id);
+    if (id != 'reset' && id > -1 && this._wmMapPoisPois.value != null) {
+      const currentPoi = this._wmMapPoisPois.value.features.find(p => +p.properties.id === +id);
       setTimeout(() => {
         this._selectIcon(currentPoi);
       }, 200);
