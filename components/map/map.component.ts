@@ -56,15 +56,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
-  @Input() initBaseSource(tile: string): XYZ {
-    if (tile === '') {
-      return null;
-    }
-    return new XYZ({
-      url: tile,
-      cacheSize: 50000,
-    });
-  }
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
@@ -96,9 +87,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this._wmMapConf$.pipe(take(1)).subscribe(conf => {
-      this._initMap(conf);
-    });
+    this._wmMapConf$
+      .pipe(
+        take(3),
+        filter(f => f != null),
+      )
+      .subscribe(conf => {
+        this._initMap(conf);
+      });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -131,7 +127,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     const tilesMap = tiles.map((tile, index) => {
       return new TileLayer({
         preload: Infinity,
-        source: this.initBaseSource(Object.values(tile)[0]),
+        source: this._initBaseSource(Object.values(tile)[0]),
         visible: index === 0,
         zIndex: index,
         className: Object.keys(tile)[0],
@@ -139,13 +135,28 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }) ?? [
       new TileLayer({
         preload: Infinity,
-        source: this.initBaseSource(DEF_XYZ_URL),
+        source: this._initBaseSource(DEF_XYZ_URL),
         visible: true,
         zIndex: 0,
         className: 'webmapp',
       }),
     ];
     return tilesMap;
+  }
+
+  /**
+   * Initialize the base source of the map
+   *
+   * @returns the XYZ source to use
+   */
+  private _initBaseSource(tile: string): XYZ {
+    if (tile === '') {
+      return null;
+    }
+    return new XYZ({
+      url: tile,
+      cacheSize: 50000,
+    });
   }
 
   private _initDefaultInteractions(): Collection<Interaction> {
