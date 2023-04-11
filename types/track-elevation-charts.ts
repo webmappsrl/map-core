@@ -1,10 +1,9 @@
-import {ILocation} from './location';
-
 export interface ITrackElevationChartStyle {
-  backgroundColor: string;
+  b
+  ackgroundColor: string;
 }
 
 export interface ITrackElevationChartHoverElements {
-  location: ILocation;
+  location: Location;
   track?: any;
 }

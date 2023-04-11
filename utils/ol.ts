@@ -26,7 +26,7 @@ import Polygon from 'ol/geom/Polygon';
 import {LoadFunction} from 'ol/Tile';
 import {ALERT_POI_RADIUS, TRACK_ZINDEX} from '../readonly';
 import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from '../readonly/constants';
-import {ILocation} from '../types/location';
+import {Location} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import {fromHEXToColor, getClusterStyle} from './styles';
 /**
@@ -290,7 +290,7 @@ export function deactivateInteractions(map: Map): void {
  * @param point1 the first location
  * @param point2 the second location
  */
-export function distanceBetweenPoints(point1: ILocation, point2: ILocation): number {
+export function distanceBetweenPoints(point1: Location, point2: Location): number {
   const earthRadius: number = 6371e3;
   const lat1: number = (point1.latitude * Math.PI) / 180;
   const lat2: number = (point2.latitude * Math.PI) / 180;
@@ -573,7 +573,7 @@ export function changedLayer(layer: VectorLayer<any>): void {
 }
 
 export function calculateNearestPoint(
-  location: ILocation,
+  location: Location,
   layer: VectorLayer<VectorSource>,
   alertPoiRadius = ALERT_POI_RADIUS,
 ): Feature<Geometry> | null {

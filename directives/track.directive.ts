@@ -31,10 +31,10 @@ import {
   SELECTED_TRACK_ZINDEX,
   startIconHtml,
 } from '../readonly';
-import {ILocation} from '../types/location';
 import {ILineString} from '../types/model';
 import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
 import {getFlowPopoverText} from '../utils/popover';
+import {Location} from '../types/location';
 
 @Directive({
   selector: '[wmMapTrack]',
@@ -150,7 +150,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
-  private _drawTemporaryLocationFeature(location?: ILocation, track?: any): void {
+  private _drawTemporaryLocationFeature(location?: Location, track?: any): void {
     if (location) {
       if (!this._elevationChartSource) {
         this._elevationChartSource = new VectorSource({
