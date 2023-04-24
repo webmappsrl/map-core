@@ -35,7 +35,7 @@ import {
   scaleUnits,
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
-import {extentFromLonLat} from '../../utils/ol';
+import {extentFromLonLat} from '../../../utils/ol';
 
 @Component({
   selector: 'wm-map',

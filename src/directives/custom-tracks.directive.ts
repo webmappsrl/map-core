@@ -15,14 +15,14 @@ import Stroke from 'ol/style/Stroke';
 import {WmMapBaseDirective} from '.';
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
-import {createCircleFeature, getLineStyle} from '../utils';
+import {createCircleFeature, getLineStyle} from '../../utils';
 import {filter, take} from 'rxjs/operators';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective {
-  private _customPoiLayer: VectorLayer<VectorSource>;
+  private _customPoiLayer: VectorLayer<VectorSource> | undefined;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });

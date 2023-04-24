@@ -51,8 +51,8 @@ export function addFeatureToLayer(
   layer: VectorLayer<VectorSource<Geometry>>,
   feature: Feature<Geometry>,
 ): void {
-  if (layer != null) {
-    layer.getSource().addFeature(feature);
+  if (layer != null && layer.getSource() != null) {
+    (layer.getSource() as any).addFeature(feature);
   }
 }
 
@@ -97,8 +97,8 @@ export function createCluster(
         source: new VectorSource({
           features: [],
         }),
-        geometryFunction: (feature: Feature): Point | null => {
-          return feature.getGeometry().getType() === 'Point' ? <Point>feature.getGeometry() : null;
+        geometryFunction: (feature: Feature): Point  => {
+          return <Point>feature.getGeometry() 
         },
       }),
       style: getClusterStyle,
@@ -107,10 +107,10 @@ export function createCluster(
       zIndex,
     });
   }
-  return clusterLayer;
+  return clusterLayer as VectorLayer<Cluster>;
 }
 
-export function createHull(): SelectCluster {
+export function createHull(): any {
   var img = new Circle({
     radius: 5,
     stroke: new Stroke({
@@ -132,7 +132,7 @@ export function createHull(): SelectCluster {
     animate: true,
     name: 'selectCluster',
     // Feature style when it springs apart
-    style: function (f, res) {
+    style: function (f:any, res:any) {
       var cluster = f.get('features');
       if (cluster != null) {
         if (cluster.length > 1) {
@@ -527,7 +527,7 @@ export function tileLoadFn(tile: any, url: string) {
         tile.projection,
         tile.onLoad.bind(tile),
         tile.onError.bind(tile),
-        cached,
+        cached as string,
       ),
     );
   });

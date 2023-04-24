@@ -19,7 +19,7 @@ import VectorSource from 'ol/source/Vector';
 import {WmMapBaseDirective} from '.';
 import {SELECTED_TRACK_ZINDEX} from '../readonly';
 import {IMAP} from '../types/model';
-import {getLineStyle} from '../utils';
+import {getLineStyle} from '../../utils';
 import {WmMapComponent} from '../components';
 @Directive({
   selector: '[wmMapTrackHighLight]',

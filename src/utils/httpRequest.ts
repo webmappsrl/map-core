@@ -1,13 +1,13 @@
 import * as localforage from 'localforage';
 export function loadFeaturesXhr(
-  url,
-  format,
-  extent,
-  resolution,
-  projection,
-  success,
-  failure,
-  cachedStringed,
+  url: string | URL,
+  format: { readFeatures: (arg0: Uint8Array, arg1: { extent: any; featureProjection: any; }) => any; readProjection: (arg0: Uint8Array) => any; },
+  extent: any,
+  resolution: any,
+  projection: any,
+  success: (arg0: any, arg1: any) => void,
+  failure: any,
+  cachedStringed: string,
 ): void {
   let cached = null;
   if (cachedStringed != null) {
@@ -30,7 +30,7 @@ export function loadFeaturesXhr(
   }
   if (cached == null) {
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
+    xhr.open('POST', url as string, true);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function () {
       if (!xhr.status || (xhr.status >= 200 && xhr.status < 300)) {
@@ -43,7 +43,7 @@ export function loadFeaturesXhr(
         }
         if (resp != null) {
           try {
-            cacheSetUrl(url, resp);
+            cacheSetUrl(url as string, resp);
           } catch (e) {
             console.warn(e);
             resp = null;

@@ -11,7 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
 import {WmMapBaseDirective} from './base.directive';
-import {circularPolygon} from '../utils/ol';
+import {circularPolygon} from '../../utils/ol';
 import {WmMapComponent} from '../components';
 import {filter, take} from 'rxjs/operators';
 interface Bearing {

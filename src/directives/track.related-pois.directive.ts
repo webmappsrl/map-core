@@ -31,7 +31,7 @@ import {
   downloadBase64Img,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
-} from '../utils';
+} from '../../utils';
 import VectorSource from 'ol/source/Vector';
 import {preventDefault, stopPropagation} from 'ol/events/Event';
 import {filter, take} from 'rxjs/operators';

@@ -19,8 +19,8 @@ import VectorSource from 'ol/source/Vector';
 
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
-import {createCircleFeature} from '../utils/ol';
-import {getLineStyle} from '../utils/styles';
+import {createCircleFeature} from '../../utils/ol';
+import {getLineStyle} from '../../utils/styles';
 import {WmMapBaseDirective} from './base.directive';
 import {filter, take} from 'rxjs/operators';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';

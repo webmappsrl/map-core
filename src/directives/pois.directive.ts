@@ -19,7 +19,7 @@ import {fromLonLat} from 'ol/proj';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
-import {clusterHullStyle, fromHEXToColor} from './../utils/styles';
+import {clusterHullStyle, fromHEXToColor} from '../../utils/styles';
 
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
@@ -32,7 +32,7 @@ import {
   createHull,
   createLayer,
   intersectionBetweenArrays,
-} from '../utils';
+} from '../../utils';
 import {WmMapComponent} from '../components';
 import {filter, take} from 'rxjs/operators';
 import {BehaviorSubject} from 'rxjs';

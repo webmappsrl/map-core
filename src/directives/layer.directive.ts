@@ -24,7 +24,7 @@ import {
   styleHighFn,
   getColorFromLayer,
   fromNameToHEX,
-} from '../utils';
+} from '../../utils';
 import {IMAP} from '../types/model';
 import {WmMapComponent} from '../components';
 

@@ -9,7 +9,7 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 import {WmMapComponent} from '../components';
-import {WmMapPopover} from './../components/popover/popover.map';
+import {WmMapPopover} from '../components/popover/popover.map';
 import {PinchRotate} from 'ol/interaction';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -32,8 +32,8 @@ import {
   startIconHtml,
 } from '../readonly';
 import {ILineString} from '../types/model';
-import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
-import {getFlowPopoverText} from '../utils/popover';
+import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../../utils';
+import {getFlowPopoverText} from '../../utils/popover';
 import {Location} from '../types/location';
 
 @Directive({

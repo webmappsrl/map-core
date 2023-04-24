@@ -6,7 +6,7 @@ import {FitOptions} from 'ol/View';
 
 import {WmMapComponent} from '../components/map/map.component';
 import {IMAP} from '../types/model';
-import {extentFromLonLat} from '../utils';
+import {extentFromLonLat} from '../../utils';
 
 @Directive()
 export abstract class WmMapBaseDirective {
