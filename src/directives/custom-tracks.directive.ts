@@ -12,17 +12,17 @@ import VectorSource from 'ol/source/Vector';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 
+import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
+import {createCircleFeature, getLineStyle} from '../../src/utils';
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
-import {createCircleFeature, getLineStyle} from '../utils';
-import {filter, take} from 'rxjs/operators';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective {
-  private _customPoiLayer: VectorLayer<VectorSource>;
+  private _customPoiLayer: VectorLayer<VectorSource> | undefined;
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });

@@ -1,4 +1,3 @@
-import {filter, take} from 'rxjs/operators';
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
@@ -14,6 +13,7 @@ import {
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable} from 'rxjs';
+import {filter, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
@@ -27,6 +27,7 @@ import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
+import {extentFromLonLat} from '../../../src/utils/ol';
 import {
   DEF_MAP_ROTATION_DURATION,
   DEF_XYZ_URL,
@@ -35,7 +36,6 @@ import {
   scaleUnits,
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
-import {extentFromLonLat} from '../../utils/ol';
 
 @Component({
   selector: 'wm-map',

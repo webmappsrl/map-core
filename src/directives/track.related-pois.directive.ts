@@ -8,7 +8,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {Subscription, BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Subscription} from 'rxjs';
 
 import Feature from 'ol/Feature';
 import Geometry from 'ol/geom/Geometry';
@@ -19,10 +19,10 @@ import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
 
+import {preventDefault, stopPropagation} from 'ol/events/Event';
+import VectorSource from 'ol/source/Vector';
+import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {WmMapComponent} from '../components';
-import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
-import {IGeojsonFeature, PoiMarker} from '../types/model';
 import {
   addFeatureToLayer,
   calculateNearestPoint,
@@ -31,10 +31,10 @@ import {
   downloadBase64Img,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
-} from '../utils';
-import VectorSource from 'ol/source/Vector';
-import {preventDefault, stopPropagation} from 'ol/events/Event';
-import {filter, take} from 'rxjs/operators';
+} from '../../src/utils';
+import {WmMapComponent} from '../components';
+import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
+import {IGeojsonFeature, PoiMarker} from '../types/model';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',

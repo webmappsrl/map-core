@@ -4,7 +4,6 @@ import {WmMapPopover} from './components/popover/popover.map';
 
 import {IonicModule} from '@ionic/angular';
 
-import {WmButtonsModule} from './components/buttons/buttons.module';
 import {WmMapControls} from './components/controls/controls.map';
 import {WmMapComponent} from './components/map/map.component';
 import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-custom-track.map';

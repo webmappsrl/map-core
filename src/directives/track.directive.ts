@@ -8,14 +8,12 @@ import {
   SimpleChanges,
   ViewContainerRef,
 } from '@angular/core';
-import {WmMapComponent} from '../components';
-import {WmMapPopover} from './../components/popover/popover.map';
-import {PinchRotate} from 'ol/interaction';
 import Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
+import {PinchRotate} from 'ol/interaction';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import CircleStyle from 'ol/style/Circle';
@@ -23,18 +21,26 @@ import FillStyle from 'ol/style/Fill';
 import StrokeStyle from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 
+import {WmMapComponent} from '../components';
+import {WmMapPopover} from '../components/popover/popover.map';
+
 import {WmMapBaseDirective} from '.';
 import {
-  endIconHtml,
+  coordsFromLonLat,
+  createIconFeatureFromHtml,
+  getFlowStyle,
+  getLineStyle,
+} from '../../src/utils';
+import {getFlowPopoverText} from '../../src/utils/popover';
+import {
   FLAG_TRACK_ZINDEX,
   POINTER_TRACK_ZINDEX,
   SELECTED_TRACK_ZINDEX,
+  endIconHtml,
   startIconHtml,
 } from '../readonly';
-import {ILineString} from '../types/model';
-import {coordsFromLonLat, createIconFeatureFromHtml, getFlowStyle, getLineStyle} from '../utils';
-import {getFlowPopoverText} from '../utils/popover';
 import {Location} from '../types/location';
+import {ILineString} from '../types/model';
 
 @Directive({
   selector: '[wmMapTrack]',

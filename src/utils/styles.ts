@@ -175,7 +175,7 @@ export function getLineStyle(color?: string): Style[] {
 export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
   return new FlowLine({
     lineCap: 'butt',
-    color: function (f, step) {
+    color: function (f: { getGeometry: () => { (): any; new(): any; getCoordinates: { (): any; new(): any; }; }; }, step: number) {
       const geometry = f.getGeometry().getCoordinates();
       const position = +(geometry.length * step).toFixed();
       const currentLocation = geometry[position];
@@ -215,10 +215,10 @@ export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOption
 
 export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
   const layer = layers.filter(l => +l.id === +id);
-  return layer[0] && layer[0].style && layer[0].style.color ? layer[0].style.color : DEF_LINE_COLOR;
+  return layer[0] && layer[0].style && layer[0].style['color'] ? layer[0].style['color'] : DEF_LINE_COLOR;
 }
 
-export function getClusterStyle(feature, resolution) {
+export function getClusterStyle(feature: { get: (arg0: string) => { (): any; new(): any; length: any; }; getProperties: () => { (): any; new(): any; features: any[]; }; }, resolution: any) {
   var size = feature.get('features').length;
   var style = null;
   var color = '41,128,185';
@@ -258,16 +258,16 @@ export function getClusterStyle(feature, resolution) {
 
 export let currentCluster = null;
 
-export function setCurrentCluster(cluster): void {
+export function setCurrentCluster(cluster: null): void {
   currentCluster = cluster;
 }
 
 export function clusterHullStyle(cluster) {
-  if (cluster != currentCluster) {
+  if (cluster != currentCluster || cluster == null) {
     return;
   }
   const originalFeatures = cluster.get('features');
-  const points = originalFeatures.map(feature => feature.getGeometry().getCoordinates());
+  const points = originalFeatures.map((feature: { getGeometry: () => { (): any; new(): any; getCoordinates: { (): any; new(): any; }; }; }) => feature.getGeometry().getCoordinates());
   return new Style({
     geometry: new Polygon([convexHull(points)]),
     fill: new Fill({
@@ -280,10 +280,10 @@ export function clusterHullStyle(cluster) {
   });
 }
 
-export function styleCoreFn(feature: FeatureLike) {
+export function styleCoreFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
-  const layers: number[] = JSON.parse(properties.layers);
+  const layers: number[] = JSON.parse(properties['layers']);
   let strokeStyle: StrokeStyle = new StrokeStyle();
 
   if (this.currentLayer != null) {
@@ -328,7 +328,7 @@ export function styleCoreFn(feature: FeatureLike) {
   }
   return styles;
 }
-export function buildRefStyle(feature): Style {
+export function buildRefStyle(feature: { getProperties: () => any; }): Style {
   const properties = feature.getProperties();
   let text = new Text({
     text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
@@ -351,7 +351,7 @@ export function buildRefStyle(feature): Style {
     text,
   });
 }
-export function buildStartEndIcons(geometry): Style[] {
+export function buildStartEndIcons(geometry: string | any[]): Style[] {
   const start = [geometry[0], geometry[1]];
   const end = [geometry[geometry.length - 2], geometry[geometry.length - 1]];
 
@@ -387,21 +387,21 @@ export function buildStartEndIcons(geometry): Style[] {
     }),
   ];
 }
-export function styleLowFn(feature: FeatureLike) {
+export function styleLowFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
   return styleCoreFn.bind(this)(feature);
 }
 
-export function styleHighFn(feature: FeatureLike) {
+export function styleHighFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
   return styleCoreFn.bind(this)(feature);
 }
 
-export function styleFn(feature: FeatureLike) {
+export function styleFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
-  const layers: number[] = JSON.parse(properties.layers);
+  const layers: number[] = JSON.parse(properties['layers']);
   let strokeStyle: StrokeStyle = new StrokeStyle();
 
   if (this.currentLayer != null) {
