@@ -209,6 +209,7 @@ export function createHull(): any {
   });
   return selectCluster;
 }
+
 /**
  * Returns an icon identifier from the given taxonomy identifiers.
  *
