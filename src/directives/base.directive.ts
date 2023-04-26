@@ -4,9 +4,9 @@ import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {FitOptions} from 'ol/View';
 
+import {extentFromLonLat} from '../../src/utils';
 import {WmMapComponent} from '../components/map/map.component';
 import {IMAP} from '../types/model';
-import {extentFromLonLat} from '../../utils';
 
 @Directive()
 export abstract class WmMapBaseDirective {
@@ -42,6 +42,7 @@ export abstract class WmMapBaseDirective {
       }
     }
   }
+
   /**
    * @description
    * This function is used to fit a view from a given longitude and latitude.

@@ -1,19 +1,21 @@
-import {POSITION_ZINDEX} from '../readonly';
+import {Directive, Host, Input, OnChanges, OnDestroy, OnInit, SimpleChanges} from '@angular/core';
 import {BehaviorSubject, Subscription} from 'rxjs';
-import {Directive, Input, OnDestroy, OnChanges, SimpleChanges, Host, OnInit} from '@angular/core';
+import {POSITION_ZINDEX} from '../readonly';
 
 import {Feature} from 'ol';
 import {FitOptions} from 'ol/View';
-import Icon from 'ol/style/Icon';
 import Point from 'ol/geom/Point';
-import Style from 'ol/style/Style';
 import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from 'ol/proj';
-import {WmMapBaseDirective} from './base.directive';
-import {circularPolygon} from '../../utils/ol';
-import {WmMapComponent} from '../components';
+import VectorSource from 'ol/source/Vector';
+import Icon from 'ol/style/Icon';
+import Style from 'ol/style/Style';
+
 import {filter, take} from 'rxjs/operators';
+
+import {circularPolygon} from '../../src/utils/ol';
+import {WmMapComponent} from '../components';
+import {WmMapBaseDirective} from './base.directive';
 interface Bearing {
   cos: number;
   sin: number;

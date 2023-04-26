@@ -8,34 +8,33 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import Popup from 'ol-ext/overlay/popup';
-import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
+import {FitOptions} from 'ol/View';
+import {createEmpty, extend} from 'ol/extent';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
-import {FitOptions} from 'ol/View';
-import {clusterHullStyle, fromHEXToColor} from '../../utils/styles';
+import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
+import {BehaviorSubject} from 'rxjs';
+import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
-import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {
   clearLayer,
   createCluster,
   createHull,
   createLayer,
   intersectionBetweenArrays,
-} from '../../utils';
+} from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {filter, take} from 'rxjs/operators';
-import {BehaviorSubject} from 'rxjs';
+import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
+import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
@@ -45,7 +44,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _olFeatures = [];
   private _poisClusterLayer: VectorLayer<Cluster>;
   private _popupOverlay: Popup;
-  private _selectCluster: SelectCluster;
+  private _selectCluster: any;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 

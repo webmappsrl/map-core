@@ -2,7 +2,6 @@ import {
   Directive,
   EventEmitter,
   Host,
-  Input,
   OnChanges,
   OnInit,
   Output,
@@ -12,15 +11,13 @@ import {
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from 'ol/layer/Vector';
 import VectorTileLayer from 'ol/layer/VectorTile';
-import Map from 'ol/Map';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 import VectorSource from 'ol/source/Vector';
 
 import {WmMapBaseDirective} from '.';
-import {SELECTED_TRACK_ZINDEX} from '../readonly';
-import {IMAP} from '../types/model';
-import {getLineStyle} from '../../utils';
+import {getLineStyle} from '../../src/utils';
 import {WmMapComponent} from '../components';
+import {SELECTED_TRACK_ZINDEX} from '../readonly';
 @Directive({
   selector: '[wmMapTrackHighLight]',
 })
@@ -33,7 +30,8 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
   }
-  ngOnInit(): void {
+
+  ngOnChanges(_: SimpleChanges): void {
     if (this.mapCmp.map != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._mapIsInit = true;
       let highlightFeatureId = null;
@@ -74,7 +72,8 @@ export class wmMapTrackHighLightDirective extends WmMapBaseDirective implements 
       });
     }
   }
-  ngOnChanges(_: SimpleChanges): void {
+
+  ngOnInit(): void {
     if (this.mapCmp.map != null && this.wmMapConf != null && this._mapIsInit == false) {
       this._mapIsInit = true;
       let highlightFeatureId = null;

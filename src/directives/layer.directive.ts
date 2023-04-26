@@ -7,26 +7,26 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import {take, filter} from 'rxjs/operators';
-import VectorTileLayer from 'ol/layer/VectorTile';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
 import * as localforage from 'localforage';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
+import VectorTileLayer from 'ol/layer/VectorTile';
+import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
-import {IDATALAYER, ILAYER} from '../types/layer';
 import {
   clearStorage,
+  fromNameToHEX,
+  getColorFromLayer,
   initInteractions,
   initVectorTileLayer,
-  tileLoadFn,
   lowTileLoadFn,
-  styleLowFn,
   styleHighFn,
-  getColorFromLayer,
-  fromNameToHEX,
-} from '../../utils';
-import {IMAP} from '../types/model';
+  styleLowFn,
+  tileLoadFn,
+} from '../../src/utils';
 import {WmMapComponent} from '../components';
+import {SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
+import {IDATALAYER, ILAYER} from '../types/layer';
+import {IMAP} from '../types/model';
 
 @Directive({
   selector: '[wmMapLayer]',
