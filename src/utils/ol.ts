@@ -250,7 +250,19 @@ export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
   return layer;
 }
 
-export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature {
+/**
+ * Creates an OpenLayers Feature with an icon style based on an HTML string (SVG).
+ *
+ * @param {string} html - The HTML string (SVG) to be used as the icon source.
+ * @param {Coordinate} position - The coordinate ([longitude, latitude]) where the icon feature should be placed.
+ * @returns {Feature} - An OpenLayers Feature with the icon style created from the provided HTML (SVG).
+ *
+ * @example
+ * const svgHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="16" fill="blue"/></svg>';
+ * const coordinates: Coordinate = [16, 48];
+ * const iconFeature = createIconFeatureFromHtml(svgHtml, coordinates);
+ */
+export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature<Point> {
   const canvas = <HTMLCanvasElement>document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const DOMURL = window.URL;
@@ -282,6 +294,18 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
   return feature;
 }
 
+/**
+ * Creates an OpenLayers Style object with an Icon created from an SVG string and a geometry.
+ *
+ * @param {string} html - The SVG string representing the icon.
+ * @param {Coordinate} position - The coordinate of the icon's position (default: [0, 0]).
+ * @returns {Style} The resulting OpenLayers Style object with the Icon and specified geometry.
+ *
+ * @example
+ * const svgString = '<svg width="32" height="32">...</svg>';
+ * const coord: Coordinate = [12.34, 56.78];
+ * const iconStyle = createIconFromHtmlAndGeometry(svgString, coord);
+ */
 export function createIconFromHtmlAndGeometry(html: string, position: Coordinate): Style {
   const canvas = <HTMLCanvasElement>document.getElementById('ol-map');
   const ctx = canvas.getContext('2d');
@@ -361,6 +385,12 @@ export function distanceBetweenPoints(point1: Location, point2: Location): numbe
   return earthRadius * c;
 }
 
+/**
+ * Calculates the Euclidean distance between two coordinates in 2D space.
+ * @param c1 The first coordinate, as a tuple of two numbers [x, y].
+ * @param c2 The second coordinate, as a tuple of two numbers [x, y].
+ * @returns The distance between the two coordinates.
+ */
 export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
   return Math.sqrt(Math.pow(c1[0] - c2[0], 2) + Math.pow(c1[1] - c2[1], 2));
 }
