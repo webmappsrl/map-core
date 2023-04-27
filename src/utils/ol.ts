@@ -84,6 +84,26 @@ export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions)
   return circleFeature;
 }
 
+/**
+ * Creates or updates a cluster layer with the given zIndex.
+ *
+ * @export
+ * @param {VectorLayer<Cluster> | null} clusterLayer - An optional VectorLayer<Cluster> object to update. If not provided, a new cluster layer with default values will be created.
+ * @param {number} zIndex - The zIndex for the resulting cluster layer.
+ * @returns {VectorLayer<Cluster>} - The updated or newly created VectorLayer<Cluster> object.
+ *
+ * Default values for a new cluster layer:
+ * - AnimatedCluster with the following properties:
+ *   - name: 'cluster'
+ *   - animationDuration: 0
+ *   - distance: CLUSTER_DISTANCE (default is 20)
+ *   - source: A new VectorSource with an empty features array.
+ *   - geometryFunction: A function that filters features with a 'Point' geometry type.
+ *   - style: The getClusterStyle function.
+ *   - updateWhileAnimating: true
+ *   - updateWhileInteracting: true
+ *   - zIndex: The provided zIndex value.
+ */
 export function createCluster(
   clusterLayer: VectorLayer<Cluster> | null,
   zIndex: number,
@@ -97,8 +117,8 @@ export function createCluster(
         source: new VectorSource({
           features: [],
         }),
-        geometryFunction: (feature: Feature): Point  => {
-          return <Point>feature.getGeometry() 
+        geometryFunction: (feature: Feature): Point => {
+          return <Point>feature.getGeometry();
         },
       }),
       style: getClusterStyle,
@@ -110,6 +130,20 @@ export function createCluster(
   return clusterLayer as VectorLayer<Cluster>;
 }
 
+/**
+ * Creates a SelectCluster object with a Circle style.
+ *
+ * @export
+ * @returns {SelectCluster} - A new SelectCluster object with a default Circle style.
+ *
+ * Default Circle style values:
+ * - radius: 5
+ * - stroke: A new Stroke object with the following properties:
+ *   - color: 'rgba(0,255,255,1)'
+ *   - width: 1
+ * - fill: A new Fill object with the following property:
+ *   - color: 'rgba(0,255,255,0.3)'
+ */
 export function createHull(): any {
   var img = new Circle({
     radius: 5,
@@ -132,7 +166,7 @@ export function createHull(): any {
     animate: true,
     name: 'selectCluster',
     // Feature style when it springs apart
-    style: function (f:any, res:any) {
+    style: function (f: any, res: any) {
       var cluster = f.get('features');
       if (cluster != null) {
         if (cluster.length > 1) {
@@ -175,6 +209,17 @@ export function createHull(): any {
   });
   return selectCluster;
 }
+
+/**
+ * Returns an icon identifier from the given taxonomy identifiers.
+ *
+ * @export
+ * @param {string[]} taxonomyIdentifiers - An array of taxonomy identifiers to search for an icon identifier.
+ * @returns {string} - The first non-excluded taxonomy identifier with "poi_type" in it, the first taxonomy identifier if no "poi_type" is found, or an empty string if taxonomyIdentifiers is an empty array.
+ *
+ * Excluded taxonomy identifiers:
+ * - 'theme_ucvs'
+ */
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   const excludedIcn = ['theme_ucvs'];
   const res = taxonomyIdentifiers.filter(
@@ -182,6 +227,15 @@ export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   );
   return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
+
+/**
+ * Creates a VectorLayer with the given zIndex if the layer is not provided or returns the provided layer if it is not null.
+ *
+ * @export
+ * @param {VectorLayer<VectorSource> | null} layer - The vector layer to be returned if not null.
+ * @param {number} zIndex - The zIndex for the new VectorLayer if the layer is not provided.
+ * @returns {VectorLayer<VectorSource>} - The provided VectorLayer if not null, or a new VectorLayer with the given zIndex.
+ */
 export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
   if (!layer) {
     layer = new VectorLayer({
@@ -196,7 +250,19 @@ export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
   return layer;
 }
 
-export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature {
+/**
+ * Creates an OpenLayers Feature with an icon style based on an HTML string (SVG).
+ *
+ * @param {string} html - The HTML string (SVG) to be used as the icon source.
+ * @param {Coordinate} position - The coordinate ([longitude, latitude]) where the icon feature should be placed.
+ * @returns {Feature} - An OpenLayers Feature with the icon style created from the provided HTML (SVG).
+ *
+ * @example
+ * const svgHtml = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="16" fill="blue"/></svg>';
+ * const coordinates: Coordinate = [16, 48];
+ * const iconFeature = createIconFeatureFromHtml(svgHtml, coordinates);
+ */
+export function createIconFeatureFromHtml(html: string, position: Coordinate): Feature<Point> {
   const canvas = <HTMLCanvasElement>document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const DOMURL = window.URL;
@@ -228,6 +294,18 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
   return feature;
 }
 
+/**
+ * Creates an OpenLayers Style object with an Icon created from an SVG string and a geometry.
+ *
+ * @param {string} html - The SVG string representing the icon.
+ * @param {Coordinate} position - The coordinate of the icon's position (default: [0, 0]).
+ * @returns {Style} The resulting OpenLayers Style object with the Icon and specified geometry.
+ *
+ * @example
+ * const svgString = '<svg width="32" height="32">...</svg>';
+ * const coord: Coordinate = [12.34, 56.78];
+ * const iconStyle = createIconFromHtmlAndGeometry(svgString, coord);
+ */
 export function createIconFromHtmlAndGeometry(html: string, position: Coordinate): Style {
   const canvas = <HTMLCanvasElement>document.getElementById('ol-map');
   const ctx = canvas.getContext('2d');
@@ -307,6 +385,12 @@ export function distanceBetweenPoints(point1: Location, point2: Location): numbe
   return earthRadius * c;
 }
 
+/**
+ * Calculates the Euclidean distance between two coordinates in 2D space.
+ * @param c1 The first coordinate, as a tuple of two numbers [x, y].
+ * @param c2 The second coordinate, as a tuple of two numbers [x, y].
+ * @returns The distance between the two coordinates.
+ */
 export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
   return Math.sqrt(Math.pow(c1[0] - c2[0], 2) + Math.pow(c1[1] - c2[1], 2));
 }
