@@ -14,7 +14,10 @@
     "release:minor": "changelog -m && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version minor && git push origin && git push origin --tags",
     "release:patch": "changelog -p && git add CHANGELOG.md && git commit -m 'updated CHANGELOG.md' && npm version patch && git push origin && git push origin --tags && npm run surge",
     "compodoc": "npx compodoc -p tsconfig.doc.json",
-    "serve:compodoc": "npx compodoc -p tsconfig.doc.json  -s -d ./documentation"
+    "serve:compodoc": "npx compodoc -p tsconfig.doc.json  -s -d ./documentation",
+    "compodoc:build": "compodoc -p tsconfig.doc.json",
+    "compodoc:build-and-serve": "compodoc -p tsconfig.doc.json -s",
+    "compodoc:serve": "compodoc -s"
   },
   "private": true,
   "dependencies": {
@@ -36,15 +39,14 @@
     "ol-ext": "^4.0.2"
   },
   "devDependencies": {
-    "@types/ol": "^6.5.3",
     "@angular-devkit/build-angular": "~12.2.18",
     "@angular/cli": "~12.2.18",
     "@angular/compiler-cli": "~12.2.0",
+    "@compodoc/compodoc": "^1.1.19",
     "@types/jasmine": "~3.8.0",
     "@types/node": "^12.11.1",
-    "@compodoc/compodoc": "^1.1.19",
+    "@types/ol": "^6.5.3",
     "generate-changelog": "^1.8.0",
-    "surge": "^0.23.1",
     "jasmine-core": "~3.8.0",
     "karma": "~6.3.0",
     "karma-chrome-launcher": "~3.1.0",
@@ -52,6 +54,7 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "~1.7.0",
     "ng-packagr": "^12.1.1",
+    "surge": "^0.23.1",
     "typescript": "~4.3.5"
   }
 }
