@@ -807,8 +807,8 @@ export function calculateRotation(first, second): number {
   const firstY = first[1];
   const secondX = second[0];
   const secondY = second[1];
-  //const temp = [firstX - secondX, firstY - secondY];
-  const temp = [secondX - firstX, secondY - firstY];
+  const temp = [firstX - secondX, firstY - secondY];
+  //const temp = [secondX - firstX, secondY - firstY];
   return Math.atan2(temp[0], temp[1]);
 }
 

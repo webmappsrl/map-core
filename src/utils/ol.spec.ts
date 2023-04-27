@@ -500,13 +500,12 @@ describe('ol', () => {
   });
 
   it('calculateRotation: should calculate the correct rotation angle between two coordinates', () => {
-    const firstCoordinate = [0, 0];
-    const secondCoordinate = [1, 1];
+    const firstCoordinate = [10, 10];
+    const secondCoordinate = [5, 5];
     const expectedRotation = Math.atan2(1, 1);
 
     const rotation = calculateRotation(firstCoordinate, secondCoordinate);
-
-    expect(rotation).toBeCloseTo(expectedRotation);
+    expect(rotation).toEqual(expectedRotation);
   });
 
   it('calculateRotation: should calculate the correct rotation angle between two identical coordinates', () => {
