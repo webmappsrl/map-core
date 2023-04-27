@@ -29,6 +29,7 @@ import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from '../re
 import {Location} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import {fromHEXToColor, getClusterStyle} from './styles';
+
 /**
  * set all interaction of  map active.
  * [map](https://compodoc.app/guides/getting-started.html)
@@ -348,11 +349,13 @@ export function coordsToLonLat(coordinates: Coordinate): Coordinate {
 }
 
 /**
- * Transform a set of [lon, lat](EPSG:4326) coordinates in EPSG:3857
+ * Transforms a set of [lon, lat](EPSG:4326) coordinates to EPSG:3857.
  *
- * @param coordinates the [lon, lat](EPSG:4326) coordinates
- *
- * @returns the coordinates [lon, lat](EPSG:4326)
+ * @param coordinates - The [lon, lat](EPSG:4326) coordinates.
+ * @returns The transformed [lon, lat](EPSG:3857) coordinates.
+ * @example
+ * const coords4326: Coordinate = [-123.121583, 49.247593];
+ * const coords3857 = coordsFromLonLat(coords4326);
  */
 export function coordsFromLonLat(coordinates: Coordinate): Coordinate {
   return transform(coordinates, 'EPSG:4326', 'EPSG:3857');
@@ -363,10 +366,15 @@ export function deactivateInteractions(map: Map): void {
 }
 
 /**
- * Return the distance in meters between two locations
+ * Calculates the distance in meters between two locations.
  *
- * @param point1 the first location
- * @param point2 the second location
+ * @param point1 - The first location.
+ * @param point2 - The second location.
+ * @returns The distance between the two locations in meters.
+ * @example
+ * const point1: Location = { latitude: 40.712776, longitude: -74.005974 };
+ * const point2: Location = { latitude: 37.7749, longitude: -122.419416 };
+ * const distance = distanceBetweenPoints(point1, point2);
  */
 export function distanceBetweenPoints(point1: Location, point2: Location): number {
   const earthRadius: number = 6371e3;
@@ -396,11 +404,13 @@ export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
 }
 
 /**
- * Transform a set of EPSG:3857 extent in [minLon, minLat, maxLon, maxLat](EPSG:4326)
+ * Transforms a set of [minLon, minLat, maxLon, maxLat](EPSG:4326) extent coordinates to EPSG:3857.
  *
- * @param extent the EPSG:3857 extent
- *
- * @returns the extent [minLon, minLat, maxLon, maxLat](EPSG:4326)
+ * @param extent - The [minLon, minLat, maxLon, maxLat](EPSG:4326) extent coordinates.
+ * @returns The transformed [minLon, minLat, maxLon, maxLat](EPSG:3857) extent coordinates.
+ * @example
+ * const extent4326: Extent = [-123.121583, 49.247593, -123.117918, 49.251826];
+ * const extent3857 = extentFromLonLat(extent4326);
  */
 export function extentToLonLat(extent: Extent): Extent {
   return transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
@@ -417,6 +427,19 @@ export function extentFromLonLat(extent: Extent): Extent {
   return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
 }
 
+/**
+ * Determines if a cluster is present at the given MapBrowserEvent location.
+ *
+ * @param layer - The VectorLayer<Cluster> to search for clusters.
+ * @param evt - The MapBrowserEvent<UIEvent> representing the event location.
+ * @param map - The Map instance to retrieve the view and resolution.
+ * @returns true if a cluster is present, false otherwise.
+ * @example
+ * const isClusterPresent = isCluster(layer, evt, map);
+ * if (isClusterPresent) {
+ *   // Handle cluster-related actions
+ * }
+ */
 export function isCluster(
   layer: VectorLayer<Cluster>,
   evt: MapBrowserEvent<UIEvent>,
@@ -441,6 +464,20 @@ export function isCluster(
 
   return features.length > 1;
 }
+
+/**
+ * Retrieves an array of clustered features at a given MapBrowserEvent location.
+ *
+ * @param layer - The VectorLayer<Cluster> to search for clusters.
+ * @param evt - The MapBrowserEvent<UIEvent> representing the event location.
+ * @param map - The Map instance to retrieve the view and resolution.
+ * @returns An array of clustered Feature<Geometry> objects.
+ * @example
+ * const clusteredFeatures = getCluster(layer, evt, map);
+ * clusteredFeatures.forEach(feature => {
+ *   // Handle the feature
+ * });
+ */
 export function getCluster(
   layer: VectorLayer<Cluster>,
   evt: MapBrowserEvent<UIEvent>,
@@ -466,6 +503,20 @@ export function getCluster(
   return features;
 }
 
+/**
+ * Returns the intersection of two arrays.
+ *
+ * @param a The first array.
+ * @param b The second array.
+ *
+ * @returns An array containing the elements that are present in both input arrays.
+ *
+ * @example
+ * const a = [1, 2, 3, 4];
+ * const b = [3, 4, 5, 6];
+ * const intersection = intersectionBetweenArrays(a, b);
+ * console.log(intersection); // Output: [3, 4]
+ */
 export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
   var setA = new Set(a);
   var setB = new Set(b);
@@ -473,6 +524,12 @@ export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
   return Array.from(intersection);
 }
 
+/**
+ * Returns the nearest feature from a list of features to a given coordinate
+ * @param features List of features to search through
+ * @param coordinate The coordinate to find the nearest feature to
+ * @returns The nearest feature to the given coordinate
+ */
 export function nearestFeatureOfCooridinate(
   features: Feature<Geometry>[],
   coordinate: Coordinate,
@@ -490,6 +547,15 @@ export function nearestFeatureOfCooridinate(
   return ret;
 }
 
+/**
+ * Get the nearest feature to a given coordinate on a vector layer
+ * @param layer The vector layer to search for features
+ * @param evt The map browser event containing the clicked coordinate
+ * @param map The map object containing the layer and view
+ * @returns The nearest feature to the clicked coordinate
+ * @example
+ * const nearest = nearestFeatureOfLayer(vectorLayer, mapBrowserEvent, map);
+ */
 export function nearestFeatureOfLayer(
   layer: VectorLayer<any>,
   evt: MapBrowserEvent<UIEvent>,
@@ -520,6 +586,13 @@ export function nearestFeatureOfLayer(
   return nearestFeature;
 }
 
+/**
+ * Given a layer and a map event, returns the nearest feature from a cluster or a single feature source.
+ * @param layer The layer containing the source
+ * @param evt The map event that triggered the search
+ * @param map The map instance
+ * @returns The nearest feature to the event coordinate
+ */
 export function nearestFeatureOfCluster(
   layer: VectorLayer<any>,
   evt: MapBrowserEvent<UIEvent>,
@@ -550,12 +623,24 @@ export function nearestFeatureOfCluster(
   return nearestFeature;
 }
 
+/**
+ * Remove a feature from a vector layer
+ * @param layer the vector layer to remove the feature from
+ * @param feature the feature to remove from the layer
+ */
 export function removeFeatureFromLayer(layer: VectorLayer<any>, feature: Feature<Geometry>): void {
   const source = layer.getSource();
   if (source.hasFeature(feature)) {
     source.removeFeature(feature);
   }
 }
+
+/**
+ * Initializes interactions for an OpenLayers map with the given options.
+ * @param opt an optional object of type DefaultsOptions, containing options for the interactions.
+ * If null, default options will be used.
+ * @returns a collection of interactions for the OpenLayers map
+ */
 export function initInteractions(opt?: DefaultsOptions): Collection<Interaction> {
   if (opt == null) {
     opt = {
@@ -570,9 +655,12 @@ export function initInteractions(opt?: DefaultsOptions): Collection<Interaction>
 }
 
 /**
- * Initialize a specific layer with interactive data
- *
- * @returns the created layer
+ * Initializes a vector tile layer with a given URL, style function, and tile load function.
+ * @param url the URL of the vector tile server
+ * @param styleFn the style function to apply to the features
+ * @param tileLoadFn the function to load the vector tile data
+ * @param preload if true, preloads all tiles in the viewport at the current resolution
+ * @returns the initialized vector tile layer
  */
 export function initVectorTileLayer(
   url: any,
@@ -599,6 +687,17 @@ export function initVectorTileLayer(
   return layer;
 }
 
+/**
+ * Custom tile loading function to handle caching of tiles using LocalForage.
+ * @param tile The tile object that is being loaded
+ * @param url The URL from which the tile is to be fetched
+ * @example
+ * const vectorTileSource = new VectorTileSource({
+ *   format: new MVT(),
+ *   url: 'https://example.com/tiles/{z}/{x}/{y}.pbf',
+ *   tileLoadFunction: tileLoadFn,
+ * });
+ */
 export function tileLoadFn(tile: any, url: string) {
   // startTime(url);
   localforage.getItem(url).then(cached => {
@@ -656,6 +755,17 @@ export function changedLayer(layer: VectorLayer<any>): void {
   }
 }
 
+/**
+ * Calculate the nearest point (feature) to the given location on a vector layer.
+ * If the distance from the user to the nearest point is greater than the alertPoiRadius,
+ * the function returns null.
+ * @param location The user's location as an object with latitude and longitude properties
+ * @param layer The vector layer containing features to search
+ * @param alertPoiRadius The radius (in meters) within which to search for the nearest point (default: ALERT_POI_RADIUS)
+ * @returns The nearest feature to the user's location within the alertPoiRadius or null if not found
+ * @example
+ * const nearestFeature = calculateNearestPoint(userLocation, vectorLayer, 500);
+ */
 export function calculateNearestPoint(
   location: Location,
   layer: VectorLayer<VectorSource>,
@@ -682,12 +792,23 @@ export function calculateNearestPoint(
   return null;
 }
 
+/**
+ * Calculates the rotation angle (in radians) between two coordinates.
+ * @param first The first coordinate [x, y].
+ * @param second The second coordinate [x, y].
+ * @returns The rotation angle in radians.
+ * @example
+ * const firstCoordinate = [0, 0];
+ * const secondCoordinate = [1, 1];
+ * const rotation = calculateRotation(firstCoordinate, secondCoordinate);
+ */
 export function calculateRotation(first, second): number {
   const firstX = first[0];
   const firstY = first[1];
   const secondX = second[0];
   const secondY = second[1];
   const temp = [firstX - secondX, firstY - secondY];
+  //const temp = [secondX - firstX, secondY - firstY];
   return Math.atan2(temp[0], temp[1]);
 }
 
@@ -734,6 +855,7 @@ export function toDegrees(angleInRadians) {
 export function toRadians(angleInDegrees) {
   return (angleInDegrees * Math.PI) / 180;
 }
+
 /**
  * @param {Array<VALUE>} arr The array to modify.
  * @param {!Array<VALUE>|VALUE} data The elements or arrays of elements to add to arr.
