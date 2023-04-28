@@ -1,6 +1,7 @@
 import * as localforage from 'localforage';
 
 /**
+ * @description
  * Loads features from a given URL and processes the data using a specified format.
  * In case of successful data retrieval, it calls the `success` callback function.
  * In case of failure, it calls the `failure` callback function.
@@ -107,6 +108,7 @@ export function loadFeaturesXhr(
 }
 
 /**
+ * @description
  * Caches the value of a given URL in local storage or localforage, depending on the URL.
  * If the URL contains the string 'low', it attempts to store the value in local storage first.
  * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
@@ -148,6 +150,7 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
 }
 
 /**
+ * @description
  * Converts a string to a Uint8Array.
  *
  * @param str {string} - The string to be converted to a Uint8Array.
