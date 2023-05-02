@@ -9,6 +9,18 @@ import Style from 'ol/style/Style';
 import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {ILAYER} from '../types/layer';
 
+/**
+ * @description
+ * Generates a Mapbox Style JSON object to style vector layers in OpenLayers.
+ * This style JSON object includes layer styles for different CAI scales ('EEA', 'EE', 'E', 'T').
+ * It also includes a text label layer to display the 'ref' property of each feature.
+ *
+ * @param {string} vectorLayerUrl The URL of the vector layer source.
+ * @returns {object} A Mapbox Style JSON object.
+ *
+ * @example
+ * const styleJson = styleJsonFn("https://example.com/vector-layer-url");
+ */
 export function styleJsonFn(vectorLayerUrl: string) {
   return {
     version: 8,
@@ -172,10 +184,32 @@ export function getLineStyle(color?: string): Style[] {
   return style;
 }
 
+/**
+ * @description
+ * This function creates and returns an ol-ext/style/FlowLine style object that represents a flow-style line in an OpenLayers map.
+ * The function takes two optional parameters, orangeTreshold and redTreshold, which are numeric values representing altitude thresholds.
+ * If these parameters are not provided, their default values are set to 800 and 1500, respectively.
+ *
+ * The function initializes a FlowLine object with the following properties:
+ *  - lineCap: 'butt'
+ *  - color: a function that takes a feature 'f' and a step value as arguments, calculates the current altitude based on the feature's geometry and step value, and returns a color ('green', 'orange', or 'red') depending on the altitude.
+ *  - width: 10
+ *
+ * @export
+ * @param {number} [orangeTreshold=800] - The altitude threshold for the orange color.
+ * @param {number} [redTreshold=1500] - The altitude threshold for the red color.
+ * @returns {FlowLine} A FlowLine style object with the specified properties.
+ * @example
+ * const flowStyle = getFlowStyle();
+ * const customFlowStyle = getFlowStyle(900, 1800);
+ */
 export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
   return new FlowLine({
     lineCap: 'butt',
-    color: function (f: { getGeometry: () => { (): any; new(): any; getCoordinates: { (): any; new(): any; }; }; }, step: number) {
+    color: function (
+      f: {getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}}},
+      step: number,
+    ) {
       const geometry = f.getGeometry().getCoordinates();
       const position = +(geometry.length * step).toFixed();
       const currentLocation = geometry[position];
@@ -213,12 +247,51 @@ export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOption
   options.strokeStyle.setWidth(newWidth);
 }
 
+/**
+ * @description
+ * This function takes a layer ID and an optional array of layer objects (ILAYER[]). It searches for the layer with the
+ * specified ID within the layers array and returns the color property of the layer's style object.
+ * If the layer is not found, the function returns the default line color (DEF_LINE_COLOR).
+ * @export
+ * @param {number} id - The ID of the layer whose color should be retrieved.
+ * @param {ILAYER[]} [layers=[]] - An optional array of layer objects. If not provided, an empty array will be used.
+ * @returns {string} - The color property of the layer's style object, or the default line color if the layer is not found.
+ * @example
+ * // Example usage with an array of layer objects
+ * const layers = [
+ * {id: 1, style: {color: 'red'}},
+ * {id: 2, style: {color: 'blue'}}
+ * ];
+ * const color = getColorFromLayer(1, layers); // Returns 'red'
+ * // Example usage without an array of layer objects
+ * const color = getColorFromLayer(1); // Returns DEF_LINE_COLOR
+ */
 export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
   const layer = layers.filter(l => +l.id === +id);
-  return layer[0] && layer[0].style && layer[0].style['color'] ? layer[0].style['color'] : DEF_LINE_COLOR;
+  return layer[0] && layer[0].style && layer[0].style['color']
+    ? layer[0].style['color']
+    : DEF_LINE_COLOR;
 }
 
-export function getClusterStyle(feature: { get: (arg0: string) => { (): any; new(): any; length: any; }; getProperties: () => { (): any; new(): any; features: any[]; }; }, resolution: any) {
+/**
+ * @description
+ * This function generates and returns an OpenLayers style object based on the features and resolution provided.
+ * The style object is applied to cluster features on an OpenLayers map.
+ *
+ * @param {object} feature - An object representing a cluster feature, containing the following methods:
+ *                            - get: a function that takes a string as an argument and returns the value of the property with that name
+ *                            - getProperties: a function that returns an object containing the feature's properties
+ * @param {*} resolution - The current resolution of the map. This parameter is not used in the function, but it can be useful for custom styling based on zoom level.
+ *
+ * @returns {Style} An OpenLayers Style object that can be used to style cluster features on an OpenLayers map.
+ */
+export function getClusterStyle(
+  feature: {
+    get: (arg0: string) => {(): any; new (): any; length: any};
+    getProperties: () => {(): any; new (): any; features: any[]};
+  },
+  resolution: any,
+) {
   var size = feature.get('features').length;
   var style = null;
   var color = '41,128,185';
@@ -262,12 +335,33 @@ export function setCurrentCluster(cluster: null): void {
   currentCluster = cluster;
 }
 
+/**
+ * @description
+ * Returns the style for a cluster hull based on its features' geometries.
+ *
+ * @param cluster - The cluster object to style.
+ * @returns A new Style object for the cluster hull.
+ *
+ * @example
+ * const cluster = new Cluster({
+ *   features: [
+ *     new Feature(new Point([0, 0])),
+ *     new Feature(new Point([1, 1])),
+ *     new Feature(new Point([2, 0]))
+ *   ]
+ * });
+ * const style = clusterHullStyle(cluster);
+ */
 export function clusterHullStyle(cluster) {
   if (cluster != currentCluster || cluster == null) {
     return;
   }
   const originalFeatures = cluster.get('features');
-  const points = originalFeatures.map((feature: { getGeometry: () => { (): any; new(): any; getCoordinates: { (): any; new(): any; }; }; }) => feature.getGeometry().getCoordinates());
+  const points = originalFeatures.map(
+    (feature: {
+      getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}};
+    }) => feature.getGeometry().getCoordinates(),
+  );
   return new Style({
     geometry: new Polygon([convexHull(points)]),
     fill: new Fill({
@@ -280,6 +374,25 @@ export function clusterHullStyle(cluster) {
   });
 }
 
+/**
+ * @description
+ * Core function for generating feature styles.
+ * This function takes a FeatureLike object and generates an array of Style objects based on its properties
+ * and geometry. It first extracts the feature's properties, geometry and layer IDs from the FeatureLike object,
+ * and then calculates the appropriate stroke color based on the current layer selection or layer ID.
+ *
+ * The function then uses the `handlingStrokeStyleWidth` function to adjust the stroke width based on the current
+ * zoom level of the map. Finally, it generates an array of Style objects for the feature, including the main
+ * stroke style, and any additional start/end icons or reference point styles based on configuration options.
+ *
+ * Note that this function is bound to a `this` context, so the calling object should be of the correct type.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns An array of new Style objects for the given feature.
+ * @example
+ * const feature = new Feature(new LineString([[0, 0], [1, 1], [2, 0]]));
+ * const styles = styleCoreFn(feature);
+ */
 export function styleCoreFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
@@ -328,7 +441,31 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   }
   return styles;
 }
-export function buildRefStyle(feature: { getProperties: () => any; }): Style {
+
+/**
+ * @description
+ * Builds a reference point style for a given feature.
+ * This function takes a feature object and generates a new Style object for the reference point, based on
+ * the 'ref' property in the feature's properties and the configuration settings for reference points.
+ *
+ * If the feature has a 'ref' property and the 'ref_on_track_show' configuration option is set to true, a new
+ * Text object will be generated with the text value of the 'ref' property. The font, placement, and other
+ * styling options for the Text object will be set based on the configuration settings.
+ *
+ * If the feature does not have a 'ref' property or the 'ref_on_track_show' configuration option is set to
+ * false, the function will return a new Style object with an empty Text object and default styling options.
+ *
+ * Note that this function is bound to a `this` context, so the calling object should be of the correct type.
+ *
+ * @param feature - The feature object to generate a reference point style for.
+ * @returns A new Style object for the reference point.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * feature.setProperties({ref: 'A'});
+ * const style = buildRefStyle.bind(this)(feature);
+ */
+export function buildRefStyle(feature: {getProperties: () => any}): Style {
   const properties = feature.getProperties();
   let text = new Text({
     text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
@@ -351,6 +488,25 @@ export function buildRefStyle(feature: { getProperties: () => any; }): Style {
     text,
   });
 }
+
+/**
+ * @description
+ * Builds start and end point icons for a given geometry.
+ * This function takes a geometry object and generates a new array of Style objects for the start and end point icons.
+ * The start point icon is a green hexagon shape and the end point icon is a red hexagon shape with a larger radius.
+ * Both icons are centered on the first and last points of the geometry, respectively.
+ *
+ * Note that this function does not handle any error checking or validation on the input geometry object. It is
+ * assumed that the geometry object is a valid format and can be used to generate point icons.
+ *
+ * @param geometry - The geometry object to generate start and end point icons for.
+ * @returns An array of new Style objects for the start and end point icons.
+ *
+ * @example
+ * const geometry = new LineString([[0, 0], [1, 1], [2, 0]]);
+ * const styles = buildStartEndIcons(geometry);
+ * // styles will contain an array of 2 Style objects for the start and end point icons.
+ */
 export function buildStartEndIcons(geometry: string | any[]): Style[] {
   const start = [geometry[0], geometry[1]];
   const end = [geometry[geometry.length - 2], geometry[geometry.length - 1]];
@@ -387,18 +543,72 @@ export function buildStartEndIcons(geometry: string | any[]): Style[] {
     }),
   ];
 }
+/**
+ * @description
+ * Generates a low style for a given feature object.
+ * This function generates a new Style object for a given feature object with a lower zIndex value and a slightly increased
+ * stroke width value. This is useful for displaying low-priority features on a map with a different visual style than higher
+ * priority features.
+ *
+ * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
+ * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns A new Style object for the given feature object with a lower zIndex and a slightly increased stroke width.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * const lowStyle = styleLowFn.bind(this)(feature);
+ * // lowStyle will contain a new Style object with a lower zIndex and slightly increased stroke width.
+ */
 export function styleLowFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
   return styleCoreFn.bind(this)(feature);
 }
 
+/**
+ * @description
+ * Generates a high style for a given feature object.
+ * This function generates a new Style object for a given feature object with a higher zIndex value and a slightly increased
+ * stroke width value. This is useful for displaying high-priority features on a map with a different visual style than lower
+ * priority features.
+ *
+ * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
+ * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns A new Style object for the given feature object with a higher zIndex and a slightly increased stroke width.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * const highStyle = styleHighFn.bind(this)(feature);
+ * // highStyle will contain a new Style object with a higher zIndex and slightly increased stroke width.
+ */
 export function styleHighFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
   return styleCoreFn.bind(this)(feature);
 }
 
+/**
+ * @description
+ * Generates a style for a given feature object.
+ * This function generates a new Style object for a given feature object with a stroke style based on the current layer configuration
+ * and a zIndex value of TRACK_ZINDEX + 1. This is useful for displaying a consistent visual style for features on a map based on
+ * the current layer configuration.
+ *
+ * Note that this function is intended to be bound to a `this` context object that contains properties for the current layer, the
+ * default feature color, the configuration settings, and the current map view. It is not intended to be used standalone.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns A new Style object for the given feature object with a stroke style based on the current layer configuration and a zIndex value of TRACK_ZINDEX + 1.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * const style = styleFn.bind(this)(feature);
+ * // style will contain a new Style object with a stroke style based on the current layer configuration and a zIndex value of TRACK_ZINDEX + 1.
+ */
 export function styleFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
   const layers: number[] = JSON.parse(properties['layers']);
