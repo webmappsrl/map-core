@@ -1,7 +1,40 @@
 import * as localforage from 'localforage';
+
+/**
+ * @description
+ * Loads features from a given URL and processes the data using a specified format.
+ * In case of successful data retrieval, it calls the `success` callback function.
+ * In case of failure, it calls the `failure` callback function.
+ * It also supports caching features using `cachedStringed` parameter.
+ *
+ * @param url {string | URL} - The URL to request features from.
+ * @param format {Object} - The format object containing methods to read features and projection.
+ * @param extent {*} - The extent of the requested features.
+ * @param resolution {*} - The resolution of the requested features.
+ * @param projection {*} - The projection of the requested features.
+ * @param success {Function} - The callback function called upon successful retrieval of features.
+ * @param failure {Function} - The callback function called upon failure in retrieving features.
+ * @param cachedStringed {string} - The cached string representation of features to be used if available.
+ *
+ * @example
+ *
+ * loadFeaturesXhr(
+ *   'https://example.com/features',
+ *   format,
+ *   extent,
+ *   resolution,
+ *   projection,
+ *   (features, projection) => { console.log('Success:', features, projection); },
+ *   () => { console.error('Failed to load features.'); },
+ *   cachedFeatures,
+ * );
+ */
 export function loadFeaturesXhr(
   url: string | URL,
-  format: { readFeatures: (arg0: Uint8Array, arg1: { extent: any; featureProjection: any; }) => any; readProjection: (arg0: Uint8Array) => any; },
+  format: {
+    readFeatures: (arg0: Uint8Array, arg1: {extent: any; featureProjection: any}) => any;
+    readProjection: (arg0: Uint8Array) => any;
+  },
   extent: any,
   resolution: any,
   projection: any,
@@ -73,6 +106,23 @@ export function loadFeaturesXhr(
     xhr.send();
   }
 }
+
+/**
+ * @description
+ * Caches the value of a given URL in local storage or localforage, depending on the URL.
+ * If the URL contains the string 'low', it attempts to store the value in local storage first.
+ * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
+ *
+ * @param url {string} - The URL for which the value will be cached.
+ * @param value {string} - The value to be cached for the given URL.
+ *
+ * @example
+ *
+ * const url = 'https://example.com/data';
+ * const value = 'Sample data content';
+ *
+ * cacheSetUrl(url, value);
+ */
 export function cacheSetUrl(url: string, value: string): void {
   if (url.search('low') > -1) {
     try {
@@ -98,6 +148,21 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
     return null;
   }
 }
+
+/**
+ * @description
+ * Converts a string to a Uint8Array.
+ *
+ * @param str {string} - The string to be converted to a Uint8Array.
+ * @returns {Uint8Array} - The resulting Uint8Array representation of the input string.
+ *
+ * @example
+ *
+ * const inputString = 'Hello, world!';
+ * const uint8Array = stringToUint8Array(inputString);
+ *
+ * // uint8Array: [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
+ */
 export function stringToUint8Array(str: string): Uint8Array {
   const buf = new ArrayBuffer(str.length);
   const bufView = new Uint8Array(buf);
@@ -107,6 +172,14 @@ export function stringToUint8Array(str: string): Uint8Array {
   return bufView;
 }
 
+/**
+ * Clears the storage by removing all items with a key containing 'geohub'
+ * in the localStorage and clearing the entire localforage storage.
+ *
+ * Usage example:
+ *
+ * clearStorage();
+ */
 export function clearStorage(): void {
   const allGeohubStorageKeys = Object.keys(localStorage).filter(f => f.indexOf('geohub') >= 0);
   allGeohubStorageKeys.forEach(key => {
