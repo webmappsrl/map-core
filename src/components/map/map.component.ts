@@ -71,6 +71,20 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   constructor() {}
 
+  /**
+   * @description
+   * Fits the map view to a given geometry or extent.
+   * // Fit the map view to a polygon feature
+   * const polygonFeature = new Feature(new Polygon([[[0,0], [1,1], [2,0]]]));
+   * map.fitView(polygonFeature.getGeometry());
+   * // Fit the map view to an extent with a duration of 1 second
+   * const extent = [0, 0, 100, 100];
+   * map.fitView(extent, { duration: 1000 });
+   *
+   * @param {SimpleGeometry | Extent} geometryOrExtent - The geometry or extent to fit the map view to.
+   * @param {FitOptions} [optOptions] - Optional options to use for the fit operation, such as duration.
+   * @returns {void}
+   */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (optOptions == null) {
       optOptions = {
@@ -86,6 +100,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }, 500);
   }
 
+  /**
+   * @description
+   * Executes initialization of the map after view initialization.
+   * This function subscribes to the _wmMapConf$ observable and initializes the map with the given configuration
+   * after view initialization. If the observable emits a value that is null, then nothing happens.
+   *
+   * @returns void
+   */
   ngAfterViewInit(): void {
     this._wmMapConf$
       .pipe(
@@ -97,6 +119,16 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       });
   }
 
+  /**
+   * @description
+   * Method that gets called whenever there are changes to the input properties.
+   * This method is used to detect changes in the input properties of the component.
+   * If the reset property changes and its new value is not null, the _reset method is called.
+   * If the wmMapPadding property changes and _view is not null, the _view.fit() method is called to fit the centerExtent with the specified padding and maxZoom.
+   *
+   * @param changes An object containing all input property changes.
+   * @returns void.
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.reset && changes.reset.currentValue != null) {
       this._reset();
@@ -109,6 +141,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
   }
 
+  /**
+   * @description
+   * Resets the rotation of the map to north.
+   * @returns {void}
+   */
   orientNorth(): void {
     this._view.animate({
       duration: DEF_MAP_ROTATION_DURATION,
@@ -116,6 +153,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  /**
+   * Resets the map rotation to 0.
+   * @returns void
+   */
   resetRotation(): void {
     this._view.animate({
       duration: 0,
@@ -123,6 +164,18 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  /**
+   * @description
+   * Builds an array of TileLayers from an array of tile URLs.
+   * const tiles = [
+   * { osm: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' }
+   * { hot: 'https://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png' }
+   * ];
+   * const tileLayers = _buildTileLayers(tiles);
+   *
+   * @param tiles An array of objects containing the tile name and URL.
+   * @returns An array of TileLayers.
+   */
   private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
     const tilesMap = tiles.map((tile, index) => {
       return new TileLayer({
@@ -145,6 +198,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   /**
+   * @description
    * Initialize the base source of the map
    *
    * @returns the XYZ source to use
@@ -159,6 +213,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  /**
+   * @description
+   * Initializes the default interactions for the map.
+   *
+   * @returns A collection of default map interactions.
+   */
   private _initDefaultInteractions(): Collection<Interaction> {
     return defaultInteractions({
       doubleClickZoom: false,
@@ -169,6 +229,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  /**
+   * @description
+   * Initializes the map with the given configuration object
+   *
+   * @param conf The configuration object to use for map initialization
+   * @returns void
+   */
   private _initMap(conf: IMAP): void {
     this._centerExtent = extentFromLonLat(conf.bbox ?? initExtent);
     this._view = new View({
@@ -208,12 +275,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
 
     this.map.on('postrender', () => {
-      const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
-      if (degree != this.mapDegrees) {
-        this.wmMapRotateEVT$.emit(degree);
-      }
-      this.mapDegrees = degree;
-      this.map.updateSize();
+      this._updateDegrees();
     });
 
     this.map$.next(this.map);
@@ -222,6 +284,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     this.isInit$.next(true);
   }
 
+  /**
+   * @description
+   * Resets the map to its initial state.
+   */
   private _reset(): void {
     if (this._view != null) {
       this._view.animate({
@@ -230,5 +296,18 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       });
       this._view.fit(this._centerExtent);
     }
+  }
+
+  /**
+    *@description
+    * Updates the rotation degrees of the map and emits the new value through the `wmMapRotateEVT$` observable.
+    */
+  private _updateDegrees(): void{
+    const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
+    if (degree != this.mapDegrees) {
+      this.wmMapRotateEVT$.emit(degree);
+    }
+    this.mapDegrees = degree;
+    this.map.updateSize();
   }
 }
