@@ -1,4 +1,23 @@
 {
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.singleQuote": true,
+  "prettier.configPath": ".prettierrc",
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "tsco.accessorsBeforeCtor": true,
+  "tsco.addPublicModifierIfMissing": false,
+  "tsco.addRegionCaptionToRegionEnd": false,
+  "tsco.addRowNumberInRegionName": false,
+  "tsco.organizeOnSave": true,
+  "tsco.groupPropertiesWithDecorators": true,
+  "tsco.useRegions": false,
   "tsco.memberOrder": [
     {
       "caption": "Properties",
@@ -19,9 +38,20 @@
         "publicConstProperties",
         "publicStaticReadOnlyProperties",
         "publicReadOnlyProperties",
-        "publicStaticProperties",
-        "publicProperties"
+        "publicStaticProperties"
       ]
+    },
+    {
+      "caption": "Public Static Accessors",
+      "memberTypes": ["publicStaticGettersAndSetters"]
+    },
+    {
+      "caption": "Public Accessors",
+      "memberTypes": ["publicGettersAndSetters"]
+    },
+    {
+      "caption": "Properties",
+      "memberTypes": ["publicProperties"]
     },
     {
       "caption": "Constructors",
@@ -62,14 +92,6 @@
     {
       "caption": "Private Abstract Indexers",
       "memberTypes": ["privateAbstractIndexes"]
-    },
-    {
-      "caption": "Public Static Accessors",
-      "memberTypes": ["publicStaticGettersAndSetters"]
-    },
-    {
-      "caption": "Public Accessors",
-      "memberTypes": ["publicGettersAndSetters"]
     },
     {
       "caption": "Public Abstract Accessors",
