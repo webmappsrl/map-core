@@ -13,6 +13,7 @@ import { Extent } from 'ol/extent';
 import { IMAP } from 'src/types/model';
 import Map from 'ol/Map';
 import { toRadians } from 'src/utils';
+import { WmMapControls } from '../controls/controls.map';
 
 const mockMapConf: IMAP = {
   bbox: [10, 10, 20, 20],
@@ -50,7 +51,7 @@ describe('WmMapComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [WmMapComponent]
+      declarations: [WmMapComponent, WmMapControls]
     }).compileComponents();
   });
 
