@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { WmMapControls } from './controls.map';
-import TileLayer from 'ol/layer/Tile';
+import { buildTileLayers } from 'src/utils';
+import { mockMapConf } from '../map/map.component.spec';
 
 describe('WmMapControls', () => {
   let component: WmMapControls;
@@ -17,31 +18,35 @@ describe('WmMapControls', () => {
     component = fixture.componentInstance;
   });
 
-  it('WmMapControls: should show the button when there is more than one tile layer', () => {
-    component.tileLayers = [new TileLayer(), new TileLayer()];
+  it('ngOnChanges: should showButton$ equals true when there is more than one tile layer', () => {
+    const tileLayers = buildTileLayers(mockMapConf.tiles);
     component.ngOnChanges({
-      tileLayers: {
-        currentValue: component.tileLayers,
-        previousValue: null,
-        firstChange: true,
-        isFirstChange: () => true
-      }
+      tileLayers: new SimpleChange(null, tileLayers, true)
     });
-
+    fixture.detectChanges();
     expect(component.showButton$.value).toBe(true);
   });
 
-  it('WmMapControls: should not show the button when there is only one tile layer', () => {
-    component.tileLayers = [new TileLayer()];
+  it('ngOnChanges: should showButton$ equals false when there is only one tile layer', () => {
+    const tileLayers = buildTileLayers([mockMapConf.tiles[0]]);
     component.ngOnChanges({
-      tileLayers: {
-        currentValue: component.tileLayers,
-        previousValue: null,
-        firstChange: true,
-        isFirstChange: () => true
-      }
+      tileLayers: new SimpleChange(null, tileLayers, true)
     });
+    fixture.detectChanges();
 
     expect(component.showButton$.value).toBe(false);
+  });
+
+  it('selectTileLayer: should to be visible the selected layer ', () => {
+    const tileLayers = buildTileLayers(mockMapConf.tiles);
+    component.tileLayers = tileLayers;
+
+    fixture.detectChanges();
+    component.selectTileLayer(1);
+    fixture.detectChanges();
+    component.tileLayers.forEach((tile, tidx) => {
+      expect(tile.getVisible()).toBe(1 === tidx);
+    });
+    expect(component.currentTileLayerIdx$.value).toBe(1);
   });
 });

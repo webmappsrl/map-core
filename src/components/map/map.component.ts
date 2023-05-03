@@ -27,10 +27,9 @@ import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
-import {extentFromLonLat} from '../../../src/utils/ol';
+import {buildTileLayers, extentFromLonLat} from '../../../src/utils/ol';
 import {
   DEF_MAP_ROTATION_DURATION,
-  DEF_XYZ_URL,
   initExtent,
   scaleMinWidth,
   scaleUnits,
@@ -166,55 +165,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   /**
    * @description
-   * Builds an array of TileLayers from an array of tile URLs.
-   * const tiles = [
-   * { osm: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' }
-   * { hot: 'https://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png' }
-   * ];
-   * const tileLayers = _buildTileLayers(tiles);
-   *
-   * @param tiles An array of objects containing the tile name and URL.
-   * @returns An array of TileLayers.
-   */
-  private _buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
-    const tilesMap = tiles.map((tile, index) => {
-      return new TileLayer({
-        preload: Infinity,
-        source: this._initBaseSource(Object.values(tile)[0]),
-        visible: index === 0,
-        zIndex: index,
-        className: Object.keys(tile)[0],
-      });
-    }) ?? [
-      new TileLayer({
-        preload: Infinity,
-        source: this._initBaseSource(DEF_XYZ_URL),
-        visible: true,
-        zIndex: 0,
-        className: 'webmapp',
-      }),
-    ];
-    return tilesMap;
-  }
-
-  /**
-   * @description
-   * Initialize the base source of the map
-   *
-   * @returns the XYZ source to use
-   */
-  private _initBaseSource(tile: string): XYZ {
-    if (tile === '') {
-      return null;
-    }
-    return new XYZ({
-      url: tile,
-      cacheSize: 50000,
-    });
-  }
-
-  /**
-   * @description
    * Initializes the default interactions for the map.
    *
    * @returns A collection of default map interactions.
@@ -255,7 +205,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       });
     }
 
-    this.tileLayers = this._buildTileLayers(conf.tiles);
+    this.tileLayers = buildTileLayers(conf.tiles);
     this.map = new Map({
       view: this._view,
       controls: defaultControls({
@@ -299,7 +249,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   /**
-    *@description
+   * @description
     * Updates the rotation degrees of the map and emits the new value through the `wmMapRotateEVT$` observable.
     */
   private _updateDegrees(): void{

@@ -11,11 +11,19 @@ import { XYZ } from 'ol/source';
 import { FitOptions } from 'ol/View';
 import { Extent } from 'ol/extent';
 import { IMAP } from 'src/types/model';
-import Map from 'ol/Map';
 import { toRadians } from 'src/utils';
 import { WmMapControls } from '../controls/controls.map';
 
-const mockMapConf: IMAP = {
+export const mockMapConf: IMAP = {
+  tiles: [
+    {
+      webmapp: 'https://api.webmapp.it/tiles/{z}/{x}/{y}.png'
+    },
+    {
+      satellite:
+        'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=0Z7ou7nfFFXipdDXHChf'
+    }
+  ],
   bbox: [10, 10, 20, 20],
   center: [15, 15],
   defZoom: 12,
@@ -42,8 +50,7 @@ const mockMapConf: IMAP = {
   ref_on_track_min_zoom: 10,
   ref_on_track_show: true,
   start_end_icons_min_zoom: 8,
-  start_end_icons_show: true,
-  tiles: []
+  start_end_icons_show: true
 };
 describe('WmMapComponent', () => {
   let component: WmMapComponent;
@@ -61,11 +68,11 @@ describe('WmMapComponent', () => {
     fixture.detectChanges();
   });
 
-  it('WmMapComponent: should create the component', () => {
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  it('WmMapComponent: should set all inputs correctly', () => {
+  it('Inputs: should set all inputs correctly', () => {
     const mockTileLayers: TileLayer<XYZ>[] = [
       new TileLayer<XYZ>({
         source: new XYZ({
@@ -86,7 +93,7 @@ describe('WmMapComponent', () => {
     expect(component.wmMapPadding).toEqual(mockWmMapPadding);
   });
 
-  it('WmMapComponent: should emit wmMapRotateEVT$ when map is rotated', done => {
+  it('wmMapRotateEVT$: should emit when map is rotated', done => {
     component.wmMapConf = mockMapConf;
     component.map$.subscribe(map => {
       if (map != null) {
@@ -102,40 +109,8 @@ describe('WmMapComponent', () => {
     });
   });
 
-  it('WmMapComponent: should build tile layers correctly', () => {
-    const tiles = [
-      { layer1: 'https://example.com/layer1/{z}/{x}/{y}.png' },
-      { layer2: 'https://example.com/layer2/{z}/{x}/{y}.png' }
-    ];
-
-    const expectedResult = tiles.map((tile, index) => ({
-      preload: Infinity,
-      visible: index === 0,
-      zIndex: index,
-      className: Object.keys(tile)[0],
-      url: Object.values(tile)[0]
-    }));
-
-    const result = component['_buildTileLayers'](tiles).map(tileLayer => ({
-      preload: tileLayer.getPreload(),
-      visible: tileLayer.getVisible(),
-      zIndex: tileLayer.getZIndex(),
-      className: tileLayer.getClassName(),
-      url: tileLayer.getSource().getUrls()[0]
-    }));
-
-    expect(result).toEqual(expectedResult);
-  });
-
-  it('WmMapComponent: should return null if the provided tile URL is empty', () => {
-    const tile = '';
-    const result = component['_initBaseSource'](tile);
-
-    expect(result).toBeNull();
-  });
-
   it(
-    'WmMapComponent: should call _view.fit with correct parameters and debounce the call',
+    'FitView: should call _view.fit with correct parameters and debounce the call',
     fakeAsync(() => {
       const geometryOrExtent: Extent = [10, 10, 20, 20];
       const optOptions: FitOptions = {
