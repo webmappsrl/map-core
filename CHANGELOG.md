@@ -1,3 +1,20 @@
+#### 1.0.5 (2023-05-04)
+
+##### Build System / Dependencies
+
+* **package:**
+  *  set right version (2b897ec2)
+  *  update scripts (75b2e8f9)
+* **coverage:**  add coverage (0b4f3f33)
+* **tsconfig:**  un wrap tsconfig (67469c0e)
+
+##### Tests
+
+* **components:**  test implementation (6fa57ca5)
+* **utils/ol:**
+  *  test implementation (df0e4ac2)
+  *  test implementation (caf287f9)
+
 #### 1.0.4 (2022-11-08)
 
 ##### Chores

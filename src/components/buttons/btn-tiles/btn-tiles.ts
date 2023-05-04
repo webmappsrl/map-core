@@ -44,6 +44,13 @@ export class BtnTiles implements OnChanges {
     }
   }
 
+  /**
+ * @documentation
+ * Changes the visibility of the specified tile layer and sets it as the current tile layer.
+ * 
+ * @param idx - The index of the tile layer to be selected.
+ * @returns void
+ */
   selectTileLayer(idx: number): void {
     this.currentTileLayerIdx$.next(idx);
     this.tileLayers.forEach((tile, tidx) => {
