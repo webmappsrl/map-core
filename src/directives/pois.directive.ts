@@ -143,10 +143,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     const featureSource = clusterSource.getSource();
     featureSource.clear();
     if (poiCollection) {
-      for (const poi of poiCollection) {
+      for (const poi of poiCollection.filter(poi => poi.geometry != null)) {
         const properties = poi.properties || null;
         const taxonomy = properties.taxonomy || null;
-        const poyType = taxonomy.poi_type || null;
+        const poyType = taxonomy?.poi_type || null;
         const icn = this._getIcnFromTaxonomies(properties.taxonomyIdentifiers);
         const coordinates = [
           poi.geometry.coordinates[0] as number,
@@ -295,10 +295,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    */
   private _getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
     const excludedIcn = ['theme_ucvs'];
-    const res = taxonomyIdentifiers.filter(
+    const res = taxonomyIdentifiers?.filter(
       p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
     );
-    return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
+    return res?.length > 0
+      ? res[0]
+      : taxonomyIdentifiers != null && taxonomyIdentifiers.length > 0
+      ? taxonomyIdentifiers[0]
+      : null;
   }
 
   /**
@@ -427,7 +431,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         const iconFeature = new Feature({type: 'icon', geometry});
         const properties = currentPoi.properties || null;
         const taxonomy = properties.taxonomy || null;
-        const poyType = taxonomy.poi_type || null;
+        const poyType = taxonomy?.poi_type || null;
         const poiColor = poyType?.color
           ? poyType.color
           : properties.color
