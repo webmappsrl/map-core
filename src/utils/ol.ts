@@ -13,7 +13,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Map from 'ol/Map';
 import {fromLonLat, toLonLat, transform, transformExtent} from 'ol/proj';
-import {Cluster} from 'ol/source';
+import {Cluster, XYZ} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import VectorTileSource from 'ol/source/VectorTile';
 import {getDistance, offset} from 'ol/sphere';
@@ -25,10 +25,16 @@ import convexHull from 'ol-ext/geom/ConvexHull';
 import Polygon from 'ol/geom/Polygon';
 import {LoadFunction} from 'ol/Tile';
 import {ALERT_POI_RADIUS, TRACK_ZINDEX} from '../readonly';
-import {CLUSTER_DISTANCE, DEF_MAP_CLUSTER_CLICK_TOLERANCE, ICN_PATH} from '../readonly/constants';
+import {
+  CLUSTER_DISTANCE,
+  DEF_MAP_CLUSTER_CLICK_TOLERANCE,
+  DEF_XYZ_URL,
+  ICN_PATH,
+} from '../readonly/constants';
 import {Location} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import {fromHEXToColor, getClusterStyle} from './styles';
+import TileLayer from 'ol/layer/Tile';
 
 /**
  * @description
@@ -736,6 +742,53 @@ export function initVectorTileLayer(
   return layer;
 }
 
+/**
+ * @description
+ * Builds an array of TileLayers from an array of tile URLs.
+ * const tiles = [
+ * { osm: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' }
+ * { hot: 'https://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png' }
+ * ];
+ * const tileLayers = _buildTileLayers(tiles);
+ *
+ * @param tiles An array of objects containing the tile name and URL.
+ * @returns An array of TileLayers.
+ */
+export function buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
+  /**
+   * @description
+   * Initialize the base source of the map
+   *
+   * @returns the XYZ source to use
+   */
+  const initBaseSource = (tile: string): XYZ => {
+    if (tile === '') {
+      return null;
+    }
+    return new XYZ({
+      url: tile,
+      cacheSize: 50000,
+    });
+  };
+  const tilesMap = tiles.map((tile, index) => {
+    return new TileLayer({
+      preload: Infinity,
+      source: initBaseSource(Object.values(tile)[0]),
+      visible: index === 0,
+      zIndex: index,
+      className: Object.keys(tile)[0],
+    });
+  }) ?? [
+    new TileLayer({
+      preload: Infinity,
+      source: initBaseSource(DEF_XYZ_URL),
+      visible: true,
+      zIndex: 0,
+      className: 'webmapp',
+    }),
+  ];
+  return tilesMap;
+}
 /**
  * @description
  * Custom tile loading function to handle caching of tiles using LocalForage.
