@@ -10,48 +10,10 @@ import TileLayer from 'ol/layer/Tile';
 import { XYZ } from 'ol/source';
 import { FitOptions } from 'ol/View';
 import { Extent } from 'ol/extent';
-import { IMAP } from 'src/types/model';
 import { toRadians } from 'src/utils';
 import { WmMapControls } from '../controls/controls.map';
+import { mockMapConf } from 'src/const.spec';
 
-export const mockMapConf: IMAP = {
-  tiles: [
-    {
-      webmapp: 'https://api.webmapp.it/tiles/{z}/{x}/{y}.png'
-    },
-    {
-      satellite:
-        'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=0Z7ou7nfFFXipdDXHChf'
-    }
-  ],
-  bbox: [10, 10, 20, 20],
-  center: [15, 15],
-  defZoom: 12,
-  flow_line_quote_orange: 10,
-  flow_line_quote_red: 20,
-  flow_line_quote_show: true,
-  layers: [],
-  maxStrokeWidth: 5,
-  maxZoom: 18,
-  minStrokeWidth: 1,
-  minZoom: 6,
-  pois: {
-    apppoisApiLayer: false,
-    poiIconRadius: '10',
-    poiIconZoom: '14',
-    poiLabelMinZoom: '14',
-    poiMaxRadius: '20',
-    poiMinRadius: '5',
-    poiMinZoom: '6',
-    poi_interaction: 'tooltip',
-    skipRouteIndexDownload: false,
-    taxonomies: {}
-  },
-  ref_on_track_min_zoom: 10,
-  ref_on_track_show: true,
-  start_end_icons_min_zoom: 8,
-  start_end_icons_show: true
-};
 describe('WmMapComponent', () => {
   let component: WmMapComponent;
   let fixture: ComponentFixture<WmMapComponent>;

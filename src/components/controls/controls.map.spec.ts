@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
 import { WmMapControls } from './controls.map';
 import { buildTileLayers } from 'src/utils';
-import { mockMapConf } from '../map/map.component.spec';
+import { mockMapConf } from 'src/const.spec';
 
 describe('WmMapControls', () => {
   let component: WmMapControls;

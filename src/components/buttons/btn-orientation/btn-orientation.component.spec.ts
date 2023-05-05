@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { BtnOrientation } from './btn-orientation.component';
+import { IonFabButton } from '@ionic/angular';
 
 describe('BtnOrientation', () => {
   let component: BtnOrientation;
@@ -8,7 +9,7 @@ describe('BtnOrientation', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [BtnOrientation]
+      declarations: [BtnOrientation, IonFabButton]
     }).compileComponents();
   });
 
