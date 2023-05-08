@@ -2,9 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   Component,
   ComponentFactoryResolver,
-  SimpleChange,
-  SimpleChanges,
-  ViewContainerRef
+  SimpleChange
 } from '@angular/core';
 import { WmMapComponent } from '../components/map/map.component';
 import { WmMapTrackDirective } from './track.directive';
@@ -15,16 +13,13 @@ import { AsyncPipe, CommonModule } from '@angular/common';
 import { coordsFromLonLat, getLineStyle } from 'src/utils';
 import FlowLine from 'ol-ext/style/FlowLine';
 import { IonCard, IonCardContent } from '@ionic/angular';
-import * as ol from 'ol';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
-import VectorTileLayer from 'ol/layer/VectorTile';
 import BaseEvent from 'ol/events/Event';
 import { LineString, Point } from 'ol/geom';
 import { ILineString } from 'src/types/model';
 import { Feature } from 'ol';
 import { PinchRotate } from 'ol/interaction';
-import { boundingExtent, getCenter } from 'ol/extent';
 import { WmMapPopover } from '../components/popover/popover.map';
 import { BehaviorSubject } from 'rxjs';
 
