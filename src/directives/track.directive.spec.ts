@@ -1,31 +1,35 @@
-import {ComponentFixture, TestBed} from '@angular/core/testing';
-import {Component, ComponentFactoryResolver, SimpleChange} from '@angular/core';
-import {WmMapComponent} from '../components/map/map.component';
-import {WmMapTrackDirective} from './track.directive';
-import {By} from '@angular/platform-browser';
-import {mockMapConf, mockTrack} from '../const.spec';
-import {WmMapControls} from 'src/components';
-import {AsyncPipe, CommonModule} from '@angular/common';
-import {coordsFromLonLat, getLineStyle} from 'src/utils';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  Component,
+  ComponentFactoryResolver,
+  SimpleChange
+} from '@angular/core';
+import { WmMapComponent } from '../components/map/map.component';
+import { WmMapTrackDirective } from './track.directive';
+import { By } from '@angular/platform-browser';
+import { mockMapConf, mockTrack } from '../const.spec';
+import { WmMapControls } from 'src/components';
+import { AsyncPipe, CommonModule } from '@angular/common';
+import { coordsFromLonLat, getLineStyle } from 'src/utils';
 import FlowLine from 'ol-ext/style/FlowLine';
-import {IonCard, IonCardContent} from '@ionic/angular';
+import { IonCard, IonCardContent } from '@ionic/angular';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import BaseEvent from 'ol/events/Event';
-import {LineString, Point} from 'ol/geom';
-import {ILineString} from 'src/types/model';
-import {Feature} from 'ol';
-import {PinchRotate} from 'ol/interaction';
-import {WmMapPopover} from '../components/popover/popover.map';
-import {BehaviorSubject} from 'rxjs';
+import { LineString, Point } from 'ol/geom';
+import { ILineString } from 'src/types/model';
+import { Feature } from 'ol';
+import { PinchRotate } from 'ol/interaction';
+import { WmMapPopover } from '../components/popover/popover.map';
+import { BehaviorSubject } from 'rxjs';
 
 @Component({
   template: `<wm-map
   [wmMapConf]="conf"
   wmMapTrack
   [track]="track"
-  [trackElevationChartElements]="elevationChart"
-></wm-map>`,
+  
+></wm-map>`
 })
 class TestComponent {
   conf = mockMapConf;
@@ -39,10 +43,10 @@ class TestComponent {
   wmMapTrack
   [track]="track"
   [trackElevationChartElements]="elevationChart"
-></wm-map>`,
+></wm-map>`
 })
 class TestComponentFlowLine {
-  conf = {...mockMapConf, ...{flow_line_quote_show: true}};
+  conf = { ...mockMapConf, ...{ flow_line_quote_show: true } };
   elevationChart = mockTrack.properties.elevation_chart_image;
   track = mockTrack;
 }
@@ -66,9 +70,9 @@ describe('WmMapTrackDirective', () => {
         WmMapPopover,
         AsyncPipe,
         IonCard,
-        IonCardContent,
+        IonCardContent
       ],
-      imports: [CommonModule],
+      imports: [CommonModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestComponent);
@@ -76,20 +80,23 @@ describe('WmMapTrackDirective', () => {
     component = fixture.componentInstance;
     componentFlowLine = fixtureFlowLine.componentInstance;
 
-    const directiveEl = fixture.debugElement.query(By.directive(WmMapTrackDirective));
+    const directiveEl = fixture.debugElement.query(
+      By.directive(WmMapTrackDirective)
+    );
     wmMapTrackDirective = directiveEl.injector.get(WmMapTrackDirective);
     const directiveElFlowLine = fixtureFlowLine.debugElement.query(
-      By.directive(WmMapTrackDirective),
+      By.directive(WmMapTrackDirective)
     );
-    wmMapTrackDirectiveFlowLine = directiveElFlowLine.injector.get(WmMapTrackDirective);
+    wmMapTrackDirectiveFlowLine = directiveElFlowLine.injector.get(
+      WmMapTrackDirective
+    );
     fixture.detectChanges();
     fixtureFlowLine.detectChanges();
   });
 
   it('drawTrack: track should have default color', () => {
     wmMapTrackDirective.ngOnChanges({
-      wmMapConf: new SimpleChange(null, mockMapConf, true),
-      track: new SimpleChange(null, mockTrack, true),
+      wmMapConf: new SimpleChange(null, mockMapConf, true)
     });
     fixture.detectChanges();
     const trackLayer = wmMapTrackDirective['_trackLayer'];
@@ -99,13 +106,14 @@ describe('WmMapTrackDirective', () => {
       getLineStyle(wmMapTrackDirective.wmMapTrackColor).length - 1
     ];
 
-    expect(style.getStroke().getColor()).toBe(trackLayerStyle.getStroke().getColor());
+    expect(style.getStroke().getColor()).toBe(
+      trackLayerStyle.getStroke().getColor()
+    );
   });
 
   it('drawTrack: track should have #cbdf15 color', () => {
     wmMapTrackDirective.ngOnChanges({
-      wmMapConf: new SimpleChange(null, mockMapConf, true),
-      track: new SimpleChange(null, mockTrack, true),
+      wmMapConf: new SimpleChange(null, mockMapConf, true)
     });
     wmMapTrackDirective.wmMapTrackColor = '#cbdf15';
     fixture.detectChanges();
@@ -116,13 +124,14 @@ describe('WmMapTrackDirective', () => {
       getLineStyle(wmMapTrackDirective.wmMapTrackColor).length - 1
     ];
 
-    expect(style.getStroke().getColor()).toBe(trackLayerStyle.getStroke().getColor());
+    expect(style.getStroke().getColor()).toBe(
+      trackLayerStyle.getStroke().getColor()
+    );
   });
 
   it('drawTrack: track should have flow line color', () => {
     wmMapTrackDirectiveFlowLine.ngOnChanges({
-      wmMapConf: new SimpleChange(null, mockMapConf, true),
-      track: new SimpleChange(null, mockTrack, true),
+      wmMapConf: new SimpleChange(null, mockMapConf, true)
     });
 
     wmMapTrackDirectiveFlowLine.wmMapTrackColor = '#cbdf15';
@@ -136,8 +145,7 @@ describe('WmMapTrackDirective', () => {
 
   it('_centerMapToTrack: should center the map view to the track', () => {
     wmMapTrackDirective.ngOnChanges({
-      wmMapConf: new SimpleChange(null, mockMapConf, true),
-      track: new SimpleChange(null, mockTrack, true),
+      wmMapConf: new SimpleChange(null, mockMapConf, true)
     });
 
     spyOn(wmMapTrackDirective.mapCmp.map.getView(), 'fit');
@@ -145,21 +153,31 @@ describe('WmMapTrackDirective', () => {
     const trackExt = wmMapTrackDirective['_trackLayer'].getSource().getExtent();
     wmMapTrackDirective['_centerMapToTrack']();
     wmMapTrackDirective.mapCmp.map.getView().setCenter([0, 0]); // va aggiunto se no da errore il calculateExtent
-    wmMapTrackDirective.mapCmp.map.dispatchEvent(new BaseEvent('rendercomplete'));
+    wmMapTrackDirective.mapCmp.map.dispatchEvent(
+      new BaseEvent('rendercomplete')
+    );
     // extent dopo l'esecuzione della _centerMapToTrack
-    const extAfterCenterMapToTrack = wmMapTrackDirective.mapCmp.map.getView().calculateExtent();
+    const extAfterCenterMapToTrack = wmMapTrackDirective.mapCmp.map
+      .getView()
+      .calculateExtent();
     wmMapTrackDirective.mapCmp.map.getView().fit(trackExt, {
       padding: [80, 80, 80, 80],
-      duration: 500,
+      duration: 500
     });
     // extent ricalcolato partendo dall' extent della traccia
-    const extMocked = wmMapTrackDirective.mapCmp.map.getView().calculateExtent();
+    const extMocked = wmMapTrackDirective.mapCmp.map
+      .getView()
+      .calculateExtent();
     // questo expect controlla se _centerMapToTrack venga chiamato effettivamente sull' extent della track
-    expect(JSON.stringify(extAfterCenterMapToTrack)).toBe(JSON.stringify(extMocked));
+    expect(JSON.stringify(extAfterCenterMapToTrack)).toBe(
+      JSON.stringify(extMocked)
+    );
     // questo expect controlla se _centerMapToTrack viene chiamato con le opzioni esatte
-    expect(wmMapTrackDirective.mapCmp.map.getView().fit).toHaveBeenCalledWith(jasmine.any(Array), {
+    expect(
+      wmMapTrackDirective.mapCmp.map.getView().fit
+    ).toHaveBeenCalledWith(jasmine.any(Array), {
       padding: [80, 80, 80, 80],
-      duration: 500,
+      duration: 500
     });
   });
 
@@ -172,19 +190,25 @@ describe('WmMapTrackDirective', () => {
       altitudeAccuracy: 10,
       bearing: 0,
       speed: 1,
-      time: 1234567890,
+      time: 1234567890
     };
     const track = mockTrack;
 
     wmMapTrackDirective['_drawTemporaryLocationFeature'](location, track);
 
-    expect(wmMapTrackDirective['_elevationChartSource']).toBeInstanceOf(VectorSource);
-    expect(wmMapTrackDirective['_elevationChartLayer']).toBeInstanceOf(VectorLayer);
+    expect(wmMapTrackDirective['_elevationChartSource']).toBeInstanceOf(
+      VectorSource
+    );
+    expect(wmMapTrackDirective['_elevationChartLayer']).toBeInstanceOf(
+      VectorLayer
+    );
 
     const pointFeature = wmMapTrackDirective['_elevationChartPoint'];
     expect(pointFeature).toBeInstanceOf(Feature);
     expect(pointFeature.getGeometry().getCoordinates()).toEqual(
-      new Point(coordsFromLonLat([location.longitude, location.latitude])).getCoordinates(),
+      new Point(
+        coordsFromLonLat([location.longitude, location.latitude])
+      ).getCoordinates()
     );
 
     const trackFeature = wmMapTrackDirective['_elevationChartTrack'];
@@ -192,8 +216,10 @@ describe('WmMapTrackDirective', () => {
     expect(trackFeature).toBeInstanceOf(Feature);
     expect(trackFeature.getGeometry().getCoordinates()).toEqual(
       new LineString(
-        (track.geometry.coordinates as ILineString).map(value => coordsFromLonLat(value)),
-      ).getCoordinates(),
+        (track.geometry.coordinates as ILineString).map(value =>
+          coordsFromLonLat(value)
+        )
+      ).getCoordinates()
     );
   });
 
@@ -203,10 +229,10 @@ describe('WmMapTrackDirective', () => {
         type: 'Feature',
         geometry: {
           type: 'Point',
-          coordinates: [10.267605401, 43.794218975],
-        },
+          coordinates: [10.267605401, 43.794218975]
+        }
       },
-      otherProperty: 'test',
+      otherProperty: 'test'
     };
 
     const result = wmMapTrackDirective['_getGeoJson'](input);
@@ -217,9 +243,9 @@ describe('WmMapTrackDirective', () => {
     const input = {
       geometry: {
         type: 'LineString',
-        coordinates: [10.280758, 43.777285, 2, 0],
+        coordinates: [10.280758, 43.777285, 2, 0]
       },
-      otherProperty: 'test',
+      otherProperty: 'test'
     };
 
     const result = wmMapTrackDirective['_getGeoJson'](input);
@@ -228,7 +254,7 @@ describe('WmMapTrackDirective', () => {
 
   it('_getGeoJson: should return the _geometry property if it exists', () => {
     const input = {
-      _geometry: {type: 'Point', coordinates: [10.267605401, 43.794218975]},
+      _geometry: { type: 'Point', coordinates: [10.267605401, 43.794218975] },
       type: 'Feature',
       properties: {
         id: 73649,
@@ -237,9 +263,9 @@ describe('WmMapTrackDirective', () => {
         name: {
           it: 'Da Marina di Vecchiano a Viareggio',
           en: 'From Marina di Vecchiano to Viareggio',
-          es: null,
-        },
-      },
+          es: null
+        }
+      }
     };
 
     const result = wmMapTrackDirective['_getGeoJson'](input);
@@ -256,7 +282,9 @@ describe('WmMapTrackDirective', () => {
   it('_init: should add _startEndLayer to the map', () => {
     wmMapTrackDirective['_init']();
 
-    const features = wmMapTrackDirective['_startEndLayer'].getSource().getFeatures();
+    const features = wmMapTrackDirective['_startEndLayer']
+      .getSource()
+      .getFeatures();
     expect(features.length).toBe(2);
     expect(features).toContain(wmMapTrackDirective['_startFeature']);
     expect(features).toContain(wmMapTrackDirective['_endFeature']);
@@ -265,7 +293,9 @@ describe('WmMapTrackDirective', () => {
   it('_init: should draw the track on the map', () => {
     spyOn(wmMapTrackDirective, 'drawTrack').and.callThrough();
     wmMapTrackDirective['_init']();
-    expect(wmMapTrackDirective.drawTrack).toHaveBeenCalledWith(wmMapTrackDirective.track);
+    expect(wmMapTrackDirective.drawTrack).toHaveBeenCalledWith(
+      wmMapTrackDirective.track
+    );
   });
 
   it('_init: should add the PinchRotate interaction to the map', () => {
@@ -279,19 +309,29 @@ describe('WmMapTrackDirective', () => {
 
   it('_initPopover: should create and insert a WmMapPopover component as the first child of wm-map', () => {
     const viewContainerRef = wmMapTrackDirective['viewContainerRef'];
-    const createComponentSpy = spyOn(viewContainerRef, 'createComponent').and.callThrough();
+    const createComponentSpy = spyOn(
+      viewContainerRef,
+      'createComponent'
+    ).and.callThrough();
     const wmMapElement = wmMapTrackDirective['element'].nativeElement;
-    const insertBeforeSpy = spyOn(wmMapElement, 'insertBefore').and.callThrough();
+    const insertBeforeSpy = spyOn(
+      wmMapElement,
+      'insertBefore'
+    ).and.callThrough();
 
     wmMapTrackDirective['_initPopover']();
 
     const componentFactoryResolver = TestBed.inject(ComponentFactoryResolver);
     expect(createComponentSpy).toHaveBeenCalledOnceWith(
-      componentFactoryResolver.resolveComponentFactory(WmMapPopover),
+      componentFactoryResolver.resolveComponentFactory(WmMapPopover)
     );
 
-    const wmMapPopoverElement = createComponentSpy.calls.first().returnValue.location.nativeElement;
-    expect(insertBeforeSpy).toHaveBeenCalledOnceWith(wmMapPopoverElement, jasmine.anything());
+    const wmMapPopoverElement = createComponentSpy.calls.first().returnValue
+      .location.nativeElement;
+    expect(insertBeforeSpy).toHaveBeenCalledOnceWith(
+      wmMapPopoverElement,
+      jasmine.anything()
+    );
 
     expect(wmMapElement.firstChild).toBe(wmMapPopoverElement);
   });
@@ -307,23 +347,36 @@ describe('WmMapTrackDirective', () => {
     wmMapTrackDirective['_startEndLayer'] = new VectorLayer();
     wmMapTrackDirective['_trackLayer'] = new VectorLayer();
     wmMapTrackDirective['_popoverRef'] = {
-      instance: {message$: new BehaviorSubject(null)},
+      instance: { message$: new BehaviorSubject(null) }
     } as any;
 
-    spyOn(wmMapTrackDirective['_elevationChartSource'], 'removeFeature').and.callThrough();
-    spyOn(wmMapTrackDirective['_elevationChartSource'], 'clear').and.callThrough();
+    spyOn(
+      wmMapTrackDirective['_elevationChartSource'],
+      'removeFeature'
+    ).and.callThrough();
+    spyOn(
+      wmMapTrackDirective['_elevationChartSource'],
+      'clear'
+    ).and.callThrough();
     spyOn(map, 'removeLayer').and.callThrough();
-    spyOn(wmMapTrackDirective['_popoverRef'].instance.message$, 'next').and.callThrough();
+    spyOn(
+      wmMapTrackDirective['_popoverRef'].instance.message$,
+      'next'
+    ).and.callThrough();
 
     wmMapTrackDirective['_resetView']();
 
-    expect(wmMapTrackDirective['_elevationChartSource'].removeFeature).toHaveBeenCalledWith(
-      jasmine.any(Feature),
-    );
+    expect(
+      wmMapTrackDirective['_elevationChartSource'].removeFeature
+    ).toHaveBeenCalledWith(jasmine.any(Feature));
 
-    expect(wmMapTrackDirective['_elevationChartSource'].clear).toHaveBeenCalled();
+    expect(
+      wmMapTrackDirective['_elevationChartSource'].clear
+    ).toHaveBeenCalled();
     expect(map.removeLayer).toHaveBeenCalledTimes(3);
-    expect(wmMapTrackDirective['_popoverRef'].instance.message$.next).toHaveBeenCalledWith(null);
+    expect(
+      wmMapTrackDirective['_popoverRef'].instance.message$.next
+    ).toHaveBeenCalledWith(null);
 
     expect(wmMapTrackDirective['_elevationChartLayer']).toBeUndefined();
     expect(wmMapTrackDirective['_elevationChartPoint']).toBeUndefined();
