@@ -28,7 +28,8 @@ import {
   nearestFeatureOfCooridinate,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
-  toDegrees
+  toDegrees,
+  toRadians
 } from './ol';
 import { MapBrowserEvent, View, Map } from 'ol';
 import { Geometry, Point, Polygon } from 'ol/geom';
@@ -638,5 +639,20 @@ describe('ol', () => {
     }));
 
     expect(result).toEqual(expectedResult);
+  });
+
+  it('toRadians: should convert degrees to radians correctly', () => {
+    const testCases = [
+      { degrees: 0, radians: 0 },
+      { degrees: 45, radians: Math.PI / 4 },
+      { degrees: 90, radians: Math.PI / 2 },
+      { degrees: 180, radians: Math.PI },
+      { degrees: 360, radians: 2 * Math.PI }
+    ];
+
+    for (const testCase of testCases) {
+      const result = toRadians(testCase.degrees);
+      expect(result).toBeCloseTo(testCase.radians, 10);
+    }
   });
 });
