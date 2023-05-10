@@ -58,7 +58,6 @@ describe('WmMapPositionDirective', () => {
 
     const directiveEl = fixture.debugElement.query(By.directive(WmMapPositionDirective));
     wmMapPositionDirective = directiveEl.injector.get(WmMapPositionDirective);
-    console.log(wmMapPositionDirective);
     fixture.detectChanges();
   });
 

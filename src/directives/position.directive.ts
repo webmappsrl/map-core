@@ -98,7 +98,6 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
    * @returns void
    */
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     if (
       changes.wmMapPositioncurrentLocation != null &&
       changes.wmMapPositioncurrentLocation.currentValue != null
