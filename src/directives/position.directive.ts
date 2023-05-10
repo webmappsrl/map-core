@@ -13,7 +13,7 @@ import Style from 'ol/style/Style';
 
 import {filter, take} from 'rxjs/operators';
 
-import {circularPolygon} from '../../src/utils/ol';
+import {circularPolygon, toRadians} from '../../src/utils/ol';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 interface Bearing {
@@ -98,6 +98,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
    * @returns void
    */
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     if (
       changes.wmMapPositioncurrentLocation != null &&
       changes.wmMapPositioncurrentLocation.currentValue != null
@@ -154,18 +155,9 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
    */
   private _centerPosition() {
     const point = this._updateGeometry(this._currentLocation);
-    this._followLocation(point);
-  }
-
-  /**
-   * @description
-   * Converts degrees to radians.
-   *
-   * @param degrees The angle in degrees to be converted to radians
-   * @returns The angle in radians.
-   */
-  private _degreesToRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
+    if (point != null) {
+      this._followLocation(point);
+    }
   }
 
   /**
@@ -227,7 +219,7 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   private _runningAvg(bearing: number): number {
     try {
       if (typeof bearing === 'number' && Number.isNaN(bearing) === false && bearing >= 0) {
-        const bearingInRadians = this._degreesToRadians(bearing);
+        const bearingInRadians = toRadians(bearing);
         const newBearing: Bearing = {
           cos: Math.cos(bearingInRadians),
           sin: Math.sin(bearingInRadians),
@@ -277,10 +269,13 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
    * @returns The new point location.
    */
   private _updateGeometry(loc: Location): Point {
-    const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
-    const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy);
-    this._featureLocation.setGeometry(point);
-    this._featureAccuracy.setGeometry(geometry);
-    return point;
+    if (loc != null) {
+      const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
+      const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy);
+      this._featureLocation.setGeometry(point);
+      this._featureAccuracy.setGeometry(geometry);
+      return point;
+    }
+    return null;
   }
 }

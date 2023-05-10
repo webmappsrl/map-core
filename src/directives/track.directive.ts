@@ -72,20 +72,20 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   }
 
   /**
-  * @description
-  * This function draws a track on the map.
-  * The function reads the trackgeojson data and converts it to a feature vector,
-  * which is then added as a layer to the map. The style of the layer is determined
-  * by the value of isFlowLine configuration parameter. If isFlowLine is true, the
-  * track is drawn as a FlowLine, otherwise it is drawn as a simple LineString. If the
-  * track is drawn as a FlowLine, the orangeTreshold and redTreshold configuration
-  * parameters are used to determine the style of the line. The function also
-  * initializes a popover if isFlowLine is true.
-  * 
-  * @param trackgeojson The track to be drawn on the map in GeoJSON format.
-  * @returns void
-  * 
-  */
+   * @description
+   * This function draws a track on the map.
+   * The function reads the trackgeojson data and converts it to a feature vector,
+   * which is then added as a layer to the map. The style of the layer is determined
+   * by the value of isFlowLine configuration parameter. If isFlowLine is true, the
+   * track is drawn as a FlowLine, otherwise it is drawn as a simple LineString. If the
+   * track is drawn as a FlowLine, the orangeTreshold and redTreshold configuration
+   * parameters are used to determine the style of the line. The function also
+   * initializes a popover if isFlowLine is true.
+   *
+   * @param trackgeojson The track to be drawn on the map in GeoJSON format.
+   * @returns void
+   *
+   */
   drawTrack(trackgeojson: any): void {
     const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
@@ -120,7 +120,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * If the track or configuration have been set and the map is initialized, it initializes the track.
    * If the track and the map are set and the elevation chart elements are available,
    * it updates the flow line popover and draws the temporary location feature.
-   * 
+   *
    * @param changes - The SimpleChanges object that contains the changes of input properties.
    * @returns void
    */
@@ -187,13 +187,13 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * @description
    * Draws a temporary location feature on the elevation chart layer based on the given location and track.
    * If the elevation chart source and layer do not exist yet, they will be created.
-   * This is a private method in a component class that is responsible for drawing a temporary location feature on the map, given a location and a track. 
-   * If a location is provided, it adds a point to a vector source with a circle style representing the location. 
+   * This is a private method in a component class that is responsible for drawing a temporary location feature on the map, given a location and a track.
+   * If a location is provided, it adds a point to a vector source with a circle style representing the location.
    * If a track is provided, it updates the vector source with a line feature representing the track.
-   * The method also checks if the necessary layers and sources have been initialized, and if not, initializes them before adding the features. 
+   * The method also checks if the necessary layers and sources have been initialized, and if not, initializes them before adding the features.
    * The style of the track feature is determined using the getLineStyle() function with the color of the elevation chart track.
    * This method is used in the ngOnChanges() method of the same component to update the temporary location feature whenever the track or the location changes.
-   * 
+   *
    * @param location - The location to draw as a temporary feature.
    * @param track - The track to use for drawing the elevation chart track.
    */
@@ -284,10 +284,10 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * If the input object has a "geometry" property, the "geometry" property is returned.
    * If the input object has a "_geometry" property, the "_geometry" property is returned.
    * If none of the above properties exist, the input object itself is returned.
-   * 
+   *
    * @param trackgeojson The track geojson object to extract the GeoJSON from.
    * @returns The GeoJSON object.
-  */
+   */
   private _getGeoJson(trackgeojson: any): any {
     if (trackgeojson?.geojson) {
       return trackgeojson.geojson;
@@ -303,10 +303,10 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   /**
    * @description
-   * This is a private method that initializes the map with the track information. 
-   * It adds the start and end markers to the map, draws the track, 
+   * This is a private method that initializes the map with the track information.
+   * It adds the start and end markers to the map, draws the track,
    * adds the PinchRotate interaction to the map, and centers the map view to the track.
-  */
+   */
   private _init(): void {
     const startPosition = this.track.geometry.coordinates[0];
     const endPosition = this.track.geometry.coordinates[this.track.geometry.coordinates.length - 1];
@@ -325,10 +325,10 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   }
 
   /**
-    * @description
-    * Creates a popover component and inserts it into the HTML DOM tree as the first child of wm-map.
-    * The popover is created using the `WmMapPopover` component and a component factory resolver.
-  */
+   * @description
+   * Creates a popover component and inserts it into the HTML DOM tree as the first child of wm-map.
+   * The popover is created using the `WmMapPopover` component and a component factory resolver.
+   */
   private _initPopover(): void {
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(WmMapPopover);
     this._popoverRef = this.viewContainerRef.createComponent(componentFactory);

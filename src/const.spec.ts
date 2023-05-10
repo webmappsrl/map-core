@@ -1,4 +1,4 @@
-import { IMAP } from './types/model';
+import {IMAP} from './types/model';
 
 export const mockTrack = {
   type: 'Feature',
@@ -9,19 +9,18 @@ export const mockTrack = {
     name: {
       it: 'Da Marina di Vecchiano a Viareggio',
       en: 'From Marina di Vecchiano to Viareggio',
-      es: null
+      es: null,
     },
     description: {
-      it:
-        "<p>Fatti guidare da una guida esperta e non pensare ad altro che goderti il cammino<br />Giulio (Azimut-Treks): +39 3395675637<br />Matteo (Il Bivacco): +39 339 2429589</p>\r\n<p>Seguendo la via del Balipedio percorribile a piedi o in bici raggiungeeremo Viareggio la citt&agrave; del carnevale.</p>\r\n<p>Da un lato il mare, dall'altro la pineta per una camminata o pedalata immersi nel relax</p>",
-      es: null
+      it: "<p>Fatti guidare da una guida esperta e non pensare ad altro che goderti il cammino<br />Giulio (Azimut-Treks): +39 3395675637<br />Matteo (Il Bivacco): +39 339 2429589</p>\r\n<p>Seguendo la via del Balipedio percorribile a piedi o in bici raggiungeeremo Viareggio la citt&agrave; del carnevale.</p>\r\n<p>Da un lato il mare, dall'altro la pineta per una camminata o pedalata immersi nel relax</p>",
+      es: null,
     },
-    excerpt: { it: '' },
+    excerpt: {it: ''},
     distance_comp: 22.4,
     user_id: 21054,
     feature_image: {
       id: 13164,
-      name: { it: '20230304_151032.jpg' },
+      name: {it: '20230304_151032.jpg'},
       url: 'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/13164.jpg',
       api_url: 'https://geohub.webmapp.it/api/ec/media/13164',
       sizes: {
@@ -48,8 +47,8 @@ export const mockTrack = {
         '1920x':
           'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/1920x/13164_1920x.jpg',
         '250x150':
-          'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/250x150/13164_250x150.jpg'
-      }
+          'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/250x150/13164_250x150.jpg',
+      },
     },
     distance: 22.4,
     ascent: 9,
@@ -67,8 +66,7 @@ export const mockTrack = {
     not_accessible: false,
     skip_geomixer_tech: true,
     author_email: 'bikevillage@webmapp.it',
-    geojson_url:
-      'https://geohub.webmapp.it/api/ec/track/download/73649.geojson',
+    geojson_url: 'https://geohub.webmapp.it/api/ec/track/download/73649.geojson',
     gpx_url: 'https://geohub.webmapp.it/api/ec/track/download/73649.gpx',
     kml_url: 'https://geohub.webmapp.it/api/ec/track/download/73649.kml',
     taxonomy: {
@@ -77,9 +75,9 @@ export const mockTrack = {
           id: 2,
           created_at: '2021-07-05T16:34:23.000000Z',
           updated_at: '2022-04-05T13:47:56.000000Z',
-          name: { it: 'In bicicletta', en: 'In bicicletta' },
-          description: { en: null },
-          excerpt: { en: null },
+          name: {it: 'In bicicletta', en: 'In bicicletta'},
+          description: {en: null},
+          excerpt: {en: null},
           identifier: 'cycling',
           feature_image: 286,
           stroke_width: '2.5',
@@ -88,13 +86,13 @@ export const mockTrack = {
           min_size: '1',
           max_size: '4',
           icon_zoom: '5',
-          icon_size: '0.1'
-        }
+          icon_size: '0.1',
+        },
       ],
       theme: [142],
-      where: [9, 70, 66, 4680, 2508]
+      where: [9, 70, 66, 4680, 2508],
     },
-    duration: { cycling: { forward: 135, backward: 135 } },
+    duration: {cycling: {forward: 135, backward: 135}},
     related_pois: [
       {
         type: 'Feature',
@@ -102,15 +100,14 @@ export const mockTrack = {
           id: 12720,
           created_at: '2023-03-14T15:46:18.000000Z',
           updated_at: '2023-03-14T15:46:48.000000Z',
-          name: { it: 'Marina di Vecchiano' },
-          description: { es: null },
-          excerpt: { es: null },
+          name: {it: 'Marina di Vecchiano'},
+          description: {es: null},
+          excerpt: {es: null},
           user_id: 21054,
           feature_image: {
             id: 13272,
-            name: { it: 'DJI_0468.jpg' },
-            url:
-              'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/13272.jpg',
+            name: {it: 'DJI_0468.jpg'},
+            url: 'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/13272.jpg',
             api_url: 'https://geohub.webmapp.it/api/ec/media/13272',
             sizes: {
               '108x148':
@@ -136,8 +133,8 @@ export const mockTrack = {
               '1920x':
                 'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/1920x/13272_1920x.jpg',
               '250x150':
-                'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/250x150/13272_250x150.jpg'
-            }
+                'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/250x150/13272_250x150.jpg',
+            },
           },
           ele: '1',
           addr_street: 'Via del Balipedio - Marina di Vecchiano',
@@ -154,10 +151,9 @@ export const mockTrack = {
           reachability_by_car_check: true,
           reachability_by_public_transportation_check: true,
           addr_complete: 'Via del Balipedio - Marina di Vecchiano',
-          pivot: { ec_track_id: 73649, ec_poi_id: 12720, order: 1 },
+          pivot: {ec_track_id: 73649, ec_poi_id: 12720, order: 1},
           author_email: 'bikevillage@webmapp.it',
-          geojson_url:
-            'https://geohub.webmapp.it/api/ec/poi/download/12720.geojson',
+          geojson_url: 'https://geohub.webmapp.it/api/ec/poi/download/12720.geojson',
           gpx_url: 'https://geohub.webmapp.it/api/ec/poi/download/12720.gpx',
           kml_url: 'https://geohub.webmapp.it/api/ec/poi/download/12720.kml',
           taxonomy: {
@@ -165,9 +161,9 @@ export const mockTrack = {
             where: [9, 70, 4680, 9, 70, 4680],
             poi_type: {
               id: 2,
-              name: { it: 'Spiaggia', en: 'Beach' },
-              color: '#F39C19'
-            }
+              name: {it: 'Spiaggia', en: 'Beach'},
+              color: '#F39C19',
+            },
           },
           taxonomyIdentifiers: [
             'where_toscana',
@@ -176,14 +172,14 @@ export const mockTrack = {
             'where_toscana',
             'where_pisa',
             'where_050037',
-            'poi_type_beach'
-          ]
+            'poi_type_beach',
+          ],
         },
-        geometry: { type: 'Point', coordinates: [10.267605401, 43.794218975] }
-      }
+        geometry: {type: 'Point', coordinates: [10.267605401, 43.794218975]},
+      },
     ],
     user_can_download: false,
-    roundtrip: true
+    roundtrip: true,
   },
   geometry: {
     type: 'LineString',
@@ -1030,20 +1026,20 @@ export const mockTrack = {
       [10.280156, 43.777417, 3, 18.8],
       [10.280194, 43.777413, 3, -3.2],
       [10.280526, 43.777338, 2, -2.1],
-      [10.280758, 43.777285, 2, 0]
-    ]
-  }
+      [10.280758, 43.777285, 2, 0],
+    ],
+  },
 };
 
 export const mockMapConf: IMAP = {
   tiles: [
     {
-      webmapp: 'https://api.webmapp.it/tiles/{z}/{x}/{y}.png'
+      webmapp: 'https://api.webmapp.it/tiles/{z}/{x}/{y}.png',
     },
     {
       satellite:
-        'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=0Z7ou7nfFFXipdDXHChf'
-    }
+        'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=0Z7ou7nfFFXipdDXHChf',
+    },
   ],
   bbox: [10, 10, 20, 20],
   center: [15, 15],
@@ -1066,10 +1062,10 @@ export const mockMapConf: IMAP = {
     poiMinZoom: '6',
     poi_interaction: 'tooltip',
     skipRouteIndexDownload: false,
-    taxonomies: {}
+    taxonomies: {},
   },
   ref_on_track_min_zoom: 10,
   ref_on_track_show: true,
   start_end_icons_min_zoom: 8,
-  start_end_icons_show: true
+  start_end_icons_show: true,
 };

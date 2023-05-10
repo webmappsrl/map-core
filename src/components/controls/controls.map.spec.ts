@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, SimpleChange } from '@angular/core';
-import { WmMapControls } from './controls.map';
-import { buildTileLayers } from 'src/utils';
-import { mockMapConf } from 'src/const.spec';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {NO_ERRORS_SCHEMA, SimpleChange} from '@angular/core';
+import {WmMapControls} from './controls.map';
+import {buildTileLayers} from 'src/utils';
+import {mockMapConf} from 'src/const.spec';
 
 describe('WmMapControls', () => {
   let component: WmMapControls;
@@ -11,7 +11,7 @@ describe('WmMapControls', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       declarations: [WmMapControls],
-      schemas: [NO_ERRORS_SCHEMA]
+      schemas: [NO_ERRORS_SCHEMA],
     });
 
     fixture = TestBed.createComponent(WmMapControls);
@@ -21,7 +21,7 @@ describe('WmMapControls', () => {
   it('ngOnChanges: should showButton$ equals true when there is more than one tile layer', () => {
     const tileLayers = buildTileLayers(mockMapConf.tiles);
     component.ngOnChanges({
-      tileLayers: new SimpleChange(null, tileLayers, true)
+      tileLayers: new SimpleChange(null, tileLayers, true),
     });
     fixture.detectChanges();
     expect(component.showButton$.value).toBe(true);
@@ -30,7 +30,7 @@ describe('WmMapControls', () => {
   it('ngOnChanges: should showButton$ equals false when there is only one tile layer', () => {
     const tileLayers = buildTileLayers([mockMapConf.tiles[0]]);
     component.ngOnChanges({
-      tileLayers: new SimpleChange(null, tileLayers, true)
+      tileLayers: new SimpleChange(null, tileLayers, true),
     });
     fixture.detectChanges();
 

@@ -1,18 +1,13 @@
-import { WmMapComponent } from './map.component';
+import {WmMapComponent} from './map.component';
 import * as ol from 'ol';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick
-} from '@angular/core/testing';
+import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
 import TileLayer from 'ol/layer/Tile';
-import { XYZ } from 'ol/source';
-import { FitOptions } from 'ol/View';
-import { Extent } from 'ol/extent';
-import { toRadians } from 'src/utils';
-import { WmMapControls } from '../controls/controls.map';
-import { mockMapConf } from 'src/const.spec';
+import {XYZ} from 'ol/source';
+import {FitOptions} from 'ol/View';
+import {Extent} from 'ol/extent';
+import {toRadians} from 'src/utils';
+import {WmMapControls} from '../controls/controls.map';
+import {mockMapConf} from 'src/const.spec';
 
 describe('WmMapComponent', () => {
   let component: WmMapComponent;
@@ -20,7 +15,7 @@ describe('WmMapComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [WmMapComponent, WmMapControls]
+      declarations: [WmMapComponent, WmMapControls],
     }).compileComponents();
   });
 
@@ -38,9 +33,9 @@ describe('WmMapComponent', () => {
     const mockTileLayers: TileLayer<XYZ>[] = [
       new TileLayer<XYZ>({
         source: new XYZ({
-          url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        })
-      })
+          url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        }),
+      }),
     ];
     const mockMapTarget = 'ol-map';
     const mockWmMapPadding: number[] = [10, 20, 30, 40];
@@ -71,25 +66,19 @@ describe('WmMapComponent', () => {
     });
   });
 
-  it(
-    'FitView: should call _view.fit with correct parameters and debounce the call',
-    fakeAsync(() => {
-      const geometryOrExtent: Extent = [10, 10, 20, 20];
-      const optOptions: FitOptions = {
-        duration: 500
-      };
+  it('FitView: should call _view.fit with correct parameters and debounce the call', fakeAsync(() => {
+    const geometryOrExtent: Extent = [10, 10, 20, 20];
+    const optOptions: FitOptions = {
+      duration: 500,
+    };
 
-      component['_view'] = new ol.View();
-      spyOn(component['_view'], 'fit').and.callThrough();
-      component.fitView(geometryOrExtent, optOptions);
+    component['_view'] = new ol.View();
+    spyOn(component['_view'], 'fit').and.callThrough();
+    component.fitView(geometryOrExtent, optOptions);
 
-      expect(component['_debounceFitTimer']).not.toBeNull();
-      tick(500);
-      expect(component['_debounceFitTimer']).toBeNull();
-      expect(component['_view'].fit).toHaveBeenCalledWith(
-        geometryOrExtent,
-        optOptions
-      );
-    })
-  );
+    expect(component['_debounceFitTimer']).not.toBeNull();
+    tick(500);
+    expect(component['_debounceFitTimer']).toBeNull();
+    expect(component['_view'].fit).toHaveBeenCalledWith(geometryOrExtent, optOptions);
+  }));
 });

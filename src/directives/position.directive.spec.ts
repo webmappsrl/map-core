@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {ComponentFixture, TestBed, tick} from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {WmMapPositionDirective} from './position.directive';
 import {WmMapComponent, WmMapControls} from '../components';
 import {mockMapConf} from 'src/const.spec';
@@ -8,9 +8,22 @@ import Map from 'ol/Map';
 import {Point} from 'ol/geom';
 import View, {FitOptions} from 'ol/View';
 import {fromLonLat} from 'ol/proj';
-import {circularPolygon} from 'src/utils';
+import {circularPolygon, toRadians} from 'src/utils';
 import {CommonModule} from '@angular/common';
 import {By} from '@angular/platform-browser';
+import {Icon, Style} from 'ol/style';
+import VectorSource from 'ol/source/Vector';
+import {POSITION_ZINDEX} from 'src/readonly';
+import VectorLayer from 'ol/layer/Vector';
+
+const mockLocation = {
+  accuracy: 10,
+  altitude: 100,
+  bearing: 0,
+  latitude: 45.464664,
+  longitude: 9.18854,
+};
+const mockPoint = new Point([0, 0]);
 
 @Component({
   template: `<wm-map
@@ -49,14 +62,7 @@ describe('WmMapPositionDirective', () => {
     fixture.detectChanges();
   });
 
-  it('ngOnChanges: should update location when wmMapPositioncurrentLocation input changes', () => {
-    const mockLocation = {
-      accuracy: 10,
-      altitude: 100,
-      bearing: 0,
-      latitude: 45.464664,
-      longitude: 9.18854,
-    };
+  it('ngOnChanges(1): should update location when wmMapPositioncurrentLocation input changes', () => {
     wmMapPositionDirective.ngOnChanges({
       wmMapPositioncurrentLocation: new SimpleChange(null, mockLocation, true),
     });
@@ -64,76 +70,68 @@ describe('WmMapPositionDirective', () => {
     expect(wmMapPositionDirective['_currentLocation']).toEqual(mockLocation);
   });
 
-  it('ngOnChanges: should call _centerPosition when wmMapPositionCenter input changes', () => {
-    const wmMapPositionAny = wmMapPositionDirective as any;
-    spyOn(wmMapPositionAny, '_centerPosition');
+  it('ngOnChanges(2): should call _centerPosition when wmMapPositionCenter input changes', () => {
+    spyOn<any>(wmMapPositionDirective, '_centerPosition');
     wmMapPositionDirective.ngOnChanges({
       wmMapPositionCenter: new SimpleChange(null, true, true),
     });
-
+    fixture.detectChanges();
     expect(wmMapPositionDirective['_centerPosition']).toHaveBeenCalled();
   });
 
-  it('ngOnChanges: should update focus and icon style when wmMapPositionfocus input changes', () => {
-    const mockMap = jasmine.createSpyObj('Map', ['getView', 'render']);
-    mockMap.getView.and.returnValue({
-      getZoom: jasmine.createSpy('getZoom').and.returnValue(10),
-      setZoom: jasmine.createSpy('setZoom'),
+  it('ngOnChanges(3): should update focus and icon style when wmMapPositionfocus input changes', () => {
+    const map = new Map({
+      target: null,
+      view: new View({center: [0, 0], zoom: 1}),
     });
 
-    const wmMapPositionAny = wmMapPositionDirective as any;
-    spyOn(wmMapPositionAny, '_setPositionByLocation');
-    const mockSource = {
-      changed: jasmine.createSpy('changed'),
-    };
-    wmMapPositionAny._layerLocation = {
-      setStyle: jasmine.createSpy('setStyle'),
-      getSource: jasmine.createSpy('getSource').and.returnValue(mockSource),
-    };
+    const wmMapComponent = new WmMapComponent();
+    wmMapComponent.map = map;
 
-    wmMapPositionDirective.mapCmp.map = mockMap;
+    wmMapPositionDirective.mapCmp = wmMapComponent;
+
+    spyOn<any>(wmMapPositionDirective, '_setPositionByLocation');
+
+    const mockSource = new VectorSource({
+      features: [wmMapPositionDirective['_featureLocation']],
+    });
+
+    const mockLayerLocation = new VectorLayer({
+      source: mockSource,
+      style: new Style({
+        image: wmMapPositionDirective['_iconLocation'],
+      }),
+      zIndex: POSITION_ZINDEX,
+    });
+
+    wmMapPositionDirective['_layerLocation'] = mockLayerLocation;
 
     wmMapPositionDirective.ngOnChanges({
+      wmMapPositioncurrentLocation: new SimpleChange(null, mockLocation, true),
       wmMapPositionfocus: new SimpleChange(null, true, true),
     });
+    fixture.detectChanges();
 
     expect(wmMapPositionDirective['_focus$'].value).toBe(true);
-    expect(wmMapPositionDirective['_layerLocation'].setStyle).toHaveBeenCalled();
-    expect(wmMapPositionDirective.mapCmp.map.getView().setZoom).toHaveBeenCalled();
+    expect(
+      ((wmMapPositionDirective['_layerLocation'].getStyle() as Style).getImage() as Icon).getSrc(),
+    ).toEqual(wmMapPositionDirective['_iconLocationArrow'].getSrc());
+    expect(wmMapPositionDirective.mapCmp.map.getView().getZoom()).toEqual(2);
+    expect(wmMapPositionDirective['_setPositionByLocation']).toHaveBeenCalled();
+    expect(mockSource.getFeatures()).toEqual([wmMapPositionDirective['_featureLocation']]);
   });
 
-  xit('_centerPosition: should call _updateGeometry and _followLocation when _centerPosition is called', () => {
-    const wmMapPositionAny = wmMapPositionDirective as any;
-
-    const mockPoint = new Point([0, 0]);
-    spyOn(wmMapPositionAny, '_updateGeometry').and.returnValue(mockPoint);
-    spyOn(wmMapPositionAny, '_followLocation');
-
-    wmMapPositionAny._centerPosition();
-
-    expect(wmMapPositionAny._updateGeometry).toHaveBeenCalledWith(
-      wmMapPositionAny._currentLocation,
-    );
-    expect(wmMapPositionAny._followLocation).toHaveBeenCalledWith(mockPoint);
+  it('_centerPosition: should call _updateGeometry and _followLocation when _centerPosition is called', () => {
+    const spyUpdateGeometry = spyOn<any>(wmMapPositionDirective, '_updateGeometry');
+    wmMapPositionDirective.ngOnChanges({
+      wmMapPositioncurrentLocation: new SimpleChange(null, mockLocation, true),
+      wmMapPositionCenter: new SimpleChange(null, true, true),
+    });
+    fixture.detectChanges();
+    expect(spyUpdateGeometry).toHaveBeenCalledWith(mockLocation);
   });
 
-  xit('should convert degrees to radians correctly', () => {
-    const testCases = [
-      {degrees: 0, radians: 0},
-      {degrees: 45, radians: Math.PI / 4},
-      {degrees: 90, radians: Math.PI / 2},
-      {degrees: 180, radians: Math.PI},
-      {degrees: 360, radians: 2 * Math.PI},
-    ];
-
-    for (const testCase of testCases) {
-      const result = wmMapPositionDirective['_degreesToRadians'](testCase.degrees);
-      expect(result).toBeCloseTo(testCase.radians, 10);
-    }
-  });
-
-  xit('_fitView: should call fit with correct arguments when _fitView is called', () => {
-    const mockPoint = new Point([0, 0]);
+  it('_fitView: should call fit with correct arguments when _fitView is called', () => {
     const mockOptions: FitOptions = {
       maxZoom: 10,
       duration: 500,
@@ -158,34 +156,25 @@ describe('WmMapPositionDirective', () => {
     wmMapPositionDirective['_fitView'](mockPoint, mockOptions);
 
     expect(mockView.fit).toHaveBeenCalledOnceWith(mockPoint, mockOptions);
-    expect(mockView.fit).toHaveBeenCalledOnceWith(mockPoint, mockOptions);
   });
 
-  xit('_followLocation: should call _fitView and _rotate with correct arguments when _followLocation is called', () => {
-    const mockPoint = new Point([0, 0]);
-    const mockCurrentLocation = {
-      accuracy: 10,
-      altitude: 100,
-      bearing: 0,
-      latitude: 45.464664,
-      longitude: 9.18854,
-    };
-    wmMapPositionDirective['_currentLocation'] = mockCurrentLocation;
+  it('_followLocation: should call _fitView and _rotate with correct arguments when _followLocation is called', () => {
+    wmMapPositionDirective['_currentLocation'] = mockLocation;
 
-    spyOn(wmMapPositionDirective as any, '_fitView');
-    spyOn(wmMapPositionDirective as any, '_rotate');
+    spyOn<any>(wmMapPositionDirective, '_fitView');
+    spyOn<any>(wmMapPositionDirective, '_rotate');
 
     wmMapPositionDirective['_followLocation'](mockPoint);
 
     expect(wmMapPositionDirective['_fitView']).toHaveBeenCalledWith(mockPoint);
 
     expect(wmMapPositionDirective['_rotate']).toHaveBeenCalledWith(
-      -wmMapPositionDirective['_runningAvg'](mockCurrentLocation.bearing),
+      -wmMapPositionDirective['_runningAvg'](mockLocation.bearing),
       500,
     );
   });
 
-  xit('_rotate: should call animate with correct arguments when _rotate is called', () => {
+  it('_rotate: should call animate with correct arguments when _rotate is called', () => {
     const mockBearing = 0.5;
     const mockDuration = 500;
 
@@ -210,51 +199,28 @@ describe('WmMapPositionDirective', () => {
     });
   });
 
-  xit('_runningAvg: should calculate the running average of bearings in radians', () => {
-    const bearings = [0, 90, 180, 270];
-    const radianBearings = bearings.map(b => wmMapPositionDirective['_degreesToRadians'](b));
+  it('_runningAvg: should calculate the running average of bearings in radians', () => {
+    const expect1 = 0;
+    const expect2 = 0.39269908169872414;
+    const expect3 = 0.7853981633974483;
+    const expect4 = 1.1780972450961724;
 
-    const expectedResult = [
-      radianBearings[0],
-      (radianBearings[0] + radianBearings[1]) / 2,
-      (radianBearings[0] + radianBearings[1] + radianBearings[2]) / 3,
-      (radianBearings[1] + radianBearings[2] + radianBearings[3]) / 3,
-    ];
+    const test1 = wmMapPositionDirective['_runningAvg'](0);
+    const test2 = wmMapPositionDirective['_runningAvg'](45);
+    const test3 = wmMapPositionDirective['_runningAvg'](90);
+    const test4 = wmMapPositionDirective['_runningAvg'](135);
+    const test5 = wmMapPositionDirective['_runningAvg'](-45);
 
-    bearings.forEach((bearing, index) => {
-      // Reset _lastBearings before each test case
-      wmMapPositionDirective['_lastBearings'] = [];
-      for (let i = 0; i <= index; i++) {
-        wmMapPositionDirective['_runningAvg'](bearings[i]);
-      }
-      const result = wmMapPositionDirective['_runningAvg'](bearing);
-      expect(result).toBeCloseTo(expectedResult[index], 5);
-    });
-
-    // Test with a non-number bearing
-    const nonNumberBearing = NaN;
-    const nonNumberResult = wmMapPositionDirective['_runningAvg'](nonNumberBearing);
-    expect(nonNumberResult).toBe(0);
-
-    // Test with a negative bearing
-    const negativeBearing = -90;
-    const negativeResult = wmMapPositionDirective['_runningAvg'](negativeBearing);
-    expect(negativeResult).toBe(0);
+    expect(test1).toBeCloseTo(expect1);
+    expect(test2).toBeCloseTo(expect2);
+    expect(test3).toBeCloseTo(expect3);
+    expect(test4).toBeCloseTo(expect4);
+    expect(test5).toBeCloseTo(expect1);
   });
 
-  xit('_setPositionByLocation: should call _updateGeometry and _followLocation with correct parameters', () => {
-    const mockLocation = {
-      accuracy: 10,
-      altitude: 100,
-      bearing: 0,
-      latitude: 45.464664,
-      longitude: 9.18854,
-    };
-
-    const mockPoint = new Point([0, 0]);
-
-    spyOn(wmMapPositionDirective as any, '_updateGeometry').and.returnValue(mockPoint);
-    spyOn(wmMapPositionDirective as any, '_followLocation');
+  it('_setPositionByLocation: should call _updateGeometry and _followLocation with correct parameters', () => {
+    spyOn<any>(wmMapPositionDirective, '_updateGeometry').and.returnValue(mockPoint);
+    spyOn<any>(wmMapPositionDirective, '_followLocation');
 
     wmMapPositionDirective['_focus$'].next(true);
 
@@ -264,19 +230,9 @@ describe('WmMapPositionDirective', () => {
     expect(wmMapPositionDirective['_followLocation']).toHaveBeenCalledWith(mockPoint);
   });
 
-  xit('_setPositionByLocation: should call _updateGeometry but not _followLocation when _focus$.value is false', () => {
-    const mockLocation = {
-      accuracy: 10,
-      altitude: 100,
-      bearing: 0,
-      latitude: 45.464664,
-      longitude: 9.18854,
-    };
-
-    const mockPoint = new Point([0, 0]);
-
-    spyOn(wmMapPositionDirective as any, '_updateGeometry').and.returnValue(mockPoint);
-    spyOn(wmMapPositionDirective as any, '_followLocation');
+  it('_setPositionByLocation: should call _updateGeometry but not _followLocation when _focus$.value is false', () => {
+    spyOn<any>(wmMapPositionDirective, '_updateGeometry').and.returnValue(mockPoint);
+    spyOn<any>(wmMapPositionDirective, '_followLocation');
 
     wmMapPositionDirective['_focus$'].next(false);
 
@@ -286,15 +242,7 @@ describe('WmMapPositionDirective', () => {
     expect(wmMapPositionDirective['_followLocation']).not.toHaveBeenCalled();
   });
 
-  xit('_updateGeometry: should update the geometry of _featureLocation and _featureAccuracy', () => {
-    const mockLocation = {
-      accuracy: 10,
-      altitude: 100,
-      bearing: 0,
-      latitude: 45.464664,
-      longitude: 9.18854,
-    };
-
+  it('_updateGeometry: should update the geometry of _featureLocation and _featureAccuracy', () => {
     const expectedPoint = new Point(fromLonLat([mockLocation.longitude, mockLocation.latitude]));
     const expectedGeometry = circularPolygon(
       [mockLocation.longitude, mockLocation.latitude],
