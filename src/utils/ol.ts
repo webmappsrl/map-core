@@ -1,3 +1,4 @@
+import {filter} from 'rxjs/operators';
 import {Feature, MapBrowserEvent} from 'ol';
 import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
@@ -35,6 +36,7 @@ import {Location} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
 import {fromHEXToColor, getClusterStyle} from './styles';
 import TileLayer from 'ol/layer/Tile';
+import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../types/model';
 
 /**
  * @description
@@ -237,10 +239,10 @@ export function createHull(): any {
  */
 export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   const excludedIcn = ['theme_ucvs'];
-  const res = taxonomyIdentifiers.filter(
+  const res = taxonomyIdentifiers?.filter(
     p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
   );
-  return res.length > 0 ? res[0] : taxonomyIdentifiers[0];
+  return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
 
 /**
@@ -754,7 +756,7 @@ export function initVectorTileLayer(
  * @param tiles An array of objects containing the tile name and URL.
  * @returns An array of TileLayers.
  */
-export function buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XYZ>[] {
+export function buildTileLayers(tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[]): TileLayer<XYZ>[] {
   /**
    * @description
    * Initialize the base source of the map
@@ -770,15 +772,18 @@ export function buildTileLayers(tiles: {[name: string]: string}[]): TileLayer<XY
       cacheSize: 50000,
     });
   };
-  const tilesMap = tiles.map((tile, index) => {
-    return new TileLayer({
-      preload: Infinity,
-      source: initBaseSource(Object.values(tile)[0]),
-      visible: index === 0,
-      zIndex: index,
-      className: Object.keys(tile)[0],
-    });
-  }) ?? [
+  const tilesMap = tiles
+    .filter(tile => tile.type === 'button')
+    .map((tile: ICONTROLSBUTTON, index) => {
+      return new TileLayer({
+        preload: Infinity,
+        source: initBaseSource(tile.url),
+        visible: index === 0,
+        zIndex: index,
+        className: Object.keys(tile)[0],
+        properties: {...tile},
+      });
+    }) ?? [
     new TileLayer({
       preload: Infinity,
       source: initBaseSource(DEF_XYZ_URL),

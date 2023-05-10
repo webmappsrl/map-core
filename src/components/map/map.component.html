@@ -19,7 +19,12 @@
     <ng-content select="[top-left]"></ng-content>
   </div>
   <div class="top-right">
-    <wm-map-controls [tileLayers]="tileLayers"></wm-map-controls>
+    <wm-map-controls
+      [conf]="(wmMapConf$|async)?.controls"
+      [tileLayers]="tileLayers"
+      [wmMapTranslationCallback]="translationCallback"
+      (wmMapControlOverlay)="setOverlay($event)"
+    ></wm-map-controls>
     <ng-content select="[top-right]"></ng-content>
   </div>
   <div class="bottom-right">

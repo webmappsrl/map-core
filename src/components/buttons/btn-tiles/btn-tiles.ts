@@ -17,7 +17,7 @@ import TileLayer from 'ol/layer/Tile';
   <div class="layer-button" *ngIf="showButton$|async">
     <ion-icon name="layers-outline" (click)="toggle$.next(!toggle$.value)"></ion-icon>
   </div>
-  <ion-list  *ngIf="toggle$|async" class="layer-content">
+  <ion-list  *ngIf="toggle$|async" class="layer-content" lines="none">
     <ion-radio-group [value]="currentValue">
       <ion-item *ngFor="let tileLayer of tileLayers;let idx = index">
         <ion-label>{{tileLayer.getClassName()}}</ion-label>
@@ -45,12 +45,12 @@ export class BtnTiles implements OnChanges {
   }
 
   /**
- * @documentation
- * Changes the visibility of the specified tile layer and sets it as the current tile layer.
- * 
- * @param idx - The index of the tile layer to be selected.
- * @returns void
- */
+   * @documentation
+   * Changes the visibility of the specified tile layer and sets it as the current tile layer.
+   *
+   * @param idx - The index of the tile layer to be selected.
+   * @returns void
+   */
   selectTileLayer(idx: number): void {
     this.currentTileLayerIdx$.next(idx);
     this.tileLayers.forEach((tile, tidx) => {
