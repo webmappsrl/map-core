@@ -29,14 +29,50 @@ export const RECORD_TRACK_ID: string = 'wm-current_record_track';
   selector: '[wmMapCustomTrackDrawTrack]',
 })
 export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
+  /**
+   * @description
+   * A private instance variable that represents a vector layer for custom points of interest (POI) on the map.
+   *
+   * @type VectorLayer<VectorSource>
+   */
   private _customPoiLayer: VectorLayer<VectorSource>;
+  /**
+   * @description
+   * A private class property that initializes a new instance of VectorSource with an empty array of features.
+   * This is likely used for adding custom point-of-interest (POI) features to the map, which can be added using the
+   * addFeature method of the VectorSource instance.
+   */
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });
+  /**
+   * @description
+   * This is a private variable with an unspecified type.
+   * It is used within the scope of the class and is likely used to store a custom track object for the map component.
+   */
   private _customTrack: any;
+  /**
+   * @description
+   * A vector layer representing a custom track.
+   */
   private _customTrackLayer: VectorLayer<VectorSource>;
+  /**
+   * @description
+   * Private BehaviorSubject that stores the current enabled status of the layer.
+   * Used to control whether the layer is shown on the map or not.
+   */
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  /**
+   * @description
+   * A private property representing an instance of GraphHopperRouting for routing calculations.
+   * @remarks
+   * This property is used to perform routing calculations using GraphHopper API.
+   * @param _graphHopperRoutingObj - An instance of GraphHopperRouting class.
+   */
   private _graphHopperRoutingObj: GraphHopperRouting;
+  /**
+   * An array of `Coordinate` objects that define a path or shape on the map.
+   */
   private _points: Coordinate[] = [];
 
   @Input('wmMapCustomTrackDrawTrack') set enabled(val: boolean) {
@@ -54,6 +90,13 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
 
   reset$ = new Subject();
 
+  /**
+   * @description
+   * Creates a new instance of WmMapCustomTrackService, which provides the functionality for drawing custom tracks on the map.
+   * @constructor
+   * @param {ToastController} _toastCtrl - An instance of the ToastController, used for displaying toast messages.
+   * @param {WmMapComponent} mapCmp - An instance of the WmMapComponent, the parent component of this service.
+   */
   constructor(private _toastCtrl: ToastController, @Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
@@ -63,110 +106,109 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
       )
       .subscribe(() => {
         this.mapCmp.map.once('rendercomplete', () => {
-          this.reset$.next(void 0);
-
-          this._initializeCustomTrackLayer();
-          this._customTrack = {
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: [],
-            },
-            properties: {
-              id: 'wm-current_record_track',
-              name: '',
-              color: 'rgba(226, 249, 0, 0.6)',
-            },
-          };
-          if (!this._graphHopperRoutingObj) {
-            this._graphHopperRoutingObj = new GraphHopperRouting({
-              vehicle: 'foot',
-              elevation: true,
-              instructions: false,
-            });
-            if (this.wmMapCustomTrackDrawTrackHost) {
-              this._graphHopperRoutingObj.host = this.wmMapCustomTrackDrawTrackHost;
-            }
-            this._graphHopperRoutingObj.defaults.profile = 'hike';
-          }
-          this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-            if (this._enabled$.value) {
-              stopPropagation(evt);
-              const oldCoordinates = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
-              if (oldCoordinates != null && oldCoordinates.length > 0) {
-                const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
-                this._customPoiSource.removeFeature(oldCoordinate);
-                const coords = toLonLat(
-                  (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
-                );
-                this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
-              } else {
-                const lonLat = toLonLat(evt.coordinate);
-                this._customPoiSource.addFeature(createCircleFeature(lonLat));
-                this._points.push(lonLat);
-              }
-              this._customPoiSource.changed();
-              this._customPoiLayer.changed();
-              if (this._points.length > 1) {
-                this._graphHopperRoutingObj.doRequest({points: this._points}).then(
-                  (res: GraphHopperResponse) => {
-                    this._customTrack.geometry = res.paths[0].points;
-                    this._customTrack.properties.ascent = res.paths[0].ascend
-                      ? Math.round(res.paths[0].ascend)
-                      : this._customTrack.properties.ascent;
-                    this._customTrack.properties.descent = res.paths[0].descend
-                      ? Math.round(res.paths[0].descend)
-                      : this._customTrack.properties.descent;
-                    this._customTrack.properties.distance = res.paths[0].distance
-                      ? res.paths[0].distance / 1000
-                      : this._customTrack.properties.distance;
-                    let time: number =
-                      res.paths[0].distance && res.paths[0].ascend
-                        ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
-                        : res.paths[0].time
-                        ? res.paths[0].time / (1000 * 60 * 60)
-                        : undefined;
-
-                    if (time !== undefined)
-                      this._customTrack.properties['duration:forward'] =
-                        Math.floor(time) +
-                        ':' +
-                        ('0' + Math.round((time % 1) * 60)).slice(-2) +
-                        ' h';
-
-                    this._updateTrack();
-                    this._redrawPoints();
-                    this.currentCustomTrack.emit(this._customTrack);
-                  },
-                  (err: Error) => {
-                    console.warn(err);
-                    if (err.message.indexOf('Specify at least 2 points') !== -1) {
-                      this._customTrack.geometry.coordinates = [];
-                      this._customTrack.properties.ascent = undefined;
-                      this._customTrack.properties.descent = undefined;
-                      this._customTrack.properties.distance = undefined;
-                      this._customTrack.properties['duration:forward'] = undefined;
-                      this._updateTrack();
-                    } else if (err.message.indexOf('Cannot find point') !== -1) {
-                      this._message(err.message);
-                      this._points.pop();
-                      this._redrawPoints();
-                    }
-                  },
-                );
-              } else {
-                this._customTrackLayer.getSource().clear();
-              }
-            }
-          });
-
-          this._enabled$.subscribe(v => {
-            if (v === false) {
-              this._clear();
-            }
-          });
+          this._init();
         });
       });
+  }
+
+  _init(): void {
+    this.reset$.next(void 0);
+
+    this._initializeCustomTrackLayer();
+    this._customTrack = {
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: [],
+      },
+      properties: {
+        id: 'wm-current_record_track',
+        name: '',
+        color: 'rgba(226, 249, 0, 0.6)',
+      },
+    };
+    if (!this._graphHopperRoutingObj) {
+      this._graphHopperRoutingObj = new GraphHopperRouting({
+        vehicle: 'foot',
+        elevation: true,
+        instructions: false,
+      });
+      if (this.wmMapCustomTrackDrawTrackHost) {
+        this._graphHopperRoutingObj.host = this.wmMapCustomTrackDrawTrackHost;
+      }
+      this._graphHopperRoutingObj.defaults.profile = 'hike';
+    }
+    this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      if (this._enabled$.value) {
+        stopPropagation(evt);
+        const oldCoordinates = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
+        if (oldCoordinates != null && oldCoordinates.length > 0) {
+          const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
+          this._customPoiSource.removeFeature(oldCoordinate);
+          const coords = toLonLat((oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates());
+          this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
+        } else {
+          const lonLat = toLonLat(evt.coordinate);
+          this._customPoiSource.addFeature(createCircleFeature(lonLat));
+          this._points.push(lonLat);
+        }
+        this._customPoiSource.changed();
+        this._customPoiLayer.changed();
+        if (this._points.length > 1) {
+          this._graphHopperRoutingObj.doRequest({points: this._points}).then(
+            (res: GraphHopperResponse) => {
+              this._customTrack.geometry = res.paths[0].points;
+              this._customTrack.properties.ascent = res.paths[0].ascend
+                ? Math.round(res.paths[0].ascend)
+                : this._customTrack.properties.ascent;
+              this._customTrack.properties.descent = res.paths[0].descend
+                ? Math.round(res.paths[0].descend)
+                : this._customTrack.properties.descent;
+              this._customTrack.properties.distance = res.paths[0].distance
+                ? res.paths[0].distance / 1000
+                : this._customTrack.properties.distance;
+              let time: number =
+                res.paths[0].distance && res.paths[0].ascend
+                  ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
+                  : res.paths[0].time
+                  ? res.paths[0].time / (1000 * 60 * 60)
+                  : undefined;
+
+              if (time !== undefined)
+                this._customTrack.properties['duration:forward'] =
+                  Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
+
+              this._updateTrack();
+              this._redrawPoints();
+              this.currentCustomTrack.emit(this._customTrack);
+            },
+            (err: Error) => {
+              console.warn(err);
+              if (err.message.indexOf('Specify at least 2 points') !== -1) {
+                this._customTrack.geometry.coordinates = [];
+                this._customTrack.properties.ascent = undefined;
+                this._customTrack.properties.descent = undefined;
+                this._customTrack.properties.distance = undefined;
+                this._customTrack.properties['duration:forward'] = undefined;
+                this._updateTrack();
+              } else if (err.message.indexOf('Cannot find point') !== -1) {
+                this._message(err.message);
+                this._points.pop();
+                this._redrawPoints();
+              }
+            },
+          );
+        } else {
+          this._customTrackLayer.getSource().clear();
+        }
+      }
+    });
+
+    this._enabled$.subscribe(v => {
+      if (v === false) {
+        this._clear();
+      }
+    });
   }
 
   /**
@@ -235,6 +277,12 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     await toast.present();
   }
 
+  /**
+   * @description
+   * Redraws the points on the map for the custom track.
+   * @private
+   * @memberof wmMapCustomTrackDrawTrackDirective
+   */
   private _redrawPoints(): void {
     let id: number = 0;
     this._customPoiSource.clear();
