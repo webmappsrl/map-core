@@ -22,15 +22,41 @@ import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective {
+  /**
+   * @description
+   * The custom Point of Interest (POI) layer used for displaying custom track points on the map.
+   * @private
+   */
   private _customPoiLayer: VectorLayer<VectorSource> | undefined;
+  /**
+   * @description
+   * The custom Point of Interest (POI) source used for storing the features of custom track points.
+   * @private
+   */
   private _customPoiSource: VectorSource = new VectorSource({
     features: [],
   });
+  /**
+   * @description
+   * The custom VectorLayer used for displaying the custom track.
+   * @private
+   */
   private _customTrackLayer: VectorLayer<VectorSource>;
+  /**
+   * @description
+   * BehaviorSubject that holds the array of saved tracks.
+   * @private
+   */
   private _savedTracks$: BehaviorSubject<Feature<Geometry>[]> = new BehaviorSubject<
     Feature<Geometry>[]
   >([]);
 
+  /**
+   * @description
+   * Setter for the `reloadCustomTracks` input property.
+   * Clears the custom tracks and reloads the saved tracks.
+   * @param val - The value of the `reloadCustomTracks` input property.
+   */
   @Input() set reloadCustomTracks(val) {
     if (val != null) {
       this._clear();
@@ -41,12 +67,33 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
     }
   }
 
+  /**
+   * @description
+   * Input property for the custom tracks.
+   */
   @Input() customTracks: any[];
+  /**
+   * @description
+   * Input property for the track elevation chart elements.
+   */
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
+  /**
+   * @description
+   * Output event emitter for the current custom track.
+   */
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
   reset$ = new Subject();
 
+  /**
+   * @description
+   * Constructor for the CustomTracksComponent.
+   * Initializes the component and subscribes to the initialization of the map.
+   * Loads saved tracks and initializes the track layer.
+   * @param mapCmp - The host WmMapComponent.
+   * @private
+   * @memberof WmMapCustomTracksDirective
+   */
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
@@ -63,6 +110,13 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
       });
   }
 
+  /**
+   * @description
+   * Clears the custom track and point of interest layers.
+   * Removes all features from the layers.
+   * @private
+   * @memberof WmMapCustomTracksDirective
+   */
   private _clear(): void {
     if (this._customTrackLayer != null) {
       this._customTrackLayer.getSource().clear();
