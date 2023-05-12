@@ -1,4 +1,4 @@
-import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
+import {Directive, Host, Input} from '@angular/core';
 import {BehaviorSubject, Subject} from 'rxjs';
 
 import {Coordinate} from 'ol/coordinate';
@@ -16,7 +16,6 @@ import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
 import {createCircleFeature, getLineStyle} from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
@@ -66,22 +65,6 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
       }
     }
   }
-
-  /**
-   * @description
-   * Input property for the custom tracks.
-   */
-  @Input() customTracks: any[];
-  /**
-   * @description
-   * Input property for the track elevation chart elements.
-   */
-  @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
-  /**
-   * @description
-   * Output event emitter for the current custom track.
-   */
-  @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
   reset$ = new Subject();
 
