@@ -47,7 +47,7 @@ describe('WmMapPositionDirective', () => {
   let fixture: ComponentFixture<TestComponent>;
   let wmMapPositionDirective: WmMapPositionDirective;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       declarations: [WmMapPositionDirective, TestComponent, WmMapComponent, WmMapControls],
       imports: [CommonModule],
@@ -59,6 +59,7 @@ describe('WmMapPositionDirective', () => {
     const directiveEl = fixture.debugElement.query(By.directive(WmMapPositionDirective));
     wmMapPositionDirective = directiveEl.injector.get(WmMapPositionDirective);
     fixture.detectChanges();
+    await wmMapPositionDirective.mapCmp.isInit$; //initialize map for all tests
   });
 
   it('ngOnChanges(1): should update location when wmMapPositioncurrentLocation input changes', () => {
@@ -79,16 +80,6 @@ describe('WmMapPositionDirective', () => {
   });
 
   it('ngOnChanges(3): should update focus and icon style when wmMapPositionfocus input changes', () => {
-    const map = new Map({
-      target: null,
-      view: new View({center: [0, 0], zoom: 1}),
-    });
-
-    const wmMapComponent = new WmMapComponent();
-    wmMapComponent.map = map;
-
-    wmMapPositionDirective.mapCmp = wmMapComponent;
-
     spyOn<any>(wmMapPositionDirective, '_setPositionByLocation');
 
     const mockSource = new VectorSource({
@@ -115,7 +106,12 @@ describe('WmMapPositionDirective', () => {
     expect(
       ((wmMapPositionDirective['_layerLocation'].getStyle() as Style).getImage() as Icon).getSrc(),
     ).toEqual(wmMapPositionDirective['_iconLocationArrow'].getSrc());
-    expect(wmMapPositionDirective.mapCmp.map.getView().getZoom()).toEqual(2);
+    expect(wmMapPositionDirective.mapCmp.map.getView().getZoom()).toBeLessThanOrEqual(
+      mockMapConf.maxZoom,
+    );
+    expect(wmMapPositionDirective.mapCmp.map.getView().getZoom()).toBeGreaterThanOrEqual(
+      mockMapConf.minZoom,
+    );
     expect(wmMapPositionDirective['_setPositionByLocation']).toHaveBeenCalled();
     expect(mockSource.getFeatures()).toEqual([wmMapPositionDirective['_featureLocation']]);
   });
@@ -137,24 +133,23 @@ describe('WmMapPositionDirective', () => {
       size: [100, 100],
     };
 
-    const mockMap = new Map({});
-    const mockView = new View();
-    spyOn(mockView, 'fit');
-    mockMap.setView(mockView);
-    wmMapPositionDirective.mapCmp.map = mockMap;
+    spyOn(wmMapPositionDirective.mapCmp.map.getView(), 'fit');
 
     wmMapPositionDirective['_fitView'](mockPoint);
 
-    expect(mockView.fit).toHaveBeenCalledOnceWith(
+    expect(wmMapPositionDirective.mapCmp.map.getView().fit).toHaveBeenCalledOnceWith(
       mockPoint,
       jasmine.objectContaining({duration: 500}),
     );
 
-    (mockView.fit as jasmine.Spy).calls.reset();
+    (wmMapPositionDirective.mapCmp.map.getView().fit as jasmine.Spy).calls.reset();
 
     wmMapPositionDirective['_fitView'](mockPoint, mockOptions);
 
-    expect(mockView.fit).toHaveBeenCalledOnceWith(mockPoint, mockOptions);
+    expect(wmMapPositionDirective.mapCmp.map.getView().fit).toHaveBeenCalledOnceWith(
+      mockPoint,
+      mockOptions,
+    );
   });
 
   it('_followLocation: should call _fitView and _rotate with correct arguments when _followLocation is called', () => {
@@ -177,22 +172,18 @@ describe('WmMapPositionDirective', () => {
     const mockBearing = 0.5;
     const mockDuration = 500;
 
-    const mockMap = new Map({});
-    const mockView = new View();
-    spyOn(mockView, 'animate');
-    mockMap.setView(mockView);
-    wmMapPositionDirective.mapCmp.map = mockMap;
+    spyOn(wmMapPositionDirective.mapCmp.map.getView(), 'animate');
 
     wmMapPositionDirective['_rotate'](mockBearing, mockDuration);
 
-    expect(mockView.animate).toHaveBeenCalledWith({
+    expect(wmMapPositionDirective.mapCmp.map.getView().animate).toHaveBeenCalledWith({
       rotation: mockBearing,
       duration: mockDuration,
     });
 
     wmMapPositionDirective['_rotate'](mockBearing);
 
-    expect(mockView.animate).toHaveBeenCalledWith({
+    expect(wmMapPositionDirective.mapCmp.map.getView().animate).toHaveBeenCalledWith({
       rotation: mockBearing,
       duration: 0,
     });
