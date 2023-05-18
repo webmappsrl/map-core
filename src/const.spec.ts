@@ -1,4 +1,5 @@
-import {IMAP} from './types/model';
+import {FitOptions} from 'ol/View';
+import {EGeojsonGeometryTypes, IGeojsonFeature, IMAP} from './types/model';
 
 export const mockTrack = {
   type: 'Feature',
@@ -1355,3 +1356,40 @@ export const mockSavedTracks = [
     },
   },
 ];
+
+export const mockPoi: IGeojsonFeature = {
+  type: 'Feature',
+  geometry: {
+    type: EGeojsonGeometryTypes.POINT,
+    coordinates: [7.044635, 40.528745],
+  },
+  properties: {
+    id: 1,
+    feature_image: {
+      id: 15500,
+      sizes: {
+        '108x148': '',
+        '108x137': '',
+        '225x100': '',
+        '250x150': '',
+        '118x138': '',
+        '108x139': '',
+        '118x117': '',
+        '335x250': '',
+        '400x200': '',
+        '1440x500': '',
+      },
+      api_url: '',
+      caption: '',
+      url: '',
+    },
+  },
+};
+
+export const mockExtent = [0, 0, 10, 10];
+
+export const mockOptions: FitOptions = {
+  maxZoom: 10,
+  duration: 100,
+  size: [100, 100],
+};

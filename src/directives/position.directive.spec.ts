@@ -2,7 +2,7 @@ import {Component} from '@angular/core';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {WmMapPositionDirective} from './position.directive';
 import {WmMapComponent, WmMapControls} from '../components';
-import {mockMapConf} from 'src/const.spec';
+import {mockMapConf, mockOptions} from 'src/const.spec';
 import {SimpleChange} from '@angular/core';
 import Map from 'ol/Map';
 import {Point} from 'ol/geom';
@@ -127,12 +127,6 @@ describe('WmMapPositionDirective', () => {
   });
 
   it('_fitView: should call fit with correct arguments when _fitView is called', () => {
-    const mockOptions: FitOptions = {
-      maxZoom: 10,
-      duration: 500,
-      size: [100, 100],
-    };
-
     spyOn(wmMapPositionDirective.mapCmp.map.getView(), 'fit');
 
     wmMapPositionDirective['_fitView'](mockPoint);
