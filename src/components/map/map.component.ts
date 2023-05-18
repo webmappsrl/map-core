@@ -50,18 +50,20 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
+
   @Input() set wmMapConf(conf: IMAP) {
     this.wmMapConf$.next(conf);
   }
 
+  @Input('wmMapFilters') filters: any;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
-  @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
+  @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
   customTrackEnabled$: Observable<boolean>;
@@ -146,6 +148,17 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         maxZoom: this._view.getZoom(),
       });
     }
+    if (changes.filters) {
+      if (this.map != null) {
+        setTimeout(() => {
+          this.map?.changed();
+          this.map.renderSync();
+          this.map.render();
+          this.map.updateSize();
+          this.map.dispatchEvent('over');
+        }, 300);
+      }
+    }
   }
 
   /**
@@ -169,6 +182,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       duration: 0,
       rotation: 0,
     });
+  }
+
+  setOverlay(url: string | null) {
+    this.wmMapOverlayEVT$.emit(url);
   }
 
   /**
@@ -269,9 +286,5 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
     this.mapDegrees = degree;
     this.map.updateSize();
-  }
-
-  setOverlay(url: string | null) {
-    this.wmMapOverlayEVT$.emit(url);
   }
 }

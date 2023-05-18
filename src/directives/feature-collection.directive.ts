@@ -16,7 +16,7 @@ import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {Select} from 'ol/interaction';
 import {pointerMove} from 'ol/events/condition';
-import {FEATURE_COLLECTION_DISABLE_ZOOM_TRESHOLD} from '../readonly';
+import {FEATURE_COLLECTION_DISABLE_ZOOM_TRESHOLD, FEATURE_COLLECTION_ZINDEX} from '../readonly';
 import {ZoomToExtent} from 'ol/control';
 @Directive({
   selector: '[wmMapFeatureCollection]',
@@ -90,14 +90,12 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._url$),
         filter(url => url != null),
         switchMap(url => this._http.get(url)),
-        take(1),
       )
       .subscribe((geojson: any) => {
         this.mapCmp.map.once('precompose', () => {
           console.log(geojson);
           geojson.features.forEach(feature => {
             if (Math.random() > 0.7) {
-              console.log('SETTO PROPERTIES');
               feature.properties = {
                 'layer': {
                   'id': 186,
@@ -141,12 +139,15 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       format: new GeoJSON(),
       features: features,
     });
+    if (this._featureCollectionLayer != null && this._featureCollectionLayer.getSource() != null) {
+      this._featureCollectionLayer.getSource().clear();
+    }
     this._featureCollectionLayer = new VectorLayer({
       source: vectorSource,
       style: this._unselectedStyle,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
-      zIndex: 1000,
+      zIndex: FEATURE_COLLECTION_ZINDEX,
     });
     if (this.mapCmp.map != null) {
       this.mapCmp.map.addLayer(this._featureCollectionLayer);

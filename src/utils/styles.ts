@@ -1,3 +1,4 @@
+import {filter} from 'rxjs/operators';
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
 import {FeatureLike} from 'ol/Feature';
@@ -8,6 +9,7 @@ import Style from 'ol/style/Style';
 
 import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
 import {ILAYER} from '../types/layer';
+import {intersectionBetweenArrays} from './ol';
 
 /**
  * @description
@@ -395,10 +397,11 @@ export function clusterHullStyle(cluster) {
  */
 export function styleCoreFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
+  const activitiesFilters = properties.activities ? JSON.parse(properties.activities) : null;
+  const themesFilters = properties.themes ? JSON.parse(properties.themes) : null;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
   let strokeStyle: StrokeStyle = new StrokeStyle();
-
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
@@ -410,6 +413,14 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   } else {
     const layerId = +layers[0];
     strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
+  }
+  if (
+    this.filters != null &&
+    this.filters.activities.length > 0 &&
+    !this.filters.activities.every(a => activitiesFilters.includes(a))
+  ) {
+    strokeStyle.setColor('rgba(0,0,0,0)');
+  } else {
   }
   const opt: handlingStrokeStyleWidthOptions = {
     strokeStyle,
@@ -439,6 +450,7 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   ) {
     styles = [...styles, buildRefStyle.bind(this)(feature)];
   }
+
   return styles;
 }
 

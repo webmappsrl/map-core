@@ -939,6 +939,11 @@ export function calculateRotation(first, second): number {
   //const temp = [secondX - firstX, secondY - firstY];
   return Math.atan2(temp[0], temp[1]);
 }
+export function flatten(arr) {
+  return arr.reduce(function (flat, toFlatten) {
+    return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
+  }, []);
+}
 
 /**
  * @description

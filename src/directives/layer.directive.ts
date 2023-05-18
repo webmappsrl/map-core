@@ -73,6 +73,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._resolutionLayerSwitcher();
   }
 
+  @Input() set wmMapLayerRefresh(_: any) {
+    this._updateMap();
+  }
+
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
   @Output()
@@ -176,6 +180,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           conf: this.wmMapConf,
           map: this.mapCmp.map,
           opacity: this.wmMapLayerOpacity,
+          filters: this.mapCmp.filters,
+          tileLayer: this._lowVectorTileLayer,
         })(f);
       },
       lowTileLoadFn,
@@ -188,6 +194,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
           map: this.mapCmp.map,
+          filters: this.mapCmp.filters,
         })(f);
       },
       tileLoadFn,
@@ -254,7 +261,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _updateMap(): void {
-    this._lowVectorTileLayer.changed();
-    this._highVectorTileLayer.changed();
+    if (this._lowVectorTileLayer != null) {
+      this._lowVectorTileLayer.changed();
+    }
+    if (this._highVectorTileLayer != null) {
+      this._highVectorTileLayer.changed();
+    }
   }
 }

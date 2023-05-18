@@ -47,7 +47,7 @@ export class WmMapButtonControls {
   @Input('wmMapButtonControl') control: ICONTROLSTITLE | ICONTROLSBUTTON;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Output('wmMapButtonContolClicked')
-  clickedEvt: EventEmitter<void> = new EventEmitter<void>();
+  clickedEvt: EventEmitter<number> = new EventEmitter<number>();
 
   wmMapButtonControlSelected$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
