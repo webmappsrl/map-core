@@ -187,7 +187,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                 </ion-card>`;
                 const center = getCenter(feat.getGeometry().getExtent());
                 if (JSON.stringify(center) != JSON.stringify(_center)) {
-                  console.log('shoooooowshoooooowshoooooowshoooooowshoooooowshoooooow');
                   this._popupOverlay.show(center, content);
                   _center = center;
                 }
