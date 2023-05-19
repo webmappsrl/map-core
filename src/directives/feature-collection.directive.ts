@@ -93,28 +93,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       )
       .subscribe((geojson: any) => {
         this.mapCmp.map.once('precompose', () => {
-          console.log(geojson);
-          geojson.features.forEach(feature => {
-            if (Math.random() > 0.7) {
-              feature.properties = {
-                'layer': {
-                  'id': 186,
-                  'name': 'alta_gallura',
-                  'title': {'it': 'Alta Gallura'},
-                  'description': {
-                    'it': "La G. comprende i Comuni di Tempio Pausania, Olbia, La Maddalena, Arzachena, Calangianus, Luras, Aggius, Bortigiadas, Santa Teresa Gallura, Luogosanto, Palau, Aglientu, Trinità d'Agultu e Vignola, Telti, Golfo Aranci, Badesi, Viddalba, Sant'Antonio di Gallura, Loiri Porto San Paolo, San Teodoro, Budoni, Erula e Padru.",
-                  },
-                  'feature_image':
-                    'https://ecmedia.s3.eu-central-1.amazonaws.com/EcMedia/Resize/400x200/13183_400x200.jpg',
-                  'stats': {
-                    'tracks_count': 17,
-                    'total_tracks_length': 123,
-                    'pois_count': 97,
-                  },
-                },
-              };
-            }
-          });
           this._buildGeojson(geojson);
         });
 
@@ -237,7 +215,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
             this.fitView(extent);
             console.log('seleziono nuovo layer', layer.id);
             this._popupOverlay.hide();
-            this.wmMapFeatureCollectionLayerSelected.emit(layer.id);
+            this.wmMapFeatureCollectionLayerSelected.emit(layer);
           }
         }
       });
