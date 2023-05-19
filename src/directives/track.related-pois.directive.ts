@@ -52,12 +52,25 @@ export class WmMapTrackRelatedPoisDirective
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
 
+  /**
+   * @description
+   * Setter for the 'next' input.
+   * Removes the selectedPoiLayer if it exists.
+   * @param d The value of the 'next' input.
+   */
   @Input() set next(d) {
     if (this._selectedPoiLayer != null) {
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
     }
   }
 
+  /**
+   * @description
+   * Setter for the 'setPoi' input.
+   * Sets the current POI based on the provided ID.
+   * If the ID is -1, the selectedPoiLayer is removed and related events are emitted.
+   * @param id The ID of the POI or 'reset' value.
+   */
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
@@ -75,11 +88,38 @@ export class WmMapTrackRelatedPoisDirective
     }
   }
 
+  /**
+   * @description
+   * The input property for the track object.
+   */
   @Input() track;
+  /**
+   * @description
+   * The input property for the current location of the map.
+   */
   @Input() wmMapPositioncurrentLocation: Location;
+  /**
+   * @description
+   * The input property for the radius of the alert POI in the track.
+   */
   @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
+  /**
+   * @description
+   * The output event for POI click.
+   * Emits the ID of the clicked POI.
+   */
   @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+  /**
+   * @description
+   * The output event for related POI.
+   * Emits the related POI object.
+   */
   @Output('related-poi') relatedPoiEvt: EventEmitter<any> = new EventEmitter<any>();
+  /**
+   * @description
+   * The output event for the nearest POI in the track.
+   * Emits the nearest POI as a feature with geometry.
+   */
   @Output() wmMapTrackRelatedPoisNearestPoiEvt: EventEmitter<Feature<Geometry>> =
     new EventEmitter();
 
