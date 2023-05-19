@@ -39,7 +39,7 @@ import {IGeojsonFeature, PoiMarker} from '../types/model';
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
 })
-export class wmMapTrackRelatedPoisDirective
+export class WmMapTrackRelatedPoisDirective
   extends WmMapBaseDirective
   implements OnChanges, OnDestroy
 {
@@ -144,15 +144,16 @@ export class wmMapTrackRelatedPoisDirective
       this._initPois = false;
     }
     // Initialize pois if track and related_pois are available
+    const currentTrack = changes.track != null ? changes.track.currentValue : null;
     if (
-      this.track != null &&
-      this.track.properties != null &&
-      this.track.properties.related_pois != null &&
+      currentTrack != null &&
+      currentTrack.properties != null &&
+      currentTrack.properties.related_pois != null &&
       this.mapCmp.map != null &&
       this._initPois === false
     ) {
       this._resetView();
-      this._relatedPois = this.track.properties.related_pois;
+      this._relatedPois = currentTrack.properties.related_pois;
       this._addPoisMarkers(this._relatedPois);
       calculateNearestPoint(
         this.wmMapPositioncurrentLocation as any,

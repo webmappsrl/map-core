@@ -1,5 +1,5 @@
 import {FitOptions} from 'ol/View';
-import {EGeojsonGeometryTypes, IGeojsonFeature, IMAP} from './types/model';
+import {EGeojsonGeometryTypes, IGeojsonFeature, IMAP, PoiMarker} from './types/model';
 
 export const mockTrack = {
   type: 'Feature',
@@ -1392,4 +1392,19 @@ export const mockOptions: FitOptions = {
   maxZoom: 10,
   duration: 100,
   size: [100, 100],
+};
+
+export const poiMarker: PoiMarker = {
+  id: 'poi-1',
+  icon: null,
+  poi: {
+    type: 'Feature',
+    properties: {
+      id: 1,
+    },
+    geometry: {
+      type: EGeojsonGeometryTypes.POINT,
+      coordinates: [0, 0],
+    },
+  },
 };
