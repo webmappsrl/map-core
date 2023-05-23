@@ -1386,6 +1386,40 @@ export const mockPoi: IGeojsonFeature = {
   },
 };
 
+export const mockPois: {
+  type: string;
+  properties: {
+    id: number;
+    name: string;
+    taxonomy: {
+      poi_type: {
+        color: string;
+      };
+    };
+  };
+  geometry: {
+    type: string;
+    coordinates: number[];
+  };
+}[] = [
+  {
+    type: 'Feature',
+    properties: {
+      id: 1,
+      name: 'POI 1',
+      taxonomy: {
+        poi_type: {
+          color: '#ff0000',
+        },
+      },
+    },
+    geometry: {
+      type: 'Point',
+      coordinates: [0, 0],
+    },
+  },
+];
+
 export const mockExtent = [0, 0, 10, 10];
 
 export const mockOptions: FitOptions = {

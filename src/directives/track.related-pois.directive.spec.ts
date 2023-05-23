@@ -173,6 +173,8 @@ describe('wmMapTrackRelatedPoisDirective', () => {
   });
 
   xit('_addPoisMarkers: should add markers for all related points of interest', async () => {
+    /*TODO: fix the error <spyOn> : _addMarkerToLayer() method does not exist
+    Usage: spyOn(<object>, <methodName>) */
     spyOn<any>(wmMapTrackRelatedPoisDirective, '_createIconFeature').and.returnValue(
       new Promise(resolve => {
         resolve({
@@ -319,40 +321,6 @@ describe('wmMapTrackRelatedPoisDirective', () => {
     );
     expect(createCanvasForHtml).toHaveBeenCalledWith('<div>HTML canvas content</div>', 46);
   });
-  //   const value = {
-  //     properties: {
-  //       feature_image: {
-  //         sizes: {
-  //           '108x137': 'https://example.com/image.jpg',
-  //         },
-  //       },
-  //     },
-  //   };
-  //   const htmlTextCanvas = await wmMapTrackRelatedPoisDirective['_createPoiMarkerHtmlForCanvas'](
-  //     mockPoi,
-  //     selected,
-  //   );
-
-  //   const imageUtilsSpy = jasmine.createSpyObj('imageUtils', ['downloadBase64Img']);
-  //   imageUtilsSpy.downloadBase64Img.and.returnValue(Promise.resolve('base64String'));
-
-  //   expect(htmlTextCanvas).toContain(
-  //     '<div class="webmapp-map-poimarker-container" style="position: relative;width: 30px;height: 60px;">',
-  //   );
-  //   expect(htmlTextCanvas).toContain(
-  //     '<svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style=" position: absolute;  width: 46px;  height: 46px;  left: 0px;  top: 0px;">',
-  //   );
-  //   expect(htmlTextCanvas).toContain('<circle opacity="0.2" cx="23" cy="23" r="23" fill="red"/>');
-  //   expect(htmlTextCanvas).toContain(
-  //     '<rect x="5" y="5" width="36" height="36" rx="18" fill="url(#img)" stroke="white" stroke-width="2"/>',
-  //   );
-  //   expect(htmlTextCanvas).toContain(
-  //     '<pattern height="100%" width="100%" patternContentUnits="objectBoundingBox" id="img">',
-  //   );
-  //   expect(htmlTextCanvas).toContain(
-  //     '<image height="1" width="1" preserveAspectRatio="xMidYMid slice" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAuCAYAAABXuSs3AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAdeSURBVHgB7ZkLbFRVGsf/986j8+i0M9MHnZa+QKCuXVwE45YlAaKGZWsIZLeSbLtbVxOzkG5W08RHaDCiqCH4lhiMT7DaqFgRhRikCmpVQKGiDlWkhT6mdIaZdt4zd+4cz72jUy4z086rG',
-  //   );
-  // });
 
   it('_createPoiMarkerHtmlForCanvas(1): should create HTML content for POI marker on canvas', async () => {
     const selected = false;
