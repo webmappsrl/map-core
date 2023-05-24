@@ -1,0 +1,22 @@
+<div class="wm-map-container">
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    [wmMapPadding]="wmMapPadding$|async"
+    *ngIf="showMap$|async"
+  ></wm-map>
+
+  <div class="link-container">
+    <a href="http://doc.map-core.surge.sh/components/WmMapComponent.html" target="_blank"
+      >Link documentation</a
+    >
+  </div>
+
+  <div class="padding-input">
+    <h3>wmMapPadding</h3>
+    <input type="number" [(ngModel)]="paddingValue[0]" />
+    <input type="number" [(ngModel)]="paddingValue[1]" />
+    <input type="number" [(ngModel)]="paddingValue[2]" />
+    <input type="number" [(ngModel)]="paddingValue[3]" />
+    <button (click)="addPaddingValue()">Update</button>
+  </div>
+</div>

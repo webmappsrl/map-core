@@ -1,10 +1,24 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
 
-const routes: Routes = [];
+const routes: Routes = [
+  {
+    path: 'map',
+    loadChildren: () => import('./pages/map-page/map-page.module').then(m => m.MapPageModule),
+  },
+  {
+    path: 'track',
+    loadChildren: () => import('./pages/track-page/track-page.module').then(m => m.TrackPageModule),
+  },
+  {
+    path: '',
+    redirectTo: 'map',
+    pathMatch: 'full',
+  },
+];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
