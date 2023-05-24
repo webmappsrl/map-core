@@ -10,6 +10,5 @@ import {MAP} from '../mocks/conf';
   encapsulation: ViewEncapsulation.None,
 })
 export class AppComponent {
-  confMAP$ = of(MAP);
   title = 'demo';
 }

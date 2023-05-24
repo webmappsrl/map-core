@@ -1,0 +1,25 @@
+map-page {
+  .wm-map-container {
+    height: 300px;
+    margin: 10px;
+  }
+  .link-container {
+    margin-top: 10px;
+  }
+}
+a:hover {
+  color: blue;
+}
+input:hover {
+  color: blue;
+}
+
+button {
+  margin: 5px;
+  transition-duration: 0.3s;
+}
+
+button:hover {
+  background-color: blue;
+  color: white;
+}

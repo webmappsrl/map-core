@@ -1,0 +1,32 @@
+left-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 90%;
+  bottom: 0;
+  h1 {
+    margin: 10px;
+  }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  button {
+    margin: 5px;
+    width: -webkit-fill-available;
+    height: 50px;
+    transition-duration: 0.3s;
+  }
+
+  button:hover {
+    background-color: blue;
+    color: white;
+  }
+
+  .selected {
+    background-color: orange;
+  }
+}
