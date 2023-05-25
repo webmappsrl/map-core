@@ -45,20 +45,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       color: 'rgba(245, 159, 26, 0)',
     }),
   });
-  private _unselectedStyleFn = (feature, resolution) => {
-    const calculatedWidth =
-      2 + (feature.getProperties().value % 5 == 0 ? 3.175 : 1.863) * Math.min(1, 2.5 / resolution);
-    console.log(resolution);
-    return new Style({
-      stroke: new Stroke({
-        color: 'rgba(245, 159, 26, 1)',
-        width: calculatedWidth,
-      }),
-      fill: new Fill({
-        color: 'rgba(245, 159, 26, 0)',
-      }),
-    });
-  };
+
   private _url$: BehaviorSubject<string | null> = new BehaviorSubject<string>(null);
 
   @Input('wmMapFeatureCollectionPrimaryColor') set color(color: string) {

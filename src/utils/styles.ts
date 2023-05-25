@@ -405,7 +405,7 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
-      const color = this.currentLayer.style.color ?? DEF_LINE_COLOR;
+      const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
       strokeStyle.setColor(color);
     } else {
       strokeStyle.setColor('rgba(0,0,0,0)');
