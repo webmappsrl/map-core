@@ -8,8 +8,10 @@ import {extentFromLonLat} from '../../src/utils';
 import {WmMapComponent} from '../components/map/map.component';
 import {IMAP} from '../types/model';
 
-@Directive()
-export abstract class WmMapBaseDirective {
+@Directive({
+  selector: '[wmMapBase]',
+})
+export class WmMapBaseDirective {
   @Input() wmMapConf: IMAP;
   @Input() wmMapPadding: number[];
 
