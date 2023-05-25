@@ -18,7 +18,6 @@ export class TrackPageComponent {
   trackColor: string;
   wmMapTrackColor$: BehaviorSubject<string> = new BehaviorSubject<string>('#caaf15');
 
-  // Colore predefinito
   constructor(private _http: HttpClient) {
     this.track$ = this._http.get('https://geohub.webmapp.it/api/ec/track/30996');
   }

@@ -11,6 +11,14 @@ const routes: Routes = [
     loadChildren: () => import('./pages/track-page/track-page.module').then(m => m.TrackPageModule),
   },
   {
+    path: 'custom-tracks',
+    loadChildren: () =>
+      import('./pages/custom-tracks-page/custom-tracks-page.module').then(
+        m => m.CustomTracksPageModule,
+      ),
+  },
+
+  {
     path: '',
     redirectTo: 'map',
     pathMatch: 'full',

@@ -1,0 +1,19 @@
+<div class="wm-map-container">
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    [wmMapCustomTrackDrawTrack]="true"
+    [wmMapCustomTrackDrawTrackHost]="'https://graphhopper.webmapp.it/'"
+    (currentCustomTrack)="setCurrentCustomTrack($event)"
+  ></wm-map>
+  <div class="link-container">
+    <a
+      href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html"
+      target="_blank"
+      >Link documentation</a
+    >
+  </div>
+  <p>
+    Zoom in and choose where to create your track by clicking on the map. After creating a track
+    view the console log for details
+  </p>
+</div>

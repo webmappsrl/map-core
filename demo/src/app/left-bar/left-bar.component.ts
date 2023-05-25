@@ -9,10 +9,11 @@ import {ActivatedRoute, Router} from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LeftBarComponent {
-  currentClick = 'map';
+  currentClick = '';
   listOfButtons = [
     {route: 'map', label: 'Map'},
     {route: 'track', label: 'Track'},
+    {route: 'custom-tracks', label: 'Custom tracks'},
   ];
 
   constructor(private _router: Router, private _route: ActivatedRoute) {}
