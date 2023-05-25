@@ -531,17 +531,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       const featureSource = clusterSource.getSource();
       featureSource.clear();
       if (this.wmMapPoisFilters.length > 0) {
-        const whereFilter = this.wmMapPoisFilters.filter(f => f.indexOf('where_') >= 0);
-        const otherFilter = this.wmMapPoisFilters.filter(f => f.indexOf('poi_type') >= 0);
         const featuresToAdd = this._olFeatures.filter(f => {
           const p = f.getProperties().properties;
-          const intersectionWhere = intersectionBetweenArrays(p.taxonomyIdentifiers, whereFilter);
-          const intersectionOther = intersectionBetweenArrays(p.taxonomyIdentifiers, otherFilter);
-          return (
-            (whereFilter.length === 0 ||
-              (whereFilter.length > 0 && intersectionWhere.length > 0)) &&
-            (otherFilter.length === 0 || (otherFilter.length > 0 && intersectionOther.length > 0))
-          );
+          return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
         });
         featureSource.addFeatures(featuresToAdd);
       } else {
@@ -552,5 +544,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._poisClusterLayer.changed();
       this._cdr.detectChanges();
     }
+  }
+  private _isArrayContained(needle: any[], haystack: any[]): boolean {
+    if (needle.length > haystack.length) return false;
+    return needle.every(element => haystack.includes(element));
   }
 }
