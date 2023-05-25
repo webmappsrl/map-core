@@ -1,3 +1,42 @@
 <div class="wm-map-container">
-  <wm-map [wmMapConf]="confMAP$|async" wmMapTrack [track]="track$|async"></wm-map>
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    wmMapTrack
+    [track]="track$|async"
+    [wmMapTrackColor]="wmMapTrackColor$|async"
+    *ngIf="showMap$|async"
+  ></wm-map>
+
+  <div class="track-color-input">
+    <h3>Track Color</h3>
+    <div class="hex-color">
+      <h4>Hex color</h4>
+      <p>
+        For example copy and paste this
+        <button (click)="copyFromClipBoard('#f542d4')">#f542d4</button>
+      </p>
+      <input type="text" placeholder="Add your hex color" [(ngModel)]="trackColor" />
+      <button (click)="addTrackColor()">Update</button>
+    </div>
+
+    <div class="select-color">
+      <h4>Select color</h4>
+      <button
+        class="color-button color-orange"
+        (click)="selectColor('#caaf15')"
+        [class.selected]="selectedColor === '#caaf15'"
+      ></button>
+      <button
+        class="color-button color-red"
+        (click)="selectColor('#ff0000')"
+        [class.selected]="selectedColor === '#ff0000'"
+      ></button>
+      <button
+        class="color-button color-green"
+        (click)="selectColor('#42f54b')"
+        [class.selected]="selectedColor === '#00ff00'"
+      ></button>
+      <div></div>
+    </div>
+  </div>
 </div>
