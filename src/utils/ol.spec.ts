@@ -1,4 +1,4 @@
-import { Coordinate } from 'ol/coordinate';
+import {Coordinate} from 'ol/coordinate';
 import {
   addFeatureToLayer,
   arrayExtend,
@@ -28,33 +28,34 @@ import {
   nearestFeatureOfCooridinate,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
-  toDegrees
+  toDegrees,
+  toRadians,
 } from './ol';
-import { MapBrowserEvent, View, Map } from 'ol';
-import { Geometry, Point, Polygon } from 'ol/geom';
-import { Style, Stroke, Fill, Icon } from 'ol/style';
+import {MapBrowserEvent, View, Map} from 'ol';
+import {Geometry, Point, Polygon} from 'ol/geom';
+import {Style, Stroke, Fill, Icon} from 'ol/style';
 import VectorLayer from 'ol/layer/Vector';
-import { Cluster } from 'ol/source';
+import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
-import { getClusterStyle } from './styles';
+import {getClusterStyle} from './styles';
 import SelectCluster from 'ol-ext/interaction/SelectCluster';
-import { CLUSTER_DISTANCE } from 'src/readonly/constants';
-import { startIconHtml, endIconHtml } from 'src/readonly/icons';
-import { transform } from 'ol/proj';
-import { Location } from '../types/location';
-import { Extent } from 'ol/extent';
-import { FeatureLike } from 'ol/Feature';
+import {CLUSTER_DISTANCE} from 'src/readonly/constants';
+import {startIconHtml, endIconHtml} from 'src/readonly/icons';
+import {transform} from 'ol/proj';
+import {Location} from '../types/location';
+import {Extent} from 'ol/extent';
+import {FeatureLike} from 'ol/Feature';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Feature from 'ol/Feature';
 
 describe('ol', () => {
   it('addFeatureToLayer: should add a feature to the given layer', () => {
     const layer = new VectorLayer<VectorSource<Point>>({
-      source: new VectorSource<Point>()
+      source: new VectorSource<Point>(),
     });
     const feature = new Feature<Point>({
-      geometry: new Point([0, 0])
+      geometry: new Point([0, 0]),
     });
 
     addFeatureToLayer(layer, feature);
@@ -63,7 +64,7 @@ describe('ol', () => {
 
   it('addFeatureToLayer: should not throw an error if layer is null', () => {
     const feature = new Feature<Point>({
-      geometry: new Point([0, 0])
+      geometry: new Point([0, 0]),
     });
     expect(() => addFeatureToLayer(null, feature)).not.toThrow();
   });
@@ -89,8 +90,8 @@ describe('ol', () => {
   it('createCluster: should return the clusterLayer with the specified zIndex', () => {
     const zIndex = 10;
     const clusterLayer = new VectorLayer<Cluster>({
-      source: new Cluster({ source: new VectorSource({ features: [] }) }),
-      zIndex
+      source: new Cluster({source: new VectorSource({features: []})}),
+      zIndex,
     });
     const resultClusterLayer = createCluster(clusterLayer, zIndex);
 
@@ -119,12 +120,7 @@ describe('ol', () => {
   });
 
   it('getIcnFromTaxonomies: should return the first non-excluded taxonomy identifier with "poi_type"', () => {
-    const taxonomies = [
-      'theme_ucvs',
-      'poi_type_1',
-      'poi_type_2',
-      'other_taxonomy'
-    ];
+    const taxonomies = ['theme_ucvs', 'poi_type_1', 'poi_type_2', 'other_taxonomy'];
     const expectedResult = 'poi_type_1';
     const result = getIcnFromTaxonomies(taxonomies);
 
@@ -160,7 +156,7 @@ describe('ol', () => {
 
   it('createLayer: should return the provided layer if it is not null', () => {
     const existingLayer = new VectorLayer({
-      source: new VectorSource()
+      source: new VectorSource(),
     });
     const zIndex = 10;
     const layer = createLayer(existingLayer, zIndex);
@@ -205,11 +201,7 @@ describe('ol', () => {
 
   it('coordsToLonLat: should transform EPSG:3857 coordinates to [lon, lat] (EPSG:4326)', () => {
     const epsg3857Coords: Coordinate = [2761667.630858837, 6252061.358379299];
-    const expectedEpsg4326Coords: Coordinate = transform(
-      epsg3857Coords,
-      'EPSG:3857',
-      'EPSG:4326'
-    );
+    const expectedEpsg4326Coords: Coordinate = transform(epsg3857Coords, 'EPSG:3857', 'EPSG:4326');
     const transformedCoords = coordsToLonLat(epsg3857Coords);
 
     expect(transformedCoords[0]).toBeCloseTo(expectedEpsg4326Coords[0], 3);
@@ -218,11 +210,7 @@ describe('ol', () => {
 
   it('coordsFromLonLat: should transform [lon, lat] (EPSG:4326) coordinates to EPSG:3857', () => {
     const epsg4326Coords: Coordinate = [24.831, 49.988];
-    const expectedEpsg3857Coords: Coordinate = transform(
-      epsg4326Coords,
-      'EPSG:4326',
-      'EPSG:3857'
-    );
+    const expectedEpsg3857Coords: Coordinate = transform(epsg4326Coords, 'EPSG:4326', 'EPSG:3857');
     const transformedCoords = coordsFromLonLat(epsg4326Coords);
 
     expect(transformedCoords[0]).toBeCloseTo(expectedEpsg3857Coords[0], 3);
@@ -232,11 +220,11 @@ describe('ol', () => {
   it('distanceBetweenPoints: should return the correct distance in meters between two locations', () => {
     const point1: Location = {
       latitude: 48.8566,
-      longitude: 2.3522
+      longitude: 2.3522,
     };
     const point2: Location = {
       latitude: 51.5074,
-      longitude: -0.1278
+      longitude: -0.1278,
     };
     const expectedDistance = 343556.06034104095;
     const calculatedDistance = distanceBetweenPoints(point1, point2);
@@ -260,16 +248,10 @@ describe('ol', () => {
 
   it('extentToLonLat: transforms an EPSG:3857 extent to EPSG:4326', () => {
     const expectedExtent4326: Extent = [
-      -123.1215834720188,
-      49.247593882736425,
-      -123.11791852804199,
-      49.25182611562397
+      -123.1215834720188, 49.247593882736425, -123.11791852804199, 49.25182611562397,
     ];
     const extent3857: Extent = [
-      -13705831.977766663,
-      6316977.796643729,
-      -13705423.998069376,
-      6317699.543413695
+      -13705831.977766663, 6316977.796643729, -13705423.998069376, 6317699.543413695,
     ];
     const transformedExtent = extentToLonLat(extent3857);
     const precision = 10;
@@ -282,16 +264,10 @@ describe('ol', () => {
 
   it('extentFromLonLat: transforms an EPSG:4326 extent to EPSG:3857', () => {
     const extent4326: Extent = [
-      -123.1215834720188,
-      49.247593882736425,
-      -123.11791852804199,
-      49.25182611562397
+      -123.1215834720188, 49.247593882736425, -123.11791852804199, 49.25182611562397,
     ];
     const expectedExtent3857: Extent = [
-      -13705831.977766663,
-      6316977.796643729,
-      -13705423.998069376,
-      6317699.543413695
+      -13705831.977766663, 6316977.796643729, -13705423.998069376, 6317699.543413695,
     ];
     const transformedExtent = extentFromLonLat(extent4326);
 
@@ -302,16 +278,13 @@ describe('ol', () => {
     const map = new Map({
       view: new View({
         center: [0, 0],
-        zoom: 4
-      })
+        zoom: 4,
+      }),
     });
-    const features = [
-      new Feature(new Point([1, 1])),
-      new Feature(new Point([1.0001, 1.0001]))
-    ];
-    const layerSource = new VectorSource({ features });
-    const clusterSource = new Cluster({ source: layerSource });
-    const layer = new VectorLayer({ source: clusterSource });
+    const features = [new Feature(new Point([1, 1])), new Feature(new Point([1.0001, 1.0001]))];
+    const layerSource = new VectorSource({features});
+    const clusterSource = new Cluster({source: layerSource});
+    const layer = new VectorLayer({source: clusterSource});
     const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
     evt.coordinate = [1, 1];
 
@@ -322,13 +295,13 @@ describe('ol', () => {
     const map = new Map({
       view: new View({
         center: [0, 0],
-        zoom: 4
-      })
+        zoom: 4,
+      }),
     });
     const features = [new Feature(new Point([1, 1]))];
-    const layerSource = new VectorSource({ features });
-    const clusterSource = new Cluster({ source: layerSource });
-    const layer = new VectorLayer({ source: clusterSource });
+    const layerSource = new VectorSource({features});
+    const clusterSource = new Cluster({source: layerSource});
+    const layer = new VectorLayer({source: clusterSource});
     const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
     evt.coordinate = [10, 10];
 
@@ -340,22 +313,22 @@ describe('ol', () => {
     const point2 = new Feature(new Point([0, 0]));
     const point3 = new Feature(new Point([10, 10]));
     const source = new VectorSource({
-      features: [point1, point2, point3]
+      features: [point1, point2, point3],
     });
     const clusterSource = new Cluster({
       source: source,
-      distance: 20
+      distance: 20,
     });
     const layer = new VectorLayer({
-      source: clusterSource
+      source: clusterSource,
     });
     const map = new Map({
       target: 'map',
       layers: [layer],
       view: new View({
         center: [0, 0],
-        zoom: 5
-      })
+        zoom: 5,
+      }),
     });
     const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
     evt.coordinate = [0, 0];
@@ -397,16 +370,16 @@ describe('ol', () => {
     const features: Feature<Geometry>[] = [
       new Feature({
         geometry: new Point([-123.1187, 49.2468]),
-        name: 'feature 1'
+        name: 'feature 1',
       }),
       new Feature({
         geometry: new Point([-123.1219, 49.2482]),
-        name: 'feature 2'
+        name: 'feature 2',
       }),
       new Feature({
         geometry: new Point([-123.1241, 49.2506]),
-        name: 'feature 3'
-      })
+        name: 'feature 3',
+      }),
     ];
     const coordinate: Coordinate = [-123.123, 49.249];
     const nearestFeature = nearestFeatureOfCooridinate(features, coordinate);
@@ -419,18 +392,18 @@ describe('ol', () => {
     const point2 = new Feature(new Point([10, 10]));
     const point3 = new Feature(new Point([20, 20]));
     const source = new VectorSource({
-      features: [point1, point2, point3]
+      features: [point1, point2, point3],
     });
     const layer = new VectorLayer({
-      source: source
+      source: source,
     });
     const map = new Map({
       target: 'map',
       layers: [layer],
       view: new View({
         center: [0, 0],
-        zoom: 1
-      })
+        zoom: 1,
+      }),
     });
     const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
     evt.coordinate = [10, 10];
@@ -444,22 +417,22 @@ describe('ol', () => {
     const point2 = new Feature(new Point([10, 10]));
     const point3 = new Feature(new Point([20, 20]));
     const source = new VectorSource({
-      features: [point1, point2, point3]
+      features: [point1, point2, point3],
     });
     const clusterSource = new Cluster({
       source: source,
-      distance: 5
+      distance: 5,
     });
     const layer = new VectorLayer({
-      source: clusterSource
+      source: clusterSource,
     });
     const map = new Map({
       target: 'map',
       layers: [layer],
       view: new View({
         center: [0, 0],
-        zoom: 1
-      })
+        zoom: 1,
+      }),
     });
     const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
     evt.coordinate = [10, 10];
@@ -470,7 +443,7 @@ describe('ol', () => {
 
   it('removeFeatureFromLayer: removes the feature from the layer source', () => {
     const source = new VectorSource();
-    const layer = new VectorLayer({ source });
+    const layer = new VectorLayer({source});
     const coordinates = [0, 0];
     const feature = new Feature(new Point(coordinates));
     source.addFeature(feature);
@@ -490,12 +463,12 @@ describe('ol', () => {
     const styleFn = (feature: FeatureLike) => {
       return new Style({
         fill: new Fill({
-          color: 'red'
+          color: 'red',
         }),
         stroke: new Stroke({
           color: '#fff',
-          width: 4
-        })
+          width: 4,
+        }),
       });
     };
     const tileLoadFn = () => {};
@@ -510,28 +483,22 @@ describe('ol', () => {
   it('calculateNearestPoint: should return the nearest feature within the alertPoiRadius', () => {
     const userLocation = {
       latitude: 0,
-      longitude: 0
+      longitude: 0,
     };
     const point1 = new Feature(new Point([0, 0]));
     const point2 = new Feature(new Point([0.001, 0.001]));
     const point3 = new Feature(new Point([0.002, 0.002]));
     const source = new VectorSource({
-      features: [point1, point2, point3]
+      features: [point1, point2, point3],
     });
     const layer = new VectorLayer({
-      source: source
+      source: source,
     });
     const alertPoiRadius = 200;
-    const nearestFeature = calculateNearestPoint(
-      userLocation,
-      layer,
-      alertPoiRadius
-    );
+    const nearestFeature = calculateNearestPoint(userLocation, layer, alertPoiRadius);
 
     expect(nearestFeature).toEqual(point1);
-    expect(nearestFeature.get('distance_from_user')).toBeLessThanOrEqual(
-      alertPoiRadius
-    );
+    expect(nearestFeature.get('distance_from_user')).toBeLessThanOrEqual(alertPoiRadius);
   });
 
   it('calculateRotation: should calculate the correct rotation angle between two coordinates', () => {
@@ -617,8 +584,8 @@ describe('ol', () => {
 
   it('buildTileLayers: should build tile layers correctly', () => {
     const tiles = [
-      { layer1: 'https://example.com/layer1/{z}/{x}/{y}.png' },
-      { layer2: 'https://example.com/layer2/{z}/{x}/{y}.png' }
+      {layer1: 'https://example.com/layer1/{z}/{x}/{y}.png'},
+      {layer2: 'https://example.com/layer2/{z}/{x}/{y}.png'},
     ];
 
     const expectedResult = tiles.map((tile, index) => ({
@@ -626,7 +593,7 @@ describe('ol', () => {
       visible: index === 0,
       zIndex: index,
       className: Object.keys(tile)[0],
-      url: Object.values(tile)[0]
+      url: Object.values(tile)[0],
     }));
 
     const result = buildTileLayers(tiles).map(tileLayer => ({
@@ -634,9 +601,24 @@ describe('ol', () => {
       visible: tileLayer.getVisible(),
       zIndex: tileLayer.getZIndex(),
       className: tileLayer.getClassName(),
-      url: tileLayer.getSource().getUrls()[0]
+      url: tileLayer.getSource().getUrls()[0],
     }));
 
     expect(result).toEqual(expectedResult);
+  });
+
+  it('toRadians: should convert degrees to radians correctly', () => {
+    const testCases = [
+      {degrees: 0, radians: 0},
+      {degrees: 45, radians: Math.PI / 4},
+      {degrees: 90, radians: Math.PI / 2},
+      {degrees: 180, radians: Math.PI},
+      {degrees: 360, radians: 2 * Math.PI},
+    ];
+
+    for (const testCase of testCases) {
+      const result = toRadians(testCase.degrees);
+      expect(result).toBeCloseTo(testCase.radians, 10);
+    }
   });
 });

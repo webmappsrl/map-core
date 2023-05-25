@@ -39,7 +39,7 @@ import {IGeojsonFeature, PoiMarker} from '../types/model';
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
 })
-export class wmMapTrackRelatedPoisDirective
+export class WmMapTrackRelatedPoisDirective
   extends WmMapBaseDirective
   implements OnChanges, OnDestroy
 {
@@ -52,12 +52,25 @@ export class wmMapTrackRelatedPoisDirective
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
 
+  /**
+   * @description
+   * Setter for the 'next' input.
+   * Removes the selectedPoiLayer if it exists.
+   * @param d The value of the 'next' input.
+   */
   @Input() set next(d) {
     if (this._selectedPoiLayer != null) {
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
     }
   }
 
+  /**
+   * @description
+   * Setter for the 'setPoi' input.
+   * Sets the current POI based on the provided ID.
+   * If the ID is -1, the selectedPoiLayer is removed and related events are emitted.
+   * @param id The ID of the POI or 'reset' value.
+   */
   @Input('poi') set setPoi(id: number | 'reset') {
     if (id === -1 && this._selectedPoiLayer != null) {
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
@@ -75,17 +88,53 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
+  /**
+   * @description
+   * The input property for the track object.
+   */
   @Input() track;
+  /**
+   * @description
+   * The input property for the current location of the map.
+   */
   @Input() wmMapPositioncurrentLocation: Location;
+  /**
+   * @description
+   * The input property for the radius of the alert POI in the track.
+   */
   @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
+  /**
+   * @description
+   * The output event for POI click.
+   * Emits the ID of the clicked POI.
+   */
   @Output('related-poi-click') poiClick: EventEmitter<number> = new EventEmitter<number>();
+  /**
+   * @description
+   * The output event for related POI.
+   * Emits the related POI object.
+   */
   @Output('related-poi') relatedPoiEvt: EventEmitter<any> = new EventEmitter<any>();
+  /**
+   * @description
+   * The output event for the nearest POI in the track.
+   * Emits the nearest POI as a feature with geometry.
+   */
   @Output() wmMapTrackRelatedPoisNearestPoiEvt: EventEmitter<Feature<Geometry>> =
     new EventEmitter();
 
   currentRelatedPoi$: BehaviorSubject<IGeojsonFeature> =
     new BehaviorSubject<IGeojsonFeature | null>(null);
 
+  /**
+   * @description
+   * Constructs the PoiSelectionHandler instance.
+   * This method is executed when changes occur to the component's input properties.
+   * It handles the logic for resetting the view and initializing the point of interest markers based on the track's related_pois property.
+   * It also calculates the nearest point of interest to the current location and emits the nearestPoi event.
+   *
+   * @param mapCmp The WmMapComponent instance.
+   */
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
@@ -110,6 +159,16 @@ export class wmMapTrackRelatedPoisDirective
       });
   }
 
+  /**
+   * @description
+   * This method is executed when changes occur to the component's input properties.
+   * It handles the logic for resetting the view and initializing the point of interest (POI) markers based on the track's related_pois property.
+   * If the track has related_pois and the map is initialized, the POI markers are added to the map.
+   * It also calculates the nearest POI to the current location and emits the wmMapTrackRelatedPoisNearestPoiEvt event.
+   * The nearest POI is highlighted on the map.
+   *
+   * @param changes The SimpleChanges object containing the changed properties.
+   */
   ngOnChanges(changes: SimpleChanges): void {
     const resetCondition =
       (changes.track &&
@@ -119,19 +178,22 @@ export class wmMapTrackRelatedPoisDirective
           (changes.track.previousValue == null &&
             changes.track.currentValue.properties.id != null))) ??
       false;
+    // Reset view and initialization of pois if necessary
     if (this.track == null || this.mapCmp.map == null || resetCondition) {
       this._resetView();
       this._initPois = false;
     }
+    // Initialize pois if track and related_pois are available
+    const currentTrack = changes.track != null ? changes.track.currentValue : null;
     if (
-      this.track != null &&
-      this.track.properties != null &&
-      this.track.properties.related_pois != null &&
+      currentTrack != null &&
+      currentTrack.properties != null &&
+      currentTrack.properties.related_pois != null &&
       this.mapCmp.map != null &&
       this._initPois === false
     ) {
       this._resetView();
-      this._relatedPois = this.track.properties.related_pois;
+      this._relatedPois = currentTrack.properties.related_pois;
       this._addPoisMarkers(this._relatedPois);
       calculateNearestPoint(
         this.wmMapPositioncurrentLocation as any,
@@ -140,13 +202,14 @@ export class wmMapTrackRelatedPoisDirective
       );
       this._initPois = true;
     }
-
+    // Calculate nearest poi when currentLocation changes
     if (
       changes.wmMapPositioncurrentLocation &&
       changes.wmMapPositioncurrentLocation.currentValue != null
     ) {
       const currentLocation = changes.wmMapPositioncurrentLocation.currentValue;
       const nearestPoi = calculateNearestPoint(currentLocation, this._poisLayer);
+      // Highlight the nearest poi on the map
       if (nearestPoi != null) {
         ((nearestPoi.getStyle() as any).getImage() as any).setScale(1.2);
       }
@@ -154,10 +217,20 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
+  /**
+   * @description
+   * Executes when the component is being destroyed.
+   * Unsubscribes from the click event subscription.
+   */
   ngOnDestroy(): void {
     this._onClickSub.unsubscribe();
   }
 
+  /**
+   * @description
+   * Switches to the next point of interest (POI).
+   * Updates the current POI to the next one in the list.
+   */
   poiNext(): void {
     const currentID = this.currentRelatedPoi$.value.properties.id;
     const currentPosition = this._relatedPois.map(f => f.properties.id).indexOf(currentID);
@@ -166,6 +239,11 @@ export class wmMapTrackRelatedPoisDirective
     this.setPoi = nextId;
   }
 
+  /**
+   * @description
+   * Switches to the previous point of interest (POI).
+   * Updates the current POI to the previous one in the list.
+   */
   poiPrev(): void {
     const currentID = this.currentRelatedPoi$.value.properties.id;
     const currentPosition = this._relatedPois.map(f => f.properties.id).indexOf(currentID);
@@ -175,6 +253,15 @@ export class wmMapTrackRelatedPoisDirective
     this.setPoi = prevId;
   }
 
+  /**
+   * @description
+   * Adds markers for the points of interest (POIs) to the map layer.
+   * This private method adds markers for the points of interest (POIs) to the map layer.
+   * It takes a collection of POIs and iterates through them to check if each POI already has a corresponding marker.
+   * If not, it creates a canvas icon for the POI and adds it to the map layer.
+   *
+   * @param poiCollection - The collection of POIs to be added as markers.
+   */
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
     this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX);
     this.mapCmp.map.addLayer(this._poisLayer);
@@ -200,6 +287,20 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
+  /**
+   * @description
+   * Creates an icon feature for a point of interest (POI) with the specified coordinates, image, size, transparency, and anchor.
+   * This private method creates an icon feature for a point of interest (POI) with the specified coordinates, image, size, transparency, and anchor.
+   * It creates a new Point geometry based on the coordinates, sets the image and style properties for the icon feature,
+   * and returns an object containing the created icon feature and its style.
+   *
+   * @param coordinates - The coordinates of the POI.
+   * @param img - The image element for the icon.
+   * @param size - The size of the icon.
+   * @param transparent - Indicates whether the icon should be transparent (optional, default: false).
+   * @param anchor - The anchor point of the icon (optional, default: [0.5, 0.5]).
+   * @returns An object containing the created icon feature and its style.
+   */
   private async _createIconFeature(
     coordinates: number[],
     img: HTMLImageElement,
@@ -230,6 +331,18 @@ export class wmMapTrackRelatedPoisDirective
     return {iconFeature, style};
   }
 
+  /**
+   * @description
+   * Creates a POI canvas icon with the specified POI, geometry, and selected state.
+   * This private method creates a POI canvas icon with the specified POI, geometry, and selected state.
+   * It first creates a canvas image using the _createPoiCanvasImage method, and then creates an icon feature using the _createIconFeature method.
+   * The icon feature is assigned the ID of the POI, and the method returns an object containing the created POI marker and its style.
+   *
+   * @param poi - The point of interest (POI) object.
+   * @param geometry - The geometry of the POI (optional, default: null).
+   * @param selected - Indicates whether the POI is selected (optional, default: false).
+   * @returns An object containing the created POI marker and its style.
+   */
   private async _createPoiCanvasIcon(
     poi: any,
     geometry = null,
@@ -254,6 +367,18 @@ export class wmMapTrackRelatedPoisDirective
     };
   }
 
+  /**
+   * @description
+   * Creates a POI canvas image with the specified POI and selected state.
+   * This private method creates a POI canvas image with the specified POI and selected state.
+   * It first creates the HTML text for the POI marker using the _createPoiMarkerHtmlForCanvas method,
+   * and then converts it into a canvas using the createCanvasForHtml method.
+   * The canvas is then converted into an HTMLImageElement, which is returned by the method.
+   *
+   * @param poi - The point of interest (POI) object.
+   * @param selected - Indicates whether the POI is selected (optional, default: false).
+   * @returns The created POI canvas image as an HTMLImageElement.
+   */
   private async _createPoiCavasImage(
     poi: IGeojsonFeature,
     selected = false,
@@ -262,6 +387,18 @@ export class wmMapTrackRelatedPoisDirective
     return createCanvasForHtml(htmlTextCanvas, 46);
   }
 
+  /**
+   * @description
+   * Creates the HTML text for a POI marker to be used in a canvas.
+   * This private method creates the HTML text for a POI marker to be used in a canvas.
+   * It takes the POI object and the selected state as inputs. If the POI has a feature image URL, it downloads the base64 image using the downloadBase64Img method.
+   * The HTML text includes an SVG element with a circle and a rectangle, filled with colors and patterns based on the selected state and the image.
+   * The result is wrapped in a container div.
+   *
+   * @param value - The POI object.
+   * @param selected - Indicates whether the POI is selected (optional, default: false).
+   * @returns The HTML text for the POI marker.
+   */
   private async _createPoiMarkerHtmlForCanvas(
     value: IGeojsonFeature,
     selected = false,
@@ -293,6 +430,10 @@ export class wmMapTrackRelatedPoisDirective
     return html;
   }
 
+  /**
+   * @description
+   * Deselects the currently selected POI by removing its layer from the map.
+   */
   private _deselectCurrentPoi(): void {
     if (this._selectedPoiMarker != null) {
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
@@ -300,6 +441,13 @@ export class wmMapTrackRelatedPoisDirective
     }
   }
 
+  /**
+   * @description
+   * Fits the view of the map to the specified geometry or extent.
+   *
+   * @param geometryOrExtent The geometry or extent to fit the view to.
+   * @param optOptions Additional options for fitting the view (optional).
+   */
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
       const size = this.mapCmp.map.getSize();
@@ -312,11 +460,27 @@ export class wmMapTrackRelatedPoisDirective
     this.mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
+  /**
+   * @description
+   * Retrieves the Point of Interest (POI) with the specified ID.
+   *
+   * @param id The ID of the POI.
+   * @returns The POI object with the specified ID, or `undefined` if not found.
+   */
   private _getPoi(id: number): any {
     const poi = this._relatedPois.find(p => p.properties.id === id);
     return poi;
   }
 
+  /**
+   * @description
+   * Resets the view by removing the POI layers and resetting other related properties.
+   * This private method resets the view by removing the POI layers and resetting other related properties.
+   * It checks if mapCmp.map is not null and _poisLayer is defined, then it removes the _poisLayer from the map.
+   * Similarly, it checks if mapCmp.map is not null and _selectedPoiLayer is defined, then it removes the _selectedPoiLayer from the map.
+   * After removing the layers, it calls mapCmp.map.render() to update the map.
+   * It also clears the _poiMarkers array and emits a null value through the relatedPoiEvt event emitter.
+   */
   private _resetView(): void {
     if (this.mapCmp.map != null && this._poisLayer != null) {
       this.mapCmp.map.removeLayer(this._poisLayer);
@@ -333,6 +497,16 @@ export class wmMapTrackRelatedPoisDirective
     this.relatedPoiEvt.emit(null);
   }
 
+  /**
+   * @description
+   * Selects the current POI marker and adds it to the selected POI layer.
+   * This private method selects the current POI marker by adding it to the selected POI layer.
+   * It first calls _deselectCurrentPoi() to clear any previously selected POI marker.
+   * Then, it creates a new layer for the selected POI (_selectedPoiLayer) with a high z-index value.
+   * The layer is added to the map using mapCmp.map.addLayer(). The selected POI marker (poiMarker) is assigned to _selectedPoiMarker.
+   * Finally, it uses _createPoiCanvasIcon() to create a canvas icon for the selected POI marker, and adds the icon feature to the selected POI layer using addFeatureToLayer().
+   * @param poiMarker The POI marker to select.
+   */
   private async _selectCurrentPoi(poiMarker: PoiMarker) {
     this._deselectCurrentPoi();
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);

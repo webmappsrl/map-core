@@ -1,4 +1,4 @@
-import {Directive, Host, Input, OnChanges, OnDestroy, OnInit, SimpleChanges} from '@angular/core';
+import {Directive, Host, Input, OnChanges, OnDestroy, SimpleChanges} from '@angular/core';
 import {BehaviorSubject, Subscription} from 'rxjs';
 import {POSITION_ZINDEX} from '../readonly';
 
@@ -13,7 +13,7 @@ import Style from 'ol/style/Style';
 
 import {filter, take} from 'rxjs/operators';
 
-import {circularPolygon} from '../../src/utils/ol';
+import {circularPolygon, toRadians} from '../../src/utils/ol';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 interface Bearing {
@@ -31,10 +31,7 @@ interface Location {
 @Directive({
   selector: '[wmMapPosition]',
 })
-export class WmMapPositionDirective
-  extends WmMapBaseDirective
-  implements OnDestroy, OnChanges, OnInit
-{
+export class WmMapPositionDirective extends WmMapBaseDirective implements OnDestroy, OnChanges {
   private _bgCurrentLocSub: Subscription = Subscription.EMPTY;
   private _bgLocSub: Subscription = Subscription.EMPTY;
   private _currentLocation: Location;
@@ -92,6 +89,14 @@ export class WmMapPositionDirective
       });
   }
 
+  /**
+   * @description
+   * Watches for changes to the position of the map. When the current location changes, updates the position of the map.
+   * When the center position or focus change, updates the position of the map and adjusts the zoom level if necessary.
+   *
+   * @param changes Object containing changes to the map position
+   * @returns void
+   */
   ngOnChanges(changes: SimpleChanges): void {
     if (
       changes.wmMapPositioncurrentLocation != null &&
@@ -130,22 +135,39 @@ export class WmMapPositionDirective
     }
   }
 
+  /**
+   *
+   * @description
+   * This method is called when the component is destroyed, and it unsubscribes from the
+   * background location and current location observables to prevent memory leaks.
+   *
+   * @returns void
+   */
   ngOnDestroy(): void {
     this._bgLocSub.unsubscribe();
     this._bgCurrentLocSub.unsubscribe();
   }
 
-  ngOnInit(): void {}
-
+  /**
+   * @description
+   * Centers the map to the current location and updates the position marker accordingly.
+   */
   private _centerPosition() {
     const point = this._updateGeometry(this._currentLocation);
-    this._followLocation(point);
+    if (point != null) {
+      this._followLocation(point);
+    }
   }
 
-  private _degreesToRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
-
+  /**
+   * @description
+   * Fits the map view to a given geometry or extent.
+   *
+   * @param geometryOrExtent The geometry or extent to fit the map view to.
+   * @param optOptions Optional options for the fit operation, including maxZoom, duration, and size.
+   * If size is not specified, it defaults to the height of the map container.
+   * @returns void
+   */
   private _fitView(geometryOrExtent: Point, optOptions?: FitOptions): void {
     if (optOptions == null) {
       const size = this.mapCmp.map.getSize();
@@ -159,12 +181,26 @@ export class WmMapPositionDirective
     this.mapCmp.map.getView().fit(geometryOrExtent, optOptions);
   }
 
+  /**
+   * @description
+   * Adjusts the map view to follow the location of the user.
+   *
+   * @param point The current position of the user as a Point object.
+   * @returns Void.
+   */
   private _followLocation(point: Point): void {
     this._fitView(point);
     const runningAvg = this._runningAvg(this._currentLocation.bearing);
     this._rotate(-runningAvg, 500);
   }
 
+  /**
+   * @description
+   * Rotates the map to a specified bearing.
+   *
+   * @param bearing The desired bearing in radians.
+   * @param duration Optional. The duration of the animation in milliseconds. Default is 0.
+   */
   private _rotate(bearing: number, duration?: number): void {
     this.mapCmp.map.getView().animate({
       rotation: bearing,
@@ -172,10 +208,17 @@ export class WmMapPositionDirective
     });
   }
 
+  /**
+   * @description
+   * Calculates the running average of bearings and returns the result in radians.
+   *
+   * @param bearing The current bearing in degrees.
+   * @returns The running average of bearings in radians.
+   */
   private _runningAvg(bearing: number): number {
     try {
       if (typeof bearing === 'number' && Number.isNaN(bearing) === false && bearing >= 0) {
-        const bearingInRadians = this._degreesToRadians(bearing);
+        const bearingInRadians = toRadians(bearing);
         const newBearing: Bearing = {
           cos: Math.cos(bearingInRadians),
           sin: Math.sin(bearingInRadians),
@@ -202,6 +245,13 @@ export class WmMapPositionDirective
     }
   }
 
+  /**
+   * @description
+   * Sets the position of the map view based on the given location.
+   * If the focus flag is set to true, it also rotates the view to follow the location.
+   *
+   * @param loc The location to center the map view on.
+   */
   private _setPositionByLocation(loc: Location): void {
     const point = this._updateGeometry(loc);
     if (this._focus$.value === true) {
@@ -209,11 +259,22 @@ export class WmMapPositionDirective
     }
   }
 
+  /**
+   * @description
+   * Update the position and accuracy of the location feature on the map based on the given location data.
+   * Also returns the new point location.
+   *
+   * @param loc The location data to use.
+   * @returns The new point location.
+   */
   private _updateGeometry(loc: Location): Point {
-    const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
-    const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy);
-    this._featureLocation.setGeometry(point);
-    this._featureAccuracy.setGeometry(geometry);
-    return point;
+    if (loc != null) {
+      const point = new Point(fromLonLat([loc.longitude, loc.latitude]));
+      const geometry = circularPolygon([loc.longitude, loc.latitude], loc.accuracy);
+      this._featureLocation.setGeometry(point);
+      this._featureAccuracy.setGeometry(geometry);
+      return point;
+    }
+    return null;
   }
 }
