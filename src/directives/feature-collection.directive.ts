@@ -33,7 +33,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       width: 3,
     }),
     fill: new Fill({
-      color: 'rgba(245, 159, 26, 1)',
+      color: 'rgba(245, 159, 26, 0.4)',
     }),
   });
   private _unselectedStyle = new Style({
