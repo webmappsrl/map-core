@@ -16,18 +16,18 @@ import {
   WmMapPoisDirective,
   WmMapPositionDirective,
   WmMapTrackDirective,
-  wmMapTrackHighLightDirective,
-  wmMapTrackRelatedPoisDirective,
+  WmMapTrackHighLightDirective,
+  WmMapTrackRelatedPoisDirective,
 } from './directives';
 
 const directives = [
   WmMapTrackDirective,
   WmMapLayerDirective,
-  wmMapTrackRelatedPoisDirective,
+  WmMapTrackRelatedPoisDirective,
   WmMapPoisDirective,
   wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
-  wmMapTrackHighLightDirective,
+  WmMapTrackHighLightDirective,
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
   WmMapPositionDirective,
