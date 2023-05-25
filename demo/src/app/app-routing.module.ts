@@ -17,6 +17,10 @@ const routes: Routes = [
         m => m.CustomTracksPageModule,
       ),
   },
+  {
+    path: 'pois',
+    loadChildren: () => import('./pages/pois-page/pois-page.module').then(m => m.PoisPageModule),
+  },
 
   {
     path: '',

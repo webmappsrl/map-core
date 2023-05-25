@@ -1,7 +1,6 @@
-import {HttpClient} from '@angular/common/http';
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
 import {MAP} from 'demo/src/mocks/conf';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {of} from 'rxjs';
 
 @Component({
   selector: 'custom-tracks-page',
