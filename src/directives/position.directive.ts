@@ -65,10 +65,39 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     zIndex: POSITION_ZINDEX,
   });
 
+  /**
+   * @description
+   * The input property for the center position of the map.
+   * It represents the coordinates [longitude, latitude] of the desired center position.
+   */
   @Input() wmMapPositionCenter;
+  /**
+   * @description
+   * The input property for the current location of the user.
+   * It represents the user's current location on the map.
+   */
   @Input() wmMapPositioncurrentLocation: Location;
+  /**
+   * @description
+   * The input property for focusing on the map position.
+   * When set to `true`, it triggers the map to focus on the specified position.
+   */
   @Input() wmMapPositionfocus;
 
+  /**
+   * @description
+   * Constructs a new instance of the PositionIndicatorComponent.
+   * It takes the parent WmMapComponent as a parameter.
+   * The constructor subscribes to the isInit$ observable of the parent component
+   * to ensure that the map is initialized before performing any operations.
+   * Inside the subscription, it sets up a one-time event listener for the 'rendercomplete' event,
+   * which is triggered when the map finishes rendering. Within this event listener,
+   * the location and accuracy layers are added to the map using the addLayer() method.
+   * If the _currentLocation property is not null,
+   * the _setPositionByLocation() method is called to set the initial position on the map.
+   *
+   * @param mapCmp The parent WmMapComponent instance.
+   */
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
