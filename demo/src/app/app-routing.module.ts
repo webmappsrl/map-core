@@ -21,6 +21,27 @@ const routes: Routes = [
     path: 'pois',
     loadChildren: () => import('./pages/pois-page/pois-page.module').then(m => m.PoisPageModule),
   },
+  {
+    path: 'track-related-pois',
+    loadChildren: () =>
+      import('./pages/track-related-pois-page/track-related-pois-page.module').then(
+        m => m.TrackRelatedPoisPageModule,
+      ),
+  },
+  {
+    path: 'overlay',
+    loadChildren: () =>
+      import('./pages/overlay-page/overlay-page.module').then(m => m.OverlayPageModule),
+  },
+  {
+    path: 'layer',
+    loadChildren: () => import('./pages/layer-page/layer-page.module').then(m => m.LayerPageModule),
+  },
+  {
+    path: 'position',
+    loadChildren: () =>
+      import('./pages/position-page/position-page.module').then(m => m.PositionPageModule),
+  },
 
   {
     path: '',
