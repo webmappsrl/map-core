@@ -15,6 +15,7 @@ export class LeftBarComponent {
     {route: 'track', label: 'Track'},
     {route: 'custom-tracks', label: 'Custom tracks'},
     {route: 'pois', label: 'Pois'},
+    {route: 'track-related-pois', label: 'Track related pois'},
   ];
 
   constructor(private _router: Router, private _route: ActivatedRoute) {}
