@@ -11,10 +11,9 @@ import {BehaviorSubject, of} from 'rxjs';
 })
 export class MapPageComponent {
   confMAP$ = of(MAP);
-  wmMapPadding$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([0, 0, 0, 0]);
-  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
-
   paddingValue: number[] = [0, 0, 0, 0];
+  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  wmMapPadding$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([0, 0, 0, 0]);
 
   addPaddingValue() {
     this.showMap$.next(false);

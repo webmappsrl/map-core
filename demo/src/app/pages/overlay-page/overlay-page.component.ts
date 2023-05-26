@@ -1,6 +1,6 @@
 import {HttpClient} from '@angular/common/http';
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
@@ -14,9 +14,11 @@ export class OverlayPageComponent {
   public get http(): HttpClient {
     return this._http;
   }
+
   public set http(value: HttpClient) {
     this._http = value;
   }
+
   confMAP$: Observable<any>;
 
   constructor(private _http: HttpClient) {

@@ -49,7 +49,7 @@
         }
       },
       "root": "demo",
-      "sourceRoot": "demo/src",
+      "sourceRoot": "/",
       "prefix": "app",
       "architect": {
         "build": {
@@ -61,7 +61,15 @@
             "polyfills": "demo/src/polyfills.ts",
             "tsConfig": "demo/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["demo/src/favicon.ico", "demo/src/assets"],
+            "assets": [
+              "demo/src/favicon.ico",
+              "demo/src/assets",
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "/map-core/src/assets"
+              }
+            ],
             "styles": ["demo/src/styles.scss"],
             "scripts": []
           },

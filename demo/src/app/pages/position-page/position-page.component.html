@@ -1,0 +1,17 @@
+<div class="wm-map-container">
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    wmMapPosition
+    [wmMapPositioncurrentLocation]="wmMapPositioncurrentLocation$|async"
+    [wmMapPositionfocus]="true"
+  ></wm-map>
+  <div class="link-container">
+    <a href="http://doc.map-core.surge.sh/directives/WmMapPositionDirective.html" target="_blank"
+      >Link documentation</a
+    >
+  </div>
+  <p>
+    An example of how your current position are displayed on the map (You need to allow access to
+    your location)
+  </p>
+</div>

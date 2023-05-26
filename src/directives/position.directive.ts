@@ -39,12 +39,12 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   private _featureLocation = new Feature();
   private _focus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _iconLocation = new Icon({
-    src: 'map-core/assets/location-icon.png',
+    src: '/map-core/src/assets/location-icon.png',
     scale: 0.4,
     size: [125, 125],
   });
   private _iconLocationArrow = new Icon({
-    src: 'map-core/assets/location-icon-arrow.png',
+    src: '/map-core/src/assets/location-icon-arrow.png',
     scale: 0.4,
     size: [125, 125],
   });
