@@ -4,8 +4,13 @@ left-bar {
   left: 0;
   right: 90%;
   bottom: 0;
+  background-color: orange;
+  border: 1px solid blue;
+
   h1 {
     margin: 10px;
+    font-family: 'Arial black', sans-serif;
+    color: blue;
   }
   .sidebar {
     display: flex;
@@ -19,6 +24,7 @@ left-bar {
     width: -webkit-fill-available;
     height: 50px;
     transition-duration: 0.3s;
+    border: none;
   }
 
   button:hover {
@@ -28,5 +34,6 @@ left-bar {
 
   .selected {
     background-color: orange;
+    border: 2px solid blue;
   }
 }
