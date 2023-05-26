@@ -1,0 +1,14 @@
+<div class="wm-map-container">
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    wmMapOverlay
+    [wmMapOverlay]="true"
+    [wmMapOverlayUrl]="'https://geohub.webmapp.it/api/taxonomy/where/geojson/13'"
+  ></wm-map>
+  <div class="link-container">
+    <a href="http://doc.map-core.surge.sh/directives/WmMapOverlayDirective.html" target="_blank"
+      >Link documentation</a
+    >
+  </div>
+  <p>An example of how overlay are displayed on the map</p>
+</div>

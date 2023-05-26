@@ -1,0 +1,15 @@
+overlay-page {
+  .wm-map-container {
+    height: 300px;
+    margin: 10px;
+  }
+  .link-container {
+    margin-top: 10px;
+  }
+  a:hover {
+    color: blue;
+  }
+  .wm-overlay {
+    background-color: red; /* Modifica il colore a quello desiderato */
+  }
+}

@@ -1,10 +1,5 @@
 <div class="wm-map-container">
-  <wm-map
-    [wmMapConf]="confMAP$|async"
-    wmMapPois
-    [wmMapPoisPois]="pois$|async"
-    [WmMapPoisUnselectPoi]="resetSelectedPoi$|async"
-  ></wm-map>
+  <wm-map [wmMapConf]="confMAP$|async" wmMapPois [wmMapPoisPois]="pois$|async"></wm-map>
   <div class="link-container">
     <a href="http://doc.map-core.surge.sh/directives/WmMapPoisDirective.html" target="_blank"
       >Link documentation</a

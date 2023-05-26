@@ -13,7 +13,6 @@ import {map} from 'rxjs/operators';
 export class PoisPageComponent {
   confMAP$: Observable<any>;
   pois$: Observable<any>;
-  resetSelectedPoi$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(private _http: HttpClient) {
