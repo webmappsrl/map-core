@@ -17,6 +17,7 @@ export class LeftBarComponent {
     {route: 'pois', label: 'Pois'},
     {route: 'track-related-pois', label: 'Track related pois'},
     {route: 'overlay', label: 'Overlay'},
+    {route: 'layer', label: 'Layer'},
   ];
 
   constructor(private _router: Router, private _route: ActivatedRoute) {}

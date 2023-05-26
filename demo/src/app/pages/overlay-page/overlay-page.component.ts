@@ -1,5 +1,5 @@
 import {HttpClient} from '@angular/common/http';
-import {Component, OnInit, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
+import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
@@ -18,7 +18,6 @@ export class OverlayPageComponent {
     this._http = value;
   }
   confMAP$: Observable<any>;
-  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(private _http: HttpClient) {
     this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/13/config.json').pipe(
