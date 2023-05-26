@@ -39,6 +39,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowVectorTileLayer: VectorTileLayer;
   private _opacity = 1;
 
+  /**
+   * @description
+   * The input property for the JIDO update time.
+   * It sets the JIDO update time in localStorage and clears the storage if the time has changed.
+   */
   @Input() set jidoUpdateTime(time: number) {
     const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
     if (time != undefined && time != +storedJidoVersion) {
@@ -47,10 +52,20 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  /**
+   * @description
+   * The input property for the data layer URLs.
+   * It sets the data layer URLs used in the map.
+   */
   @Input() set wmMapLayerDataLayerUrls(urls: IDATALAYER) {
     this._dataLayerUrls = urls;
   }
 
+  /**
+   * @description
+   * The input property to enable or disable the map layers.
+   * When set to `true`, it disables the map layers. When set to `false`, it enables the map layers.
+   */
   @Input() set wmMapLayerDisableLayers(disable: boolean) {
     this._disabled = disable;
     if (this._highVectorTileLayer != null) {
@@ -61,6 +76,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  /**
+   * @description
+   * The input property to set the current map layer.
+   * When a new layer is set, it updates the current layer and fits the map view to the bounding box of the layer if available.
+   */
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
@@ -68,13 +88,29 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   }
 
+  /**
+   * @description
+   * The input property to set the opacity of the map layer.
+   * If `opacity` is `true`, it sets the opacity of the layer to 0.3; otherwise, it sets it to 1.
+   * After updating the opacity, it triggers the `_resolutionLayerSwitcher` method.
+   */
   @Input() set wmMapLayerOpacity(opacity: boolean) {
     this._opacity = opacity ? 0.3 : 1;
     this._resolutionLayerSwitcher();
   }
 
+  /**
+   * @description
+   * The output event emitter for selecting a color from the layer.
+   * It emits the selected color value as a string.
+   */
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
+  /**
+   * @description
+   * The output event emitter for selecting a track from the layer.
+   * It emits the ID of the selected track as a number.
+   */
   @Output()
   trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
 
