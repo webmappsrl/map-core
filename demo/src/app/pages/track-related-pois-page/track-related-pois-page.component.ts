@@ -27,26 +27,19 @@ export class TrackRelatedPoisPageComponent {
     );
   }
 
-  selectPoi$ = (poiId: number) => {
+  selectPoiFn(poiId: number) {
     console.log(`selectPoi called with id: ${poiId}`);
     this.track$.subscribe((track: any) => {
       console.log('track data:', track);
-
       const selectedPoi = track?.properties?.related_pois.find(
         (poi: any) => poi.properties.id === poiId,
       );
-
-      if (selectedPoi) {
-        console.log('matching poi found:', selectedPoi);
-        this.selectedPoi$.next(selectedPoi);
-        this.selectedPoiDescription$.next(
-          this._removeHtmlTags(selectedPoi?.properties?.description?.it),
-        );
-      } else {
-        console.log(`No poi found with id: ${poiId}`);
-      }
+      this.selectedPoi$.next(selectedPoi);
+      this.selectedPoiDescription$.next(
+        this._removeHtmlTags(selectedPoi?.properties?.description?.it),
+      );
     });
-  };
+  }
 
   private _removeHtmlTags(html: string): string {
     let div = document.createElement('div');
