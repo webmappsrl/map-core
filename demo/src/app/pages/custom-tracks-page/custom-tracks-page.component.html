@@ -18,10 +18,8 @@
   </p>
 
   <div *ngIf="savedCustomTrack" class="saved-track-container">
-    <h2>Custom Track:</h2>
+    <h3>Custom Track:</h3>
     <p>Distance: {{ savedCustomTrack.properties.distance }} km</p>
-    <p>Ascent: {{ savedCustomTrack.properties.ascent }} m</p>
-    <p>Descent: {{ savedCustomTrack.properties.descent }} m</p>
     <button (click)="clearSavedCustomTrack()">Clear Saved Track</button>
   </div>
 </div>

@@ -4,6 +4,7 @@
     wmMapTrack
     wmMapTrackRelatedPois
     [track]="track$|async"
+    (related-poi-click)="selectPoi$($event)"
   ></wm-map>
 
   <div class="link-container">
@@ -13,5 +14,13 @@
       >Link documentation</a
     >
   </div>
-  <p>An example of how the related pois of a track are displayed on the map</p>
+  <p>
+    An example of how the related pois of a track are displayed on the map, select a poi to view the
+    description
+  </p>
+
+  <div *ngIf="(selectedPoi$ | async) as selectedPoiData">
+    <h3>{{ selectedPoiData?.properties?.name?.it }}</h3>
+    <p>{{ (selectedPoiDescription$ | async) }}</p>
+  </div>
 </div>
