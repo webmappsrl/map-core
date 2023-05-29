@@ -7,44 +7,62 @@
     *ngIf="showMap$|async"
   ></wm-map>
 
-  <div class="link-container">
-    <a
-      href="http://doc.map-core.surge.sh/directives/WmMapCustomTracksDirective.html"
-      target="_blank"
-      >Link documentation</a
-    >
+  <div class="directive-container">
+    <h2>
+      <a href="http://doc.map-core.surge.sh/directives/WmMapTrackDirective.html" target="_blank">
+        WmMapTrackDirective</a
+      >
+    </h2>
   </div>
 
-  <div class="track-color-input">
-    <h3>Track Color</h3>
-    <div class="hex-color">
-      <h4>Hex color</h4>
-      <p>
-        For example copy and paste this
-        <button (click)="copyFromClipBoard('#f542d4')">#f542d4</button>
-      </p>
-      <input type="text" placeholder="Add your hex color" [(ngModel)]="trackColor" />
-      <button (click)="addTrackColor()">Update</button>
-    </div>
+  <div class="inputs-outputs-container">
+    <div class="inputs-container">
+      <h2>Inputs:</h2>
 
-    <div class="select-color">
-      <h4>Select color</h4>
-      <button
-        class="color-button color-orange"
-        (click)="selectColor('#caaf15')"
-        [class.selected]="selectedColor === '#caaf15'"
-      ></button>
-      <button
-        class="color-button color-red"
-        (click)="selectColor('#ff0000')"
-        [class.selected]="selectedColor === '#ff0000'"
-      ></button>
-      <button
-        class="color-button color-green"
-        (click)="selectColor('#42f54b')"
-        [class.selected]="selectedColor === '#00ff00'"
-      ></button>
-      <div></div>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/WmMapTrackDirective.html#wmMapTrackColor"
+          target="_blank"
+        >
+          wmMapTrackColor</a
+        >
+      </h3>
+      <div class="hex-color">
+        <p>
+          For example copy and paste this hex color
+          <button (click)="copyFromClipBoard('#f542d4')">#f542d4</button>
+        </p>
+        <input type="text" placeholder="Add your hex color" [(ngModel)]="trackColor" />
+        <button (click)="addTrackColor()">Update</button>
+      </div>
+      <div class="select-color">
+        <p>Select color</p>
+        <button
+          class="color-button color-orange"
+          (click)="selectColor('#caaf15')"
+          [class.selected]="selectedColor === '#caaf15'"
+        ></button>
+        <button
+          class="color-button color-red"
+          (click)="selectColor('#ff0000')"
+          [class.selected]="selectedColor === '#ff0000'"
+        ></button>
+        <button
+          class="color-button color-green"
+          (click)="selectColor('#42f54b')"
+          [class.selected]="selectedColor === '#00ff00'"
+        ></button>
+        <div></div>
+      </div>
+
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/WmMapTrackDirective.html#trackElevationChartElements"
+          target="_blank"
+        >
+          trackElevationChartElements</a
+        >
+      </h3>
     </div>
   </div>
 </div>
