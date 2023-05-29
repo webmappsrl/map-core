@@ -11,7 +11,9 @@ import {ActivatedRoute, Router} from '@angular/router';
 export class LeftBarComponent {
   currentClick = '';
   listOfButtons = [
+    {label: 'Component'},
     {route: 'map', label: 'Map'},
+    {label: 'Directives'},
     {route: 'track', label: 'Track'},
     {route: 'custom-tracks', label: 'Custom tracks'},
     {route: 'pois', label: 'Pois'},

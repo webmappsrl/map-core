@@ -14,7 +14,6 @@ import {IDATALAYER} from 'src/types/layer';
 export class LayerPageComponent {
   confMAP$: Observable<any>;
   dataLayerUrls$: Observable<IDATALAYER>;
-  enableOverLay$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   constructor(private _http: HttpClient) {
     this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/13/config.json').pipe(
@@ -27,9 +26,6 @@ export class LayerPageComponent {
     this.dataLayerUrls$ = of(mockGeohubId).pipe(
       filter(g => g != null),
       map(geohubId => {
-        if (geohubId == 13) {
-          this.enableOverLay$.next(true);
-        }
         return {
           low: `https://jidotile.webmapp.it/?x={x}&y={y}&z={z}&index=geohub_app_low_${geohubId}`,
           high: `https://jidotile.webmapp.it/?x={x}&y={y}&z={z}&index=geohub_app_high_${geohubId}`,

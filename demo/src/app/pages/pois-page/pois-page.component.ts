@@ -17,10 +17,8 @@ export class PoisPageComponent {
 
   constructor(private _http: HttpClient) {
     this.pois$ = this._http.get('https://geohub.webmapp.it/api/v1/app/17/pois.geojson');
-    this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/17/config.json').pipe(
-      map((conf: any) => {
-        return conf.MAP;
-      }),
-    );
+    this.confMAP$ = this._http
+      .get('https://geohub.webmapp.it/api/app/webmapp/17/config.json')
+      .pipe(map((conf: any) => conf.MAP));
   }
 }

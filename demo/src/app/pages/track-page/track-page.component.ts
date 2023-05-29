@@ -22,7 +22,7 @@ export class TrackPageComponent {
     this.track$ = this._http.get('https://geohub.webmapp.it/api/ec/track/30996');
   }
 
-  addTrackColor() {
+  addTrackColor(): void {
     this.showMap$.next(false);
     this.wmMapTrackColor$.next(this.trackColor);
     setTimeout(() => {

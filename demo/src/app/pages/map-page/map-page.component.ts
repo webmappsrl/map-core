@@ -15,7 +15,7 @@ export class MapPageComponent {
   showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   wmMapPadding$: BehaviorSubject<number[]> = new BehaviorSubject<number[]>([0, 0, 0, 0]);
 
-  addPaddingValue() {
+  addPaddingValue(): void {
     this.showMap$.next(false);
     this.wmMapPadding$.next(this.paddingValue);
     setTimeout(() => {

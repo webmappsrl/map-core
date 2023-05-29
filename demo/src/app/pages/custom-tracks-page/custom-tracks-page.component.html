@@ -1,9 +1,10 @@
 <div class="wm-map-container">
   <wm-map
     [wmMapConf]="confMAP$|async"
+    wmMapCustomTracks
     [wmMapCustomTrackDrawTrack]="true"
     [wmMapCustomTrackDrawTrackHost]="'https://graphhopper.webmapp.it/'"
-    (currentCustomTrack)="setCurrentCustomTrack($event)"
+    (currentCustomTrack)="saveCurrentCustomTrack($event)"
   ></wm-map>
   <div class="link-container">
     <a
@@ -16,10 +17,4 @@
     Zoom in and choose where to create your track by clicking on the map. After creating a track
     view the console log for details
   </p>
-
-  <div *ngIf="savedCustomTrack" class="saved-track-container">
-    <h3>Custom Track:</h3>
-    <p>Distance: {{ savedCustomTrack.properties.distance }} km</p>
-    <button (click)="clearSavedCustomTrack()">Clear Saved Track</button>
-  </div>
 </div>

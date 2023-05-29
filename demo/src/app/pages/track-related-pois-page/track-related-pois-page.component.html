@@ -4,7 +4,8 @@
     wmMapTrack
     wmMapTrackRelatedPois
     [track]="track$|async"
-    (related-poi-click)="selectPoiFn($event)"
+    (related-poi-click)="relatedPoiClick($event)"
+    (related-poi)="relatedPoi($event)"
   ></wm-map>
 
   <div class="link-container">
@@ -19,8 +20,22 @@
     description
   </p>
 
-  <div *ngIf="(selectedPoi$ | async) as selectedPoiData">
-    <h3>{{ selectedPoiData?.properties?.name?.it }}</h3>
-    <p>{{ (selectedPoiDescription$ | async) }}</p>
-  </div>
+  <h1>outputs:</h1>
+  <h2>
+    <a
+      href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi-click"
+      target="_blank"
+    >
+      related-poi-click</a
+    >: {{poiId$|async}}
+  </h2>
+  <h2>
+    <a
+      href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi-click"
+      target="_blank"
+    >
+      related-poi</a
+    >:
+  </h2>
+  <pre> {{relatedPoi$|async|json}}</pre>
 </div>

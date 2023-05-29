@@ -9,6 +9,4 @@ import {MAP} from '../mocks/conf';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
-export class AppComponent {
-  title = 'demo';
-}
+export class AppComponent {}

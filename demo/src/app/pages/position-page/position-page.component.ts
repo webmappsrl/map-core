@@ -26,7 +26,7 @@ export class PositionPageComponent {
     this._webWatcher();
   }
 
-  addPositionCenterValue() {
+  addPositionCenterValue(): void {
     this.showMap$.next(false);
     this.wmMapPositionCenter$.next(this.positionValue);
     setTimeout(() => {
