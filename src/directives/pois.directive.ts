@@ -9,32 +9,26 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import Popup from 'ol-ext/overlay/popup';
-import Feature from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
-import {FitOptions} from 'ol/View';
 import {createEmpty, extend} from 'ol/extent';
+import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
-import Icon from 'ol/style/Icon';
-import Style from 'ol/style/Style';
-import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
-
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
+import Icon from 'ol/style/Icon';
+import Style from 'ol/style/Style';
+import {FitOptions} from 'ol/View';
 import {BehaviorSubject} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {
-  clearLayer,
-  createCluster,
-  createHull,
-  createLayer,
-  intersectionBetweenArrays,
-} from '../../src/utils';
+import {clearLayer, createCluster, createHull, createLayer} from '../../src/utils';
+import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
+
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
@@ -380,6 +374,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     });
   }
 
+  private _isArrayContained(needle: any[], haystack: any[]): boolean {
+    if (needle.length > haystack.length) return false;
+    return needle.every(element => haystack.includes(element));
+  }
+
   /**
    * @description
    * This code is a private method called _renderPois()
@@ -544,9 +543,5 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._poisClusterLayer.changed();
       this._cdr.detectChanges();
     }
-  }
-  private _isArrayContained(needle: any[], haystack: any[]): boolean {
-    if (needle.length > haystack.length) return false;
-    return needle.every(element => haystack.includes(element));
   }
 }
