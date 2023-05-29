@@ -16,4 +16,12 @@
     Zoom in and choose where to create your track by clicking on the map. After creating a track
     view the console log for details
   </p>
+
+  <div *ngIf="savedCustomTrack" class="saved-track-container">
+    <h2>Custom Track:</h2>
+    <p>Distance: {{ savedCustomTrack.properties.distance }} km</p>
+    <p>Ascent: {{ savedCustomTrack.properties.ascent }} m</p>
+    <p>Descent: {{ savedCustomTrack.properties.descent }} m</p>
+    <button (click)="clearSavedCustomTrack()">Clear Saved Track</button>
+  </div>
 </div>
