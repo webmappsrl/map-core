@@ -34,10 +34,4 @@ export class TrackRelatedPoisPageComponent {
     console.log(`related-poi: ${relatedPoi}`);
     this.relatedPoi$.next(relatedPoi);
   }
-
-  private _removeHtmlTags(html: string): string {
-    let div = document.createElement('div');
-    div.innerHTML = html;
-    return div.innerText;
-  }
 }

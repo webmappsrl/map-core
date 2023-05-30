@@ -1,6 +1,6 @@
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
 import {MAP} from 'demo/src/mocks/conf';
-import {of} from 'rxjs';
+import {BehaviorSubject, Observable, of} from 'rxjs';
 
 @Component({
   selector: 'custom-tracks-page',
@@ -10,10 +10,12 @@ import {of} from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomTracksPageComponent {
-  //TODO: add ability to save track created
   confMAP$ = of(MAP);
+  currentTrack$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  saveCurrentCustomTrack(track: any): void {
+  currentCustomTrack(track: any): void {
+    console.log(`custom-track: ${track}`);
     localStorage.setItem('wm-saved-tracks', JSON.stringify([track]));
+    this.currentTrack$.next(track);
   }
 }

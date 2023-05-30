@@ -3,7 +3,23 @@ custom-tracks-page {
     height: 300px;
     margin: 10px;
   }
-  .link-container {
+
+  .directive-container {
     margin-top: 10px;
+  }
+
+  .inputs-outputs-container {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .inputs-container {
+    flex: 1;
+    padding-right: 10px;
+  }
+
+  .outputs-container {
+    flex: 1;
+    padding-left: 10px;
   }
 }
