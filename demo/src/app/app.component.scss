@@ -8,10 +8,6 @@ app-root {
     border: 1px solid blue;
   }
 
-  a:hover {
-    color: blue;
-  }
-
   input:hover {
     color: blue;
   }
@@ -24,5 +20,9 @@ app-root {
   button:hover {
     background-color: blue;
     color: white;
+  }
+
+  a {
+    color: blue;
   }
 }
