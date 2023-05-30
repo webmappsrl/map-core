@@ -1,6 +1,4 @@
 import {ChangeDetectionStrategy, Component, ViewEncapsulation} from '@angular/core';
-import {of} from 'rxjs';
-import {MAP} from '../mocks/conf';
 
 @Component({
   selector: 'app-root',

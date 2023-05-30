@@ -1,6 +1,6 @@
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
 import {MAP} from 'demo/src/mocks/conf';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {BehaviorSubject, of} from 'rxjs';
 
 @Component({
   selector: 'custom-tracks-page',

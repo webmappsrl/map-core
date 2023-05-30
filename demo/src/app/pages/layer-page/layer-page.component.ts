@@ -1,6 +1,6 @@
 import {HttpClient} from '@angular/common/http';
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {filter, map} from 'rxjs/operators';
 import {IDATALAYER} from 'src/types/layer';
 

@@ -1,6 +1,6 @@
 import {HttpClient} from '@angular/common/http';
-import {Component, OnInit, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
@@ -12,12 +12,9 @@ import {map} from 'rxjs/operators';
 })
 export class TrackRelatedPoisPageComponent {
   confMAP$: Observable<any>;
-  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   track$: Observable<any>;
   poiId$: BehaviorSubject<number> = new BehaviorSubject<number>(null);
   relatedPoi$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-  selectedPoi$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-  selectedPoiDescription$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   constructor(private _http: HttpClient) {
     this.track$ = this._http.get('https://geohub.webmapp.it/api/ec/track/1544');
