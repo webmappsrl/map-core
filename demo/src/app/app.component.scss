@@ -7,4 +7,22 @@ app-root {
     bottom: 0;
     border: 1px solid blue;
   }
+
+  a:hover {
+    color: blue;
+  }
+
+  input:hover {
+    color: blue;
+  }
+
+  button {
+    margin: 5px;
+    transition-duration: 0.3s;
+  }
+
+  button:hover {
+    background-color: blue;
+    color: white;
+  }
 }

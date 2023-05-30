@@ -6,23 +6,6 @@ map-page {
   .directive-container {
     margin-top: 10px;
   }
-  a:hover {
-    color: blue;
-  }
-
-  input:hover {
-    color: blue;
-  }
-
-  button {
-    margin: 5px;
-    transition-duration: 0.3s;
-  }
-
-  button:hover {
-    background-color: blue;
-    color: white;
-  }
 
   .inputs-outputs-container {
     display: flex;
