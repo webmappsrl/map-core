@@ -1,6 +1,6 @@
 import {HttpClient} from '@angular/common/http';
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
@@ -13,7 +13,6 @@ import {map} from 'rxjs/operators';
 export class PoisPageComponent {
   confMAP$: Observable<any>;
   pois$: Observable<any>;
-  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(private _http: HttpClient) {
     this.pois$ = this._http.get('https://geohub.webmapp.it/api/v1/app/17/pois.geojson');

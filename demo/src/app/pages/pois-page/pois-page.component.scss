@@ -6,4 +6,19 @@ pois-page {
   .link-container {
     margin-top: 10px;
   }
+
+  .inputs-outputs-container {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .inputs-container {
+    flex: 1;
+    padding-right: 10px;
+  }
+
+  .outputs-container {
+    flex: 1;
+    padding-left: 10px;
+  }
 }
