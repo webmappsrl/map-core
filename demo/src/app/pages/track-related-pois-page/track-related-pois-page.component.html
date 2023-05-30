@@ -8,34 +8,80 @@
     (related-poi)="relatedPoi($event)"
   ></wm-map>
 
-  <div class="link-container">
-    <a
-      href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html"
-      target="_blank"
-      >Link documentation</a
-    >
+  <div class="directive-container">
+    <h2>
+      <a
+        href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html"
+        target="_blank"
+      >
+        WmMapTrackRelatedPoisDirective</a
+      >
+    </h2>
+    <p>
+      An example of how the related pois of a track are displayed on the map, select a poi to view
+      the description
+    </p>
   </div>
-  <p>
-    An example of how the related pois of a track are displayed on the map, select a poi to view the
-    description
-  </p>
 
-  <h1>outputs:</h1>
-  <h2>
-    <a
-      href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi-click"
-      target="_blank"
-    >
-      related-poi-click</a
-    >: {{poiId$|async}}
-  </h2>
-  <h2>
-    <a
-      href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi-click"
-      target="_blank"
-    >
-      related-poi</a
-    >:
-  </h2>
-  <pre> {{relatedPoi$|async|json}}</pre>
+  <div class="inputs-outputs-container">
+    <div class="inputs-container">
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/WmMapPoisDirective.html#next"
+          target="_blank"
+        >
+          next</a
+        >
+      </h3>
+
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/WmMapPoisDirective.html#
+          poi"
+          target="_blank"
+        >
+          poi</a
+        >
+      </h3>
+
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/WmMapPoisDirective.html#
+          wmMapPositioncurrentLocation"
+          target="_blank"
+        >
+          wmMapPositioncurrentLocation</a
+        >
+      </h3>
+    </div>
+
+    <div class="outputs-container">
+      <h2>Outputs:</h2>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#wmMapTrackRelatedPoisNearestPoiEvt"
+          target="_blank"
+        >
+          wmMapTrackRelatedPoisNearestPoiEvt</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi-click"
+          target="_blank"
+        >
+          related-poi-click</a
+        >: {{poiId$|async}}
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapTrackRelatedPoisDirective.html#related-poi"
+          target="_blank"
+        >
+          related-poi</a
+        >:
+      </h3>
+      <pre> {{relatedPoi$|async|json}}</pre>
+    </div>
+  </div>
 </div>
