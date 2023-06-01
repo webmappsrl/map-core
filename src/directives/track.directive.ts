@@ -161,7 +161,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this.trackElevationChartElements?.track,
       );
     }
-    if (this.mapCmp.map != null && changes.track != null) {
+    if (changes.wmMapTrackColor != null && changes.wmMapTrackColor.firstChange === false) {
+      this._trackLayer.setStyle(getLineStyle(this.wmMapTrackColor));
+      this._trackLayer.changed();
     }
   }
 

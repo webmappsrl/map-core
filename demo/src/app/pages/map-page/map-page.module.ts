@@ -5,9 +5,10 @@ import {MapPageRoutingModule} from './map-page-routing.module';
 import {MapPageComponent} from './map-page.component';
 import {WmMapModule} from 'src/map-core.module';
 import {FormsModule} from '@angular/forms';
+import {IonicModule} from '@ionic/angular';
 
 @NgModule({
   declarations: [MapPageComponent],
-  imports: [CommonModule, MapPageRoutingModule, WmMapModule, FormsModule],
+  imports: [CommonModule, MapPageRoutingModule, WmMapModule, FormsModule, IonicModule],
 })
 export class MapPageModule {}

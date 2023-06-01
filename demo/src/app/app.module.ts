@@ -5,10 +5,17 @@ import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
 import {WmMapModule} from 'src/map-core.module';
 import {LeftBarModule} from './left-bar/left-bar.module';
+import {IonicModule} from '@ionic/angular';
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [BrowserModule, AppRoutingModule, WmMapModule, LeftBarModule],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    WmMapModule,
+    LeftBarModule,
+    IonicModule.forRoot({mode: 'md'}),
+  ],
   providers: [],
   bootstrap: [AppComponent],
 })

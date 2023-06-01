@@ -24,11 +24,9 @@ export class TrackRelatedPoisPageComponent {
   }
 
   relatedPoiClick(poiId: number): void {
-    console.log(`related-poi-click: ${poiId}`);
     this.poiId$.next(poiId);
   }
   relatedPoi(relatedPoi: any): void {
-    console.log(`related-poi: ${relatedPoi}`);
     this.relatedPoi$.next(relatedPoi);
   }
 }

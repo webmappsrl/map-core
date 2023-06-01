@@ -13,7 +13,6 @@ import {HttpClient} from '@angular/common/http';
 export class TrackPageComponent {
   confMAP$ = of(MAP);
   selectedColor: string = '#caaf15';
-  showMap$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   track$: Observable<any>;
   trackColor: string;
   wmMapTrackColor$: BehaviorSubject<string> = new BehaviorSubject<string>('#caaf15');
@@ -23,24 +22,16 @@ export class TrackPageComponent {
   }
 
   addTrackColor(): void {
-    this.showMap$.next(false);
     this.wmMapTrackColor$.next(this.trackColor);
-    setTimeout(() => {
-      this.showMap$.next(true);
-    }, 300);
-  }
-
-  selectColor(color: string): void {
-    this.showMap$.next(false);
-    this.selectedColor = color;
-    this.wmMapTrackColor$.next(this.selectedColor);
-    setTimeout(() => {
-      this.showMap$.next(true);
-    }, 300);
   }
 
   copyFromClipBoard(color: string): void {
     navigator.clipboard.writeText(color);
+  }
+
+  selectColor(color: string): void {
+    this.selectedColor = color;
+    this.wmMapTrackColor$.next(this.selectedColor);
   }
 
   //TODO: add input for trackElevationChartElements

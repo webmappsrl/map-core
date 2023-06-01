@@ -14,7 +14,6 @@ export class CustomTracksPageComponent {
   currentTrack$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   currentCustomTrack(track: any): void {
-    console.log(`custom-track: ${track}`);
     localStorage.setItem('wm-saved-tracks', JSON.stringify([track]));
     this.currentTrack$.next(track);
   }
