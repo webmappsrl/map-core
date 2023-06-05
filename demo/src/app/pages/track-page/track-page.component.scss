@@ -1,0 +1,35 @@
+track-page {
+  .wm-map-container {
+    height: 300px;
+    margin: 10px;
+  }
+
+  .directive-container {
+    margin-top: 10px;
+  }
+
+  .color-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .color-button.selected {
+    border: 2px solid #000;
+  }
+
+  .color-button.color-orange {
+    background-color: #caaf15;
+  }
+
+  .color-button.color-red {
+    background-color: #ff0000;
+  }
+
+  .color-button.color-green {
+    background-color: #42f54b;
+  }
+}

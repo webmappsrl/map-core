@@ -1,4 +1,3 @@
-import {Select} from 'ol/interaction';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -43,12 +42,12 @@ export class WmMapControls implements OnChanges {
   @Input() conf: ICONTROLS;
   @Input() tileLayers: TileLayer<any>[];
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
-
   @Output('wmMapControlOverlay') overlayEVT: EventEmitter<string | null> = new EventEmitter<
     string | null
   >(null);
-  currentTileLayerIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(1);
+
   currentOverlayIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
+  currentTileLayerIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   showButton$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   toggle$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
@@ -64,6 +63,16 @@ export class WmMapControls implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.tileLayers.currentValue != null && changes.tileLayers.currentValue.length > 1) {
       this.showButton$.next(true);
+    }
+  }
+
+  selectOverlay(idx, overlay): void {
+    if (idx === this.currentOverlayIdx$.value) {
+      this.currentOverlayIdx$.next(-1);
+      this.overlayEVT.emit(null);
+    } else {
+      this.currentOverlayIdx$.next(idx);
+      this.overlayEVT.emit(overlay.url);
     }
   }
 
@@ -90,15 +99,5 @@ export class WmMapControls implements OnChanges {
       tile.setVisible(visibility);
     });
     this.toggle$.next(!this.toggle$.value);
-  }
-
-  selectOverlay(idx, overlay): void {
-    if (idx === this.currentOverlayIdx$.value) {
-      this.currentOverlayIdx$.next(-1);
-      this.overlayEVT.emit(null);
-    } else {
-      this.currentOverlayIdx$.next(idx);
-      this.overlayEVT.emit(overlay.url);
-    }
   }
 }

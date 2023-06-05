@@ -1,0 +1,25 @@
+position-page {
+  .wm-map-container {
+    height: 300px;
+    margin: 10px;
+  }
+
+  .directive-container {
+    margin-top: 10px;
+  }
+
+  .inputs-outputs-container {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .inputs-container {
+    flex: 1;
+    padding-right: 10px;
+  }
+
+  .outputs-container {
+    flex: 1;
+    padding-left: 10px;
+  }
+}

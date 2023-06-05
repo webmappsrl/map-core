@@ -1,0 +1,13 @@
+<div class="sidebar">
+  <h1>Map Core</h1>
+  <ng-container *ngFor="let button of listOfButtons">
+    <h3 *ngIf="button.route==null">{{button.label}}</h3>
+    <button
+      *ngIf="button.route!=null"
+      [ngClass]="(currentClick === button.route) ? 'selected': ''"
+      (click)="routeByClick(button.route)"
+    >
+      {{button.label}}
+    </button>
+  </ng-container>
+</div>

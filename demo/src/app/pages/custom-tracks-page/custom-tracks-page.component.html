@@ -1,0 +1,89 @@
+<div class="wm-map-container">
+  <wm-map
+    [wmMapConf]="confMAP$|async"
+    wmMapCustomTracks
+    [wmMapCustomTrackDrawTrack]="true"
+    [wmMapCustomTrackDrawTrackHost]="'https://graphhopper.webmapp.it/'"
+    (currentCustomTrack)="currentCustomTrack($event)"
+  ></wm-map>
+
+  <div class="directive-container">
+    <h2>
+      <a
+        href="http://doc.map-core.surge.sh/directives/WmMapCustomTracksDirective.html"
+        target="_blank"
+      >
+        WmMapCustomTracksDirective</a
+      >
+    </h2>
+    <h2>
+      <a
+        href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html"
+        target="_blank"
+      >
+        WmMapCustomTrackDrawTrackDirective</a
+      >
+    </h2>
+    <p>Zoom in and choose where to create your track by clicking on the map.</p>
+  </div>
+
+  <div class="inputs-outputs-container">
+    <div class="inputs-container">
+      <h2>Inputs:</h2>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#customTracks"
+          target="_blank"
+        >
+          customTracks</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#reloadCustomTracks"
+          target="_blank"
+        >
+          reloadCustomTracks</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#trackElevationChartElements"
+          target="_blank"
+        >
+          trackElevationChartElements</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#trackElevationChartElements"
+          target="_blank"
+        >
+          trackElevationChartElements</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#
+          wmMapCustomTrackDrawTrackHost"
+          target="_blank"
+        >
+          wmMapCustomTrackDrawTrackHost</a
+        >
+      </h3>
+    </div>
+
+    <div class="outputs-container">
+      <h2>Outputs:</h2>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/directives/wmMapCustomTrackDrawTrackDirective.html#currentCustomTrack"
+          target="_blank"
+        >
+          currentCustomTrack</a
+        >
+      </h3>
+      <pre> {{currentTrack$|async|json}}</pre>
+    </div>
+  </div>
+</div>

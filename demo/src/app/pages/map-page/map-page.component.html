@@ -1,0 +1,56 @@
+<div class="wm-map-container">
+  <wm-map [wmMapConf]="confMAP$|async" [wmMapPadding]="wmMapPadding$|async"></wm-map>
+
+  <div class="directive-container">
+    <h2>
+      <a href="http://doc.map-core.surge.sh/components/WmMapComponent.html" target="_blank">
+        WmMapComponent</a
+      >
+    </h2>
+  </div>
+  <div class="inputs-outputs-container">
+    <div class="inputs-container">
+      <h2>Inputs:</h2>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/components/WmMapComponent.html#wmMapPadding"
+          target="_blank"
+        >
+          wmMapPadding</a
+        >
+      </h3>
+      <input type="number" [(ngModel)]="paddingValue[0]" />
+      <input type="number" [(ngModel)]="paddingValue[1]" />
+      <input type="number" [(ngModel)]="paddingValue[2]" />
+      <input type="number" [(ngModel)]="paddingValue[3]" />
+      <button (click)="addPaddingValue()">Update</button>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/components/WmMapComponent.html#wmMapTarget"
+          target="_blank"
+        >
+          wmMapTarget</a
+        >
+      </h3>
+    </div>
+    <div class="outputs-container">
+      <h2>Outputs:</h2>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/components/WmMapComponent.html#clickEVT$"
+          target="_blank"
+        >
+          clickEVT$</a
+        >
+      </h3>
+      <h3>
+        <a
+          href="http://doc.map-core.surge.sh/components/WmMapComponent.html#wmMapRotateEVT$"
+          target="_blank"
+        >
+          wmMapRotateEVT$</a
+        >
+      </h3>
+    </div>
+  </div>
+</div>

@@ -1,6 +1,4 @@
 import {ChangeDetectionStrategy, Component, ViewEncapsulation} from '@angular/core';
-import {of} from 'rxjs';
-import {MAP} from '../mocks/conf';
 
 @Component({
   selector: 'app-root',
@@ -9,7 +7,4 @@ import {MAP} from '../mocks/conf';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
-export class AppComponent {
-  confMAP$ = of(MAP);
-  title = 'demo';
-}
+export class AppComponent {}

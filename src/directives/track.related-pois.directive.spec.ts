@@ -1,6 +1,6 @@
 import {Point, SimpleGeometry} from 'ol/geom';
 import {Component, SimpleChange} from '@angular/core';
-import {BehaviorSubject, Subscription, of} from 'rxjs';
+import {BehaviorSubject, Subscription} from 'rxjs';
 
 import {WmMapTrackRelatedPoisDirective} from '.';
 import {WmMapComponent, WmMapControls} from '../components';
