@@ -45,7 +45,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       color: 'rgba(245, 159, 26, 0)',
     }),
   });
-
   private _url$: BehaviorSubject<string | null> = new BehaviorSubject<string>(null);
 
   @Input('wmMapFeatureCollectionPrimaryColor') set color(color: string) {
@@ -63,7 +62,15 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this._url$.next(url);
   }
 
-  @Input('wmMapFeatureTranslationCallback') translationCallback: (any) => string = value => value;
+  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    for (const val in value) {
+      if (value[val]) {
+        return value[val];
+      }
+    }
+  };
   @Output('wmMapFeatureCollectionLayerSelected')
   wmMapFeatureCollectionLayerSelected: EventEmitter<number> = new EventEmitter<number>();
 

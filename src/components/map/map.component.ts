@@ -56,7 +56,15 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   }
 
   @Input('wmMapFilters') filters: any;
-  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
+  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    for (const val in value) {
+      if (value[val]) {
+        return value[val];
+      }
+    }
+  };
   @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
@@ -79,6 +87,16 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     private _renderer: Renderer2,
     private _el: ElementRef,
   ) {}
+
+  @Input() initBaseSource(tile: string): XYZ {
+    if (tile === '') {
+      return null;
+    }
+    return new XYZ({
+      url: tile,
+      cacheSize: 50000,
+    });
+  }
 
   /**
    * @description
