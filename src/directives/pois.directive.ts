@@ -48,6 +48,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapPoisFilters: any[] = [];
+  @Input() wmMapInputTyped: string;
   @Input() wmMapPoisPoi: number | 'reset';
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
@@ -94,7 +95,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     const filtersCondition =
       changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
-    if (this.mapCmp.map != null && (filtersCondition || changes.wmMapPoisPois != null)) {
+    if (
+      this.mapCmp.map != null &&
+      (filtersCondition || changes.wmMapPoisPois != null || changes.wmMapInputTyped != null)
+    ) {
       this._updatePois();
     }
   }
@@ -529,11 +533,26 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       const clusterSource: Cluster = this._poisClusterLayer.getSource();
       const featureSource = clusterSource.getSource();
       featureSource.clear();
-      if (this.wmMapPoisFilters.length > 0) {
-        const featuresToAdd = this._olFeatures.filter(f => {
-          const p = f.getProperties().properties;
-          return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
-        });
+      if (this.wmMapInputTyped != '' || this.wmMapPoisFilters.length > 0) {
+        const featuresToAdd = this._olFeatures
+          .filter(f => {
+            if (this.wmMapInputTyped != null && this.wmMapInputTyped != '') {
+              const p = f.getProperties().properties;
+              return (
+                JSON.stringify(p.name)
+                  .toLowerCase()
+                  .indexOf(this.wmMapInputTyped.toLocaleLowerCase()) >= 0
+              );
+            }
+            return true;
+          })
+          .filter(f => {
+            if (this.wmMapPoisFilters.length > 0) {
+              const p = f.getProperties().properties;
+              return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
+            }
+            return true;
+          });
         featureSource.addFeatures(featuresToAdd);
       } else {
         featureSource.addFeatures(this._olFeatures);

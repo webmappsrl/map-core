@@ -60,7 +60,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this._lowVectorTileLayer.setVisible(!disable);
     }
   }
-
+  @Input() wmMapInputTyped: string;
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
