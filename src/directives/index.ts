@@ -9,3 +9,4 @@ export * from './track.directive';
 export * from './layer.progess-bar.directive';
 export * from './overlay.directive';
 export * from './position.directive';
+export * from './feature-collection.directive';

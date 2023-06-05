@@ -199,6 +199,24 @@ export enum EGeojsonGeometryTypes {
  * @export
  * @interface IMAP
  */
+export interface iLocalString {
+  en?: string;
+  it?: string;
+}
+export interface ICONTROLSTITLE {
+  label: iLocalString;
+  type: 'title';
+}
+export interface ICONTROLSBUTTON {
+  label: iLocalString;
+  type: 'button';
+  icon: string;
+  url: string;
+  id: number;
+}
+export interface ICONTROLS {
+  [key: string]: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+}
 export interface IMAP {
   /**
    * rappresent the bounding box of the map
@@ -220,6 +238,7 @@ export interface IMAP {
   start_end_icons_min_zoom: number;
   start_end_icons_show: boolean;
   tiles: {[name: string]: string}[];
+  controls: ICONTROLS;
 }
 export interface IPOI {
   apppoisApiLayer: boolean;

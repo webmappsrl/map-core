@@ -13,3 +13,4 @@ export const scaleUnits = 'metric';
 export const scaleMinWidth = 50;
 export const SWITCH_RESOLUTION_ZOOM_LEVEL = 10;
 export const DEF_MAP_ROTATION_DURATION: number = 400;
+export const FEATURE_COLLECTION_DISABLE_ZOOM_TRESHOLD = 13;

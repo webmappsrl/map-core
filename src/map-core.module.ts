@@ -10,6 +10,7 @@ import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-
 import {
   wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
+  WmMapFeatureCollectionDirective,
   WmMapLayerDirective,
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
@@ -19,6 +20,7 @@ import {
   wmMapTrackHighLightDirective,
   wmMapTrackRelatedPoisDirective,
 } from './directives';
+import {WmMapControlsModule} from './components/controls/controls.module';
 
 const directives = [
   WmMapTrackDirective,
@@ -31,12 +33,13 @@ const directives = [
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
   WmMapPositionDirective,
+  WmMapFeatureCollectionDirective,
 ];
-const components = [WmMapComponent, WmMapControls, WmMapPopover, WmMapSaveCustomTrackControls];
+const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
 @NgModule({
   declarations: [...components, ...directives],
-  imports: [CommonModule, IonicModule],
+  imports: [CommonModule, IonicModule, WmMapControlsModule],
   exports: [...components, ...directives],
 })
 export class WmMapModule {}

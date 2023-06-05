@@ -1,12 +1,15 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
+  HostBinding,
   Input,
   OnChanges,
   Output,
+  Renderer2,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation,
@@ -47,17 +50,19 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _debounceFitTimer = null;
   private _view: View;
-  private _wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
   @Input() set wmMapConf(conf: IMAP) {
-    this._wmMapConf$.next(conf);
+    this.wmMapConf$.next(conf);
   }
 
+  @Input('wmMapFilters') filters: any;
+  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input() wmMapPadding: number[] | null;
   @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
+  @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
@@ -67,8 +72,13 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
   mapDegrees: number;
   tileLayers: TileLayer<XYZ>[] = [];
+  wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  constructor() {}
+  constructor(
+    private _cdr: ChangeDetectorRef,
+    private _renderer: Renderer2,
+    private _el: ElementRef,
+  ) {}
 
   /**
    * @description
@@ -108,7 +118,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
    * @returns void
    */
   ngAfterViewInit(): void {
-    this._wmMapConf$
+    this.wmMapConf$
       .pipe(
         take(3),
         filter(f => f != null),
@@ -138,6 +148,17 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         maxZoom: this._view.getZoom(),
       });
     }
+    if (changes.filters) {
+      if (this.map != null) {
+        setTimeout(() => {
+          this.map?.changed();
+          this.map.renderSync();
+          this.map.render();
+          this.map.updateSize();
+          this.map.dispatchEvent('over');
+        }, 300);
+      }
+    }
   }
 
   /**
@@ -161,6 +182,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       duration: 0,
       rotation: 0,
     });
+  }
+
+  setOverlay(url: string | null) {
+    this.wmMapOverlayEVT$.emit(url);
   }
 
   /**
@@ -204,8 +229,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         maxZoom: conf.defZoom,
       });
     }
-
-    this.tileLayers = buildTileLayers(conf.tiles);
+    if (conf.controls.tiles) {
+      const confTiles = conf.controls.tiles;
+      this.tileLayers = buildTileLayers(confTiles);
+    }
     this.map = new Map({
       view: this._view,
       controls: defaultControls({
@@ -250,9 +277,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   /**
    * @description
-    * Updates the rotation degrees of the map and emits the new value through the `wmMapRotateEVT$` observable.
-    */
-  private _updateDegrees(): void{
+   * Updates the rotation degrees of the map and emits the new value through the `wmMapRotateEVT$` observable.
+   */
+  private _updateDegrees(): void {
     const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
     if (degree != this.mapDegrees) {
       this.wmMapRotateEVT$.emit(degree);

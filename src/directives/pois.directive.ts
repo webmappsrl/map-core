@@ -9,32 +9,26 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import Popup from 'ol-ext/overlay/popup';
-import Feature from 'ol/Feature';
-import MapBrowserEvent from 'ol/MapBrowserEvent';
-import {FitOptions} from 'ol/View';
 import {createEmpty, extend} from 'ol/extent';
+import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
+import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
-import Icon from 'ol/style/Icon';
-import Style from 'ol/style/Style';
-import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
-
 import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
+import Icon from 'ol/style/Icon';
+import Style from 'ol/style/Style';
+import {FitOptions} from 'ol/View';
 import {BehaviorSubject} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {
-  clearLayer,
-  createCluster,
-  createHull,
-  createLayer,
-  intersectionBetweenArrays,
-} from '../../src/utils';
+import {clearLayer, createCluster, createHull, createLayer} from '../../src/utils';
+import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
+
 const PADDING = [80, 80, 80, 80];
 @Directive({
   selector: '[wmMapPois]',
@@ -54,6 +48,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapPoisFilters: any[] = [];
+  @Input() wmMapInputTyped: string;
   @Input() wmMapPoisPoi: number | 'reset';
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
@@ -100,7 +95,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     const filtersCondition =
       changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
-    if (this.mapCmp.map != null && (filtersCondition || changes.wmMapPoisPois != null)) {
+    if (
+      this.mapCmp.map != null &&
+      (filtersCondition || changes.wmMapPoisPois != null || changes.wmMapInputTyped != null)
+    ) {
       this._updatePois();
     }
   }
@@ -380,6 +378,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     });
   }
 
+  private _isArrayContained(needle: any[], haystack: any[]): boolean {
+    if (needle.length > haystack.length) return false;
+    return needle.every(element => haystack.includes(element));
+  }
+
   /**
    * @description
    * This code is a private method called _renderPois()
@@ -530,15 +533,26 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       const clusterSource: Cluster = this._poisClusterLayer.getSource();
       const featureSource = clusterSource.getSource();
       featureSource.clear();
-      if (this.wmMapPoisFilters.length > 0) {
-        const featuresToAdd = this._olFeatures.filter(f => {
-          const p = f.getProperties().properties;
-          const intersection = intersectionBetweenArrays(
-            p.taxonomyIdentifiers,
-            this.wmMapPoisFilters,
-          );
-          return intersection.length > 0;
-        });
+      if (this.wmMapInputTyped != '' || this.wmMapPoisFilters.length > 0) {
+        const featuresToAdd = this._olFeatures
+          .filter(f => {
+            if (this.wmMapInputTyped != null && this.wmMapInputTyped != '') {
+              const p = f.getProperties().properties;
+              return (
+                JSON.stringify(p.name)
+                  .toLowerCase()
+                  .indexOf(this.wmMapInputTyped.toLocaleLowerCase()) >= 0
+              );
+            }
+            return true;
+          })
+          .filter(f => {
+            if (this.wmMapPoisFilters.length > 0) {
+              const p = f.getProperties().properties;
+              return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
+            }
+            return true;
+          });
         featureSource.addFeatures(featuresToAdd);
       } else {
         featureSource.addFeatures(this._olFeatures);

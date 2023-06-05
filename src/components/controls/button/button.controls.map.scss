@@ -1,0 +1,34 @@
+wm-map-button-control {
+  cursor: pointer;
+  .wm-map-button-control-button {
+    .selected {
+      border: 4px solid var(--wm-color-primary);
+      border-radius: 4px;
+    }
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: normal;
+    align-items: normal;
+    align-content: normal;
+    .wm-map-button-control-icon {
+      height: 40px;
+      width: 40px;
+      margin-right: 5px;
+      background-color: lightgray;
+
+      svg {
+        height: 100%;
+        width: 100%;
+      }
+    }
+    .wm-map-button-control-label {
+      display: block;
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: auto;
+      align-self: center;
+      order: 0;
+    }
+  }
+}
