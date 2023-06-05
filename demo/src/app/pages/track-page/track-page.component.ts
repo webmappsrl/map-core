@@ -1,7 +1,7 @@
 import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/core';
-import {MAP} from 'demo/src/mocks/conf';
-import {BehaviorSubject, Observable, of} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
+import {map} from 'rxjs/operators';
 
 @Component({
   selector: 'track-page',
@@ -11,13 +11,18 @@ import {HttpClient} from '@angular/common/http';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrackPageComponent {
-  confMAP$ = of(MAP);
+  confMAP$: Observable<any>;
   selectedColor: string = '#caaf15';
   track$: Observable<any>;
   trackColor: string;
   wmMapTrackColor$: BehaviorSubject<string> = new BehaviorSubject<string>('#caaf15');
 
   constructor(private _http: HttpClient) {
+    this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/26/config.json').pipe(
+      map((conf: any) => {
+        return conf.MAP;
+      }),
+    );
     this.track$ = this._http.get('https://geohub.webmapp.it/api/ec/track/30996');
   }
 

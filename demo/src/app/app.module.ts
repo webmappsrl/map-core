@@ -9,13 +9,7 @@ import {IonicModule} from '@ionic/angular';
 
 @NgModule({
   declarations: [AppComponent],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    WmMapModule,
-    LeftBarModule,
-    IonicModule.forRoot({mode: 'md'}),
-  ],
+  imports: [BrowserModule, AppRoutingModule, WmMapModule, LeftBarModule, IonicModule.forRoot()],
   providers: [],
   bootstrap: [AppComponent],
 })

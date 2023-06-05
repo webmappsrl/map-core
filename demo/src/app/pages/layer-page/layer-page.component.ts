@@ -16,7 +16,7 @@ export class LayerPageComponent {
   dataLayerUrls$: Observable<IDATALAYER>;
 
   constructor(private _http: HttpClient) {
-    this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/13/config.json').pipe(
+    this.confMAP$ = this._http.get('https://geohub.webmapp.it/api/app/webmapp/26/config.json').pipe(
       map((conf: any) => {
         return conf.MAP;
       }),

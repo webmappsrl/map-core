@@ -3,6 +3,9 @@ map-page {
     height: 300px;
     margin: 10px;
   }
+  .layer-button {
+    height: unset !important;
+  }
 
   .directive-container {
     margin-top: 10px;

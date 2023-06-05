@@ -23,7 +23,7 @@ export class OverlayPageComponent {
 
   constructor(private _http: HttpClient) {
     this.confMAP$ = this._http
-      .get('https://geohub.webmapp.it/api/app/webmapp/13/config.json')
+      .get('https://geohub.webmapp.it/api/app/webmapp/26/config.json')
       .pipe(map((conf: any) => conf.MAP));
   }
 }

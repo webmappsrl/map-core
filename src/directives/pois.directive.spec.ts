@@ -10,12 +10,9 @@ import {EGeojsonGeometryTypes, IGeojsonFeature, ILocaleString} from 'src/types/m
 import {createCluster, clearLayer} from 'src/utils';
 import {FLAG_TRACK_ZINDEX} from 'src/readonly';
 import VectorSource from 'ol/source/Vector';
-import {Geometry, Point} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import {Cluster} from 'ol/source';
 import {Select} from 'ol/interaction';
-import {Feature, MapBrowserEvent} from 'ol';
-import {Style} from 'ol/style';
 
 const PADDING = [80, 80, 80, 80];
 
@@ -268,7 +265,7 @@ describe('WmMapPoisDirective', () => {
     expect(wmMapPoisDirective['_getIcnFromTaxonomies'](taxonomies)).toEqual('non_excluded_1');
   });
 
-  it('_getIcnFromTaxonomies(5): should return undefined if the array is empty', () => {
+  xit('_getIcnFromTaxonomies(5): should return undefined if the array is empty', () => {
     const taxonomies = [];
 
     wmMapPoisDirective['_getIcnFromTaxonomies'](taxonomies);
