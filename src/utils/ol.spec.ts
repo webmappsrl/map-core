@@ -48,6 +48,8 @@ import {Extent} from 'ol/extent';
 import {FeatureLike} from 'ol/Feature';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import Feature from 'ol/Feature';
+import {ICONTROLSBUTTON} from 'src/types/model';
+import {mockTiles} from 'src/const.spec';
 
 describe('ol', () => {
   it('addFeatureToLayer: should add a feature to the given layer', () => {
@@ -583,17 +585,14 @@ describe('ol', () => {
   });
 
   it('buildTileLayers: should build tile layers correctly', () => {
-    const tiles = [
-      {layer1: 'https://example.com/layer1/{z}/{x}/{y}.png'},
-      {layer2: 'https://example.com/layer2/{z}/{x}/{y}.png'},
-    ];
+    const tiles = mockTiles;
 
     const expectedResult = tiles.map((tile, index) => ({
       preload: Infinity,
       visible: index === 0,
       zIndex: index,
-      className: Object.keys(tile)[0],
-      url: Object.values(tile)[0],
+      className: tile.label.it,
+      url: tile.url,
     }));
 
     const result = buildTileLayers(tiles).map(tileLayer => ({

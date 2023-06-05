@@ -1,5 +1,6 @@
 import {FitOptions} from 'ol/View';
 import {EGeojsonGeometryTypes, IGeojsonFeature, IMAP, PoiMarker} from './types/model';
+import {ICONTROLSBUTTON} from 'src/types/model';
 
 export const mockTrack = {
   type: 'Feature',
@@ -1033,43 +1034,71 @@ export const mockTrack = {
 };
 
 export const mockMapConf: IMAP = {
-  tiles: [
-    {
-      webmapp: 'https://api.webmapp.it/tiles/{z}/{x}/{y}.png',
-    },
-    {
-      satellite:
-        'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=0Z7ou7nfFFXipdDXHChf',
-    },
-  ],
-  bbox: [10, 10, 20, 20],
-  center: [15, 15],
-  defZoom: 12,
-  flow_line_quote_orange: 10,
-  flow_line_quote_red: 20,
+  bbox: [0, 0, 0, 0],
+  defZoom: 0,
+  flow_line_quote_orange: 0,
+  flow_line_quote_red: 0,
   flow_line_quote_show: false,
   layers: [],
-  maxStrokeWidth: 5,
-  maxZoom: 18,
-  minStrokeWidth: 1,
-  minZoom: 6,
+  maxStrokeWidth: 0,
+  maxZoom: 0,
+  minStrokeWidth: 0,
+  minZoom: 0,
   pois: {
     apppoisApiLayer: false,
-    poiIconRadius: '10',
-    poiIconZoom: '14',
-    poiLabelMinZoom: '14',
-    poiMaxRadius: '20',
-    poiMinRadius: '5',
-    poiMinZoom: '6',
-    poi_interaction: 'tooltip',
+    poiIconRadius: '',
+    poiIconZoom: '',
+    poiLabelMinZoom: '',
+    poiMaxRadius: '',
+    poiMinRadius: '',
+    poiMinZoom: '',
+    poi_interaction: 'no_interaction',
     skipRouteIndexDownload: false,
     taxonomies: {},
   },
-  ref_on_track_min_zoom: 10,
-  ref_on_track_show: true,
-  start_end_icons_min_zoom: 8,
+  ref_on_track_min_zoom: 0,
+  ref_on_track_show: false,
+  start_end_icons_min_zoom: 0,
   start_end_icons_show: true,
+  tiles: [],
+  controls: {
+    layer1: [
+      {
+        label: {it: 'layer1'},
+        type: 'button',
+        icon: '',
+        id: 0,
+        url: 'https://example.com/layer1/{z}/{x}/{y}.png',
+      },
+    ],
+    layer2: [
+      {
+        label: {it: 'layer2'},
+        type: 'button',
+        icon: '',
+        id: 1,
+        url: 'https://example.com/layer2/{z}/{x}/{y}.png',
+      },
+    ],
+  },
 };
+
+export const mockTiles: ICONTROLSBUTTON[] = [
+  {
+    label: {'it': 'label'},
+    type: 'button',
+    icon: '',
+    id: 0,
+    url: 'https://example.com/layer1/{z}/{x}/{y}.png',
+  },
+  {
+    label: {'it': 'label'},
+    type: 'button',
+    icon: '',
+    id: 1,
+    url: 'https://example.com/layer2/{z}/{x}/{y}.png',
+  },
+];
 
 export const mockSavedTracks = [
   {
