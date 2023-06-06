@@ -30,6 +30,7 @@ import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 
 const PADDING = [80, 80, 80, 80];
+const TRESHOLD_ENABLE_FIT = 3;
 @Directive({
   selector: '[wmMapPois]',
 })
@@ -489,7 +490,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           </ion-card-content>`;
           (window as any).details = () => {
             this.currentPoiEvt.emit(currentPoi);
-            this._fitView(geometry as any);
+            const maxZoom = this.wmMapConf.maxZoom;
+            const currentZoom = this.mapCmp.map.getView().getZoom();
+            if (maxZoom - currentZoom > TRESHOLD_ENABLE_FIT) {
+              this._fitView(geometry as any);
+            }
             this._popupOverlay.hide();
           };
           if (poiInteraction === 'tooltip_popup') {
@@ -512,7 +517,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           break;
       }
       this.mapCmp.map.once('rendercomplete', () => {
-        this._fitView(geometry as any);
+        const maxZoom = this.wmMapConf.maxZoom;
+        const currentZoom = this.mapCmp.map.getView().getZoom();
+        if (maxZoom - currentZoom > TRESHOLD_ENABLE_FIT) {
+          this._fitView(geometry as any);
+        }
       });
     }
   }
