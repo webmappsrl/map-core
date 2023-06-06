@@ -162,8 +162,8 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       );
     }
     if (changes.wmMapTrackColor != null && changes.wmMapTrackColor.firstChange === false) {
-      this._trackLayer.setStyle(getLineStyle(this.wmMapTrackColor));
-      this._trackLayer.changed();
+      this._trackLayer?.setStyle(getLineStyle(this.wmMapTrackColor));
+      this._trackLayer?.changed();
     }
   }
 
