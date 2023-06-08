@@ -30,7 +30,7 @@ import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 
 const PADDING = [80, 80, 80, 80];
-const TRESHOLD_ENABLE_FIT = 3;
+const TRESHOLD_ENABLE_FIT = 4;
 @Directive({
   selector: '[wmMapPois]',
 })
@@ -48,8 +48,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   @Input() WmMapPoisUnselectPoi: boolean;
-  @Input() wmMapPoisFilters: any[] = [];
   @Input() wmMapInputTyped: string;
+  @Input() wmMapPoisFilters: any[] = [];
   @Input() wmMapPoisPoi: number | 'reset';
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
@@ -273,11 +273,20 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    */
   private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
     if (optOptions == null) {
+      const maxZoom = this.wmMapConf.maxZoom;
+      const currentZoom = this.mapCmp.map.getView().getZoom();
       optOptions = {
-        maxZoom: this.mapCmp.map.getView().getMaxZoom() - 4,
+        maxZoom: this.mapCmp.map.getView().getMaxZoom() - TRESHOLD_ENABLE_FIT,
         duration: 500,
         padding: PADDING,
       };
+      if (maxZoom - currentZoom < TRESHOLD_ENABLE_FIT) {
+        optOptions = {
+          maxZoom: currentZoom,
+          duration: 500,
+          padding: PADDING,
+        };
+      }
     }
     this.mapCmp.map.getView().fit(geometryOrExtent, optOptions);
   }
@@ -490,11 +499,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           </ion-card-content>`;
           (window as any).details = () => {
             this.currentPoiEvt.emit(currentPoi);
-            const maxZoom = this.wmMapConf.maxZoom;
-            const currentZoom = this.mapCmp.map.getView().getZoom();
-            if (maxZoom - currentZoom > TRESHOLD_ENABLE_FIT) {
-              this._fitView(geometry as any);
-            }
+            this._fitView(geometry as any);
             this._popupOverlay.hide();
           };
           if (poiInteraction === 'tooltip_popup') {
@@ -517,11 +522,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           break;
       }
       this.mapCmp.map.once('rendercomplete', () => {
-        const maxZoom = this.wmMapConf.maxZoom;
-        const currentZoom = this.mapCmp.map.getView().getZoom();
-        if (maxZoom - currentZoom > TRESHOLD_ENABLE_FIT) {
-          this._fitView(geometry as any);
-        }
+        this._fitView(geometry as any);
       });
     }
   }
