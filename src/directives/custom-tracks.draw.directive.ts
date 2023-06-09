@@ -18,11 +18,14 @@ import {toLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 
 import {filter, take} from 'rxjs/operators';
-import {createCircleFeature} from '../../src/utils/ol';
+import {createIconFeatureFromHtml} from '../../src/utils/ol';
 import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
+import Stroke from 'ol/style/Stroke';
+import Fill from 'ol/style/Fill';
+import {endIconHtml, startIconHtml} from '../readonly';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
@@ -149,7 +152,18 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
           this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
         } else {
           const lonLat = toLonLat(evt.coordinate);
-          this._customPoiSource.addFeature(createCircleFeature(lonLat));
+          const options = {
+            radius: 45,
+            stroke: new Stroke({
+              color: 'rgba(255, 0, 0, 1)',
+            }),
+            fill: new Fill({
+              color: 'rgba(255, 0, 0, 1)',
+            }),
+            scale: 1,
+          };
+          const startFeature = createIconFeatureFromHtml(startIconHtml, lonLat);
+          this._customPoiSource.addFeature(startFeature);
           this._points.push(lonLat);
         }
         this._customPoiSource.changed();
@@ -286,13 +300,13 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
   private _redrawPoints(): void {
     let id: number = 0;
     this._customPoiSource.clear();
-    for (let point of this._points) {
-      const circleFeature = createCircleFeature(point);
-      circleFeature.setId(id + '');
-      this._customPoiSource.addFeature(circleFeature);
-      circleFeature.changed();
-      id++;
-    }
+    const startFeature = createIconFeatureFromHtml(startIconHtml, this._points[0]);
+    const endFeature = createIconFeatureFromHtml(
+      endIconHtml,
+      this._points[this._points.length - 1],
+    );
+    this._customPoiSource.addFeature(startFeature);
+    this._customPoiSource.addFeature(endFeature);
 
     this._customPoiLayer.changed();
     this.mapCmp.map.render();
