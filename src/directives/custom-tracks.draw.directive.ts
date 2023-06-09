@@ -152,16 +152,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
           this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
         } else {
           const lonLat = toLonLat(evt.coordinate);
-          const options = {
-            radius: 45,
-            stroke: new Stroke({
-              color: 'rgba(255, 0, 0, 1)',
-            }),
-            fill: new Fill({
-              color: 'rgba(255, 0, 0, 1)',
-            }),
-            scale: 1,
-          };
           const startFeature = createIconFeatureFromHtml(startIconHtml, lonLat);
           this._customPoiSource.addFeature(startFeature);
           this._points.push(lonLat);
