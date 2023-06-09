@@ -42,9 +42,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectCluster: any;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private _disabled = false;
 
   @Input() set wmMapPoisPois(pois: any) {
     this._wmMapPoisPois.next(pois);
+  }
+
+  @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
+    this._disabled = disabled;
+    this._poisClusterLayer?.setVisible(!disabled);
   }
 
   @Input() WmMapPoisUnselectPoi: boolean;
@@ -218,14 +224,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @memberof WmMapPoisDirective
    */
   private _checkZoom(layer: VectorLayer<any>): void {
-    const view = this.mapCmp.map.getView();
-    if (view != null) {
-      const newZoom = +view.getZoom();
-      const poisMinZoom = +this.wmMapConf.pois.poiMinZoom || 15;
-      if (newZoom >= poisMinZoom) {
-        layer.setVisible(true);
-      } else {
-        layer.setVisible(false);
+    if (!this._disabled) {
+      const view = this.mapCmp.map.getView();
+      if (view != null) {
+        const newZoom = +view.getZoom();
+        const poisMinZoom = +this.wmMapConf.pois.poiMinZoom || 15;
+        if (newZoom >= poisMinZoom) {
+          layer.setVisible(true);
+        } else {
+          layer.setVisible(false);
+        }
       }
     }
   }

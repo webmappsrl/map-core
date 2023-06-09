@@ -9,13 +9,12 @@ import LineString from 'ol/geom/LineString';
 import VectorLayer from 'ol/layer/Vector';
 import {toLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
-import Fill from 'ol/style/Fill';
-import Stroke from 'ol/style/Stroke';
 
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {createCircleFeature, getLineStyle} from '../../src/utils';
+import {createIconFeatureFromHtml, getLineStyle} from '../../src/utils';
 import {WmMapComponent} from '../components';
+import {endIconHtml, startIconHtml} from '../readonly';
 
 @Directive({
   selector: '[wmMapCustomTracks]',
@@ -172,18 +171,11 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
         const endCoordinate = coords[coords.length - 1];
         const lonLatStart = toLonLat([startCoordinate[0], startCoordinate[1]] as Coordinate);
         const lonLatEnd = toLonLat([endCoordinate[0], endCoordinate[1]] as Coordinate);
-        const options = {
-          radius: 15,
-          stroke: new Stroke({
-            color: '#fff',
-          }),
-          fill: new Fill({
-            color: '#CA1551',
-          }),
-          scale: 0.5,
-        };
-        this._customPoiSource.addFeature(createCircleFeature(lonLatStart, options));
-        this._customPoiSource.addFeature(createCircleFeature(lonLatEnd, options));
+
+        const startFeature = createIconFeatureFromHtml(startIconHtml, lonLatStart);
+        const endFeature = createIconFeatureFromHtml(endIconHtml, lonLatEnd);
+        this._customPoiSource.addFeature(startFeature);
+        this._customPoiSource.addFeature(endFeature);
       });
 
       if (localSavedTracks != null) {
