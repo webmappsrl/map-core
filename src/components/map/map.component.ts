@@ -1,15 +1,12 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
-  HostBinding,
   Input,
   OnChanges,
   Output,
-  Renderer2,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation,
@@ -51,6 +48,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _debounceFitTimer = null;
   private _view: View;
 
+  @Input() set wmMapCloseTopRightBtns(selector: string) {
+    this.wmMapCloseTopRightBtnsEVT$.emit(selector);
+  }
+
   @Input() set wmMapConf(conf: IMAP) {
     this.wmMapConf$.next(conf);
   }
@@ -70,6 +71,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
+  @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
@@ -82,11 +84,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   tileLayers: TileLayer<XYZ>[] = [];
   wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  constructor(
-    private _cdr: ChangeDetectorRef,
-    private _renderer: Renderer2,
-    private _el: ElementRef,
-  ) {}
+  constructor() {}
 
   @Input() initBaseSource(tile: string): XYZ {
     if (tile === '') {

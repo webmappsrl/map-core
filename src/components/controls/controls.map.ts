@@ -17,8 +17,8 @@ import {ICONTROLS} from '../../types/model';
 @Component({
   selector: 'wm-map-controls',
   template: `
-  <div class="layer-button" *ngIf="showButton$|async">
-    <ion-icon name="layers-outline" (click)="toggle$.next(!toggle$.value)"></ion-icon>
+  <div class="layer-button" *ngIf="showButton$|async" (click)="toggle$.next(!toggle$.value)">
+    <ion-icon name="layers-outline" ></ion-icon>
   </div>
   <ion-list class="layer-content" lines="none"   *ngIf="toggle$|async"> 
     <ng-container *ngIf="conf.tiles as tiles">
@@ -39,6 +39,12 @@ import {ICONTROLS} from '../../types/model';
   encapsulation: ViewEncapsulation.None,
 })
 export class WmMapControls implements OnChanges {
+  @Input() set wmMapControlClose(selector: string) {
+    if (selector != 'wm-map-controls') {
+      this.toggle$.next(false);
+    }
+  }
+
   @Input() conf: ICONTROLS;
   @Input() tileLayers: TileLayer<any>[];
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
@@ -61,7 +67,7 @@ export class WmMapControls implements OnChanges {
    * @param changes - An object containing the changes detected by Angular.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.tileLayers.currentValue != null && changes.tileLayers.currentValue.length > 1) {
+    if (changes?.tileLayers?.currentValue != null && changes.tileLayers.currentValue.length > 1) {
       this.showButton$.next(true);
     }
   }
