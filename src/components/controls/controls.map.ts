@@ -22,11 +22,13 @@ import {ICONTROLS} from '../../types/model';
   </div>
   <ion-list class="layer-content" lines="none"   *ngIf="toggle$|async"> 
     <ng-container *ngIf="conf.tiles as tiles">
-      <ion-item *ngFor="let tile of tiles;let idx = index">
+      <ng-container *ngIf="tiles.length > 2">
+        <ion-item *ngFor="let tile of tiles;let idx = index">
           <wm-map-button-control [wmMapButtonControl]="tile" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectTileLayer($event)" [wmMapButtonControlSelect]="currentTileLayerIdx$.value === idx"></wm-map-button-control>
-      </ion-item>
+        </ion-item>
+        <ion-item-divider *ngIf="conf.overlays != null && conf.overlays.length > 0"></ion-item-divider>
+      </ng-container>
     </ng-container>
-    <ion-item-divider></ion-item-divider>
     <ng-container *ngIf="conf.overlays as overlays">
       <ion-item *ngFor="let overlay of overlays;let idx = index">
           <wm-map-button-control [wmMapButtonControl]="overlay" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectOverlay($event,overlay)" [wmMapButtonControlSelect]="currentOverlayIdx$.value === idx"></wm-map-button-control>
@@ -68,6 +70,9 @@ export class WmMapControls implements OnChanges {
    */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes?.tileLayers?.currentValue != null && changes.tileLayers.currentValue.length > 1) {
+      this.showButton$.next(true);
+    }
+    if (changes?.conf?.currentValue != null && changes?.conf?.currentValue.overlays.length > 1) {
       this.showButton$.next(true);
     }
   }
