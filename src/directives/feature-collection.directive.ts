@@ -2,7 +2,7 @@ import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 
 import {BehaviorSubject} from 'rxjs';
-import {filter, switchMap, take} from 'rxjs/operators';
+import {filter, switchMap, take, withLatestFrom} from 'rxjs/operators';
 import {getCenter} from 'ol/extent';
 import {Feature} from 'ol';
 import {FitOptions} from 'ol/View';
@@ -29,6 +29,7 @@ import {
 export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>(null);
   private _popupOverlay: Popup;
   private _primaryColor: string | null = null;
   private _selectedFeature: Feature | null = null;
@@ -50,7 +51,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       color: 'rgba(245, 159, 26, 0)',
     }),
   });
-  private _url$: BehaviorSubject<string | null> = new BehaviorSubject<string>(null);
 
   @Input('wmMapFeatureCollectionPrimaryColor') set color(color: string) {
     this._primaryColor = color;
@@ -63,8 +63,8 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
   }
 
-  @Input('wmMapFeatureCollectionUrl') set url(url: string) {
-    this._url$.next(url);
+  @Input('wmMapFeatureCollectionOverlay') set overlay(overlay: any) {
+    this._overlay$.next(overlay);
   }
 
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
@@ -86,11 +86,21 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         filter(e => e === true),
         switchMap(() => this.mapCmp.isInit$),
         filter(f => f === true),
-        switchMap(_ => this._url$),
-        filter(url => url != null),
-        switchMap(url => this._http.get(url)),
+        switchMap(_ => this._overlay$),
+        filter(overlay => overlay != null),
+        switchMap(overlay => {
+          this._unselectedStyle = new Style({
+            stroke: new Stroke({
+              color: overlay.strokeColor
+                ? overlay.strokeColor
+                : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+              width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+            }),
+          });
+          return this._http.get(overlay.url);
+        }),
       )
-      .subscribe((geojson: any) => {
+      .subscribe(geojson => {
         this.mapCmp.map.once('precompose', () => {
           this._buildGeojson(geojson);
         });

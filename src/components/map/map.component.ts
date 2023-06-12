@@ -200,8 +200,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
-  setOverlay(url: string | null) {
-    this.wmMapOverlayEVT$.emit(url);
+  setOverlay(overlay: any | null) {
+    this.wmMapOverlayEVT$.emit(overlay);
   }
 
   /**

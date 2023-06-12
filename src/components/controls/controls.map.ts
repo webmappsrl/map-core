@@ -50,8 +50,8 @@ export class WmMapControls implements OnChanges {
   @Input() conf: ICONTROLS;
   @Input() tileLayers: TileLayer<any>[];
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
-  @Output('wmMapControlOverlay') overlayEVT: EventEmitter<string | null> = new EventEmitter<
-    string | null
+  @Output('wmMapControlOverlay') overlayEVT: EventEmitter<any | null> = new EventEmitter<
+    any | null
   >(null);
 
   currentOverlayIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
@@ -83,7 +83,7 @@ export class WmMapControls implements OnChanges {
       this.overlayEVT.emit(null);
     } else {
       this.currentOverlayIdx$.next(idx);
-      this.overlayEVT.emit(overlay.url);
+      this.overlayEVT.emit(overlay);
     }
   }
 
