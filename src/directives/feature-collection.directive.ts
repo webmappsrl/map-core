@@ -16,8 +16,13 @@ import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {Select} from 'ol/interaction';
 import {pointerMove} from 'ol/events/condition';
-import {FEATURE_COLLECTION_DISABLE_ZOOM_TRESHOLD, FEATURE_COLLECTION_ZINDEX} from '../readonly';
-import {ZoomToExtent} from 'ol/control';
+import {Color} from 'ol/color';
+import {
+  FEATURE_COLLECTION_STROKE_COLOR,
+  FEATURE_COLLECTION_FILL_COLOR,
+  FEATURE_COLLECTION_STROKE_WIDTH,
+  FEATURE_COLLECTION_ZINDEX,
+} from '../readonly';
 @Directive({
   selector: '[wmMapFeatureCollection]',
 })
@@ -29,17 +34,17 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _selectedFeature: Feature | null = null;
   private _selectedStyle = new Style({
     stroke: new Stroke({
-      color: '#F59F1A',
-      width: 3,
+      color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+      width: FEATURE_COLLECTION_STROKE_WIDTH,
     }),
     fill: new Fill({
-      color: 'rgba(245, 159, 26, 0.4)',
+      color: FEATURE_COLLECTION_FILL_COLOR as unknown as Color,
     }),
   });
   private _unselectedStyle = new Style({
     stroke: new Stroke({
-      color: 'rgba(245, 159, 26, 1)',
-      width: 2,
+      color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+      width: FEATURE_COLLECTION_STROKE_WIDTH,
     }),
     fill: new Fill({
       color: 'rgba(245, 159, 26, 0)',
@@ -88,17 +93,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       .subscribe((geojson: any) => {
         this.mapCmp.map.once('precompose', () => {
           this._buildGeojson(geojson);
-        });
-
-        this.mapCmp.map.on('moveend', e => {
-          if (this._enabled$.value) {
-            const currentZoom = this.mapCmp.map.getView().getZoom();
-            if (currentZoom > FEATURE_COLLECTION_DISABLE_ZOOM_TRESHOLD) {
-              this._featureCollectionLayer.setVisible(false);
-            } else {
-              this._featureCollectionLayer.setVisible(true);
-            }
-          }
         });
       });
   }
@@ -154,12 +148,16 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this.mapCmp.map.addOverlay(this._popupOverlay);
     let _center = null;
     this.mapCmp.map.on('pointermove', e => {
+      this.mapCmp.map.getViewport().style.cursor = '';
+
       this.mapCmp.map.forEachFeatureAtPixel(e.pixel, feat => {
         if (
           feat instanceof Feature &&
           (feat.getGeometry() instanceof Polygon || feat.getGeometry() instanceof MultiPolygon)
         ) {
           if (feat.getProperties().layer != null) {
+            this.mapCmp.map.getViewport().style.cursor = 'pointer';
+
             if (this._selectedFeature != null) {
               this._selectedFeature.setStyle(this._unselectedStyle);
             }
