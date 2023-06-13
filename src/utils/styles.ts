@@ -421,7 +421,17 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   ) {
     strokeStyle.setColor('rgba(0,0,0,0)');
   } else {
+    const searchable = `${JSON.stringify(properties?.name ?? '')}${properties?.searchable ?? ''}`;
+    if (
+      this.inputTyped != null &&
+      this.inputTyped != '' &&
+      searchable != '' &&
+      searchable.toLowerCase().indexOf(this.inputTyped.toLocaleLowerCase()) < 0
+    ) {
+      strokeStyle.setColor('rgba(0,0,0,0)');
+    }
   }
+
   const opt: handlingStrokeStyleWidthOptions = {
     strokeStyle,
     minZoom: this.conf.minZoom,

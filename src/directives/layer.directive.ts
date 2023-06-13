@@ -219,6 +219,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           opacity: this.wmMapLayerOpacity,
           filters: this.mapCmp.filters,
           tileLayer: this._lowVectorTileLayer,
+          inputTyped: this.wmMapInputTyped,
         })(f);
       },
       lowTileLoadFn,
@@ -231,7 +232,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
           map: this.mapCmp.map,
+          opacity: this.wmMapLayerOpacity,
           filters: this.mapCmp.filters,
+          tileLayer: this._highVectorTileLayer,
+          inputTyped: this.wmMapInputTyped,
         })(f);
       },
       tileLoadFn,

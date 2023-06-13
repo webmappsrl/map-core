@@ -554,10 +554,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           .filter(f => {
             if (this.wmMapInputTyped != null && this.wmMapInputTyped != '') {
               const p = f.getProperties().properties;
+              const searchable = `${JSON.stringify(p?.name ?? '')}${p?.searchable ?? ''}`;
               return (
-                JSON.stringify(p.name)
-                  .toLowerCase()
-                  .indexOf(this.wmMapInputTyped.toLocaleLowerCase()) >= 0
+                searchable.toLowerCase().indexOf(this.wmMapInputTyped.toLocaleLowerCase()) >= 0
               );
             }
             return true;

@@ -69,10 +69,19 @@ export class WmMapControls implements OnChanges {
    * @param changes - An object containing the changes detected by Angular.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes?.tileLayers?.currentValue != null && changes.tileLayers.currentValue.length > 1) {
+    if (
+      changes?.tileLayers != null &&
+      changes?.tileLayers?.currentValue != null &&
+      changes.tileLayers.currentValue.length > 1
+    ) {
       this.showButton$.next(true);
     }
-    if (changes?.conf?.currentValue != null && changes?.conf?.currentValue.overlays.length > 1) {
+    if (
+      changes?.conf != null &&
+      changes?.conf?.currentValue != null &&
+      changes?.conf?.currentValue.overlays != null &&
+      changes?.conf?.currentValue.overlays.length > 1
+    ) {
       this.showButton$.next(true);
     }
   }
