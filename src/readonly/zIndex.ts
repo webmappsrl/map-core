@@ -1,4 +1,4 @@
-export const FEATURE_COLLECTION_ZINDEX = 400;
+export const FEATURE_COLLECTION_ZINDEX = 500;
 export const TRACK_ZINDEX = 450;
 export const SELECTED_TRACK_ZINDEX = 460;
 export const FLAG_TRACK_ZINDEX = 470;
