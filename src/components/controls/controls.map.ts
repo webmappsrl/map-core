@@ -44,6 +44,7 @@ export class WmMapControls implements OnChanges {
   @Input() set wmMapControlClose(selector: string) {
     if (selector != 'wm-map-controls') {
       this.toggle$.next(false);
+      this.currentOverlayIdx$.next(null);
     }
   }
 
