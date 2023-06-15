@@ -414,12 +414,29 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
     const layerId = +layers[0];
     strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
   }
-  if (
-    this.filters != null &&
-    this.filters.activities.length > 0 &&
-    !this.filters.activities.every(a => activitiesFilters.includes(a))
-  ) {
-    strokeStyle.setColor('rgba(0,0,0,0)');
+  if (this.filters != null && this.filters.filterTracks.length > 0) {
+    this.filters.filterTracks.forEach(filter => {
+      if (filter.type === 'slider') {
+        const identifierValue = properties[filter.identifier];
+        if (identifierValue != null) {
+          if (
+            (filter.lower != null && identifierValue < filter.lower) ||
+            (filter.upper != null && identifierValue > filter.upper)
+          ) {
+            strokeStyle.setColor('rgba(0,0,0,0)');
+          }
+        }
+      }
+      if (filter.type == null && filter.taxonomy != null) {
+        if (
+          filter.taxonomy === 'activity' &&
+          activitiesFilters != null &&
+          activitiesFilters.indexOf(filter.identifier) < 0
+        ) {
+          strokeStyle.setColor('rgba(0,0,0,0)');
+        }
+      }
+    });
   } else {
     const searchable = `${JSON.stringify(properties?.name ?? '')}${properties?.searchable ?? ''}`;
     if (
