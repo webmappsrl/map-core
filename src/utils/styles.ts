@@ -397,8 +397,6 @@ export function clusterHullStyle(cluster) {
  */
 export function styleCoreFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
-  const activitiesFilters = properties.activities ? JSON.parse(properties.activities) : null;
-  const themesFilters = properties.themes ? JSON.parse(properties.themes) : null;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
   let strokeStyle: StrokeStyle = new StrokeStyle();
@@ -429,9 +427,9 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
       }
       if (filter.type == null && filter.taxonomy != null) {
         if (
-          filter.taxonomy === 'activity' &&
-          activitiesFilters != null &&
-          activitiesFilters.indexOf(filter.identifier) < 0
+          filter.taxonomy != null &&
+          properties[filter.taxonomy] != null &&
+          properties[filter.taxonomy].indexOf(filter.identifier) < 0
         ) {
           strokeStyle.setColor('rgba(0,0,0,0)');
         }
