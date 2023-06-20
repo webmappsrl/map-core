@@ -2,7 +2,7 @@ import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 
 import {BehaviorSubject} from 'rxjs';
-import {filter, switchMap, take, withLatestFrom} from 'rxjs/operators';
+import {filter, switchMap} from 'rxjs/operators';
 import {getCenter} from 'ol/extent';
 import {Feature} from 'ol';
 import {FitOptions} from 'ol/View';
@@ -146,7 +146,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
       closeBox: true,
       offset: [0, -16],
-      positionning: 'bottom-center',
+      positioning: 'bottom-center',
       select: over,
       onclose: () => {},
       autoPan: {
@@ -184,7 +184,11 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                     <ion-card-title>${this.translationCallback(layer.title)}</ion-card-title>
                   </ion-card-header>
                   <ion-card-content>
-                  ${layer.description ? `${this.translationCallback(layer.description)}` : ''}
+                  ${
+                    layer.description
+                      ? `${this.translationCallback(layer.description).substring(0, 200) + '...'}`
+                      : ''
+                  }
                   </ion-card-content>
                 </ion-card>`;
                 const center = getCenter(feat.getGeometry().getExtent());

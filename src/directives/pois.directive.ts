@@ -26,7 +26,7 @@ import {WmMapBaseDirective} from '.';
 import {clearLayer, createCluster, createHull, createLayer} from '../../src/utils';
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
-import {FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
+import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 
 const PADDING = [80, 80, 80, 80];
@@ -333,7 +333,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    */
   private _initDirective(): void {
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-    this._poisClusterLayer = createCluster(this._poisClusterLayer, FLAG_TRACK_ZINDEX);
+    this._poisClusterLayer = createCluster(this._poisClusterLayer, CLUSTER_ZINDEX);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     this._hullClusterLayer = new VectorLayer({
       style: clusterHullStyle,
