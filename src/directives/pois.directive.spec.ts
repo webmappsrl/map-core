@@ -2,12 +2,12 @@ import {Component, SimpleChange} from '@angular/core';
 
 import {WmMapComponent, WmMapControls} from '../components';
 import {mockExtent, mockMapConf, mockOptions, mockPoi} from 'src/const.spec';
-import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
+import {ComponentFixture, TestBed, fakeAsync, tick, waitForAsync} from '@angular/core/testing';
 import {CommonModule} from '@angular/common';
 import {By} from '@angular/platform-browser';
 import {WmMapPoisDirective} from './pois.directive';
 import {EGeojsonGeometryTypes, IGeojsonFeature, ILocaleString} from 'src/types/model';
-import {createCluster, clearLayer} from 'src/utils';
+import {createCluster} from 'src/utils';
 import {FLAG_TRACK_ZINDEX} from 'src/readonly';
 import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
@@ -219,14 +219,20 @@ describe('WmMapPoisDirective', () => {
   });
 
   it('_fitView(2): should use default options if fitOptions is not provided', () => {
-    spyOn(wmMapPoisDirective.mapCmp.map.getView(), 'fit');
+    const mockMaxZoom = 4;
+    const TRESHOLD_ENABLE_FIT = 4;
+    const mockCurrentZoom = mockMaxZoom - TRESHOLD_ENABLE_FIT;
+
+    const mockView = wmMapPoisDirective.mapCmp.map.getView();
+    spyOn(mockView, 'getMaxZoom').and.returnValue(mockMaxZoom);
+    spyOn(mockView, 'getZoom').and.returnValue(mockCurrentZoom);
+    spyOn(mockView, 'fit');
 
     wmMapPoisDirective['_fitView'](mockExtent);
     fixture.detectChanges();
 
-    const mapView = wmMapPoisDirective.mapCmp.map.getView();
-    expect(mapView.fit).toHaveBeenCalledWith(mockExtent, {
-      maxZoom: mapView.getMaxZoom() - 4,
+    expect(mockView.fit).toHaveBeenCalledWith(mockExtent, {
+      maxZoom: mockMaxZoom - 4,
       duration: 500,
       padding: PADDING,
     });
@@ -274,37 +280,42 @@ describe('WmMapPoisDirective', () => {
     expect(wmMapPoisDirective['_getIcnFromTaxonomies'](taxonomies)).toBeUndefined();
   });
 
-  it('_initDirective(1): should initialize the directive', () => {
-    wmMapPoisDirective['_initDirective']();
+  it('_initDirective(1): should initialize the directive', waitForAsync(() => {
     fixture.detectChanges();
 
-    expect(wmMapPoisDirective).toBeTruthy();
+    fixture.whenStable().then(() => {
+      wmMapPoisDirective['_initDirective']();
+      tick(500);
+      fixture.detectChanges();
 
-    // Check the creation of layers
-    expect(wmMapPoisDirective['_selectedPoiLayer']).toBeTruthy();
-    expect(wmMapPoisDirective['_poisClusterLayer']).toBeTruthy();
-    expect(wmMapPoisDirective['_hullClusterLayer']).toBeTruthy();
+      expect(wmMapPoisDirective).toBeTruthy();
 
-    // Check the addition of interactions
-    const interactions = wmMapPoisDirective.mapCmp.map.getInteractions();
-    const selectClusterInteraction = interactions
-      .getArray()
-      .find(interaction => interaction instanceof Select);
-    expect(selectClusterInteraction).toBeTruthy();
+      // Check the creation of layers
+      expect(wmMapPoisDirective['_selectedPoiLayer']).toBeTruthy();
+      expect(wmMapPoisDirective['_poisClusterLayer']).toBeTruthy();
+      expect(wmMapPoisDirective['_hullClusterLayer']).toBeTruthy();
 
-    // Check the creation of the popup overlay
-    expect(wmMapPoisDirective['_popupOverlay']).toBeTruthy();
+      // Check the addition of interactions
+      const interactions = wmMapPoisDirective.mapCmp.map.getInteractions();
+      const selectClusterInteraction = interactions
+        .getArray()
+        .find(interaction => interaction instanceof Select);
+      expect(selectClusterInteraction).toBeTruthy();
 
-    // Check the addition of layers and overlays to the map
-    const layers = wmMapPoisDirective.mapCmp.map.getLayers().getArray();
-    const overlays = wmMapPoisDirective.mapCmp.map.getOverlays().getArray();
+      // Check the creation of the popup overlay
+      expect(wmMapPoisDirective['_popupOverlay']).toBeTruthy();
 
-    expect(layers).toContain(wmMapPoisDirective['_selectedPoiLayer']);
-    expect(layers).toContain(wmMapPoisDirective['_poisClusterLayer']);
-    expect(layers).toContain(wmMapPoisDirective['_hullClusterLayer']);
+      // Check the addition of layers and overlays to the map
+      const layers = wmMapPoisDirective.mapCmp.map.getLayers().getArray();
+      const overlays = wmMapPoisDirective.mapCmp.map.getOverlays().getArray();
 
-    expect(overlays).toContain(wmMapPoisDirective['_popupOverlay']);
-  });
+      expect(layers).toContain(wmMapPoisDirective['_selectedPoiLayer']);
+      expect(layers).toContain(wmMapPoisDirective['_poisClusterLayer']);
+      expect(layers).toContain(wmMapPoisDirective['_hullClusterLayer']);
+
+      expect(overlays).toContain(wmMapPoisDirective['_popupOverlay']);
+    });
+  }));
 
   xit('_initDirective(2): should handle click event and render complete', fakeAsync(() => {
     component.conf = {

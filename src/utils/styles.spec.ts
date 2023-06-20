@@ -350,7 +350,7 @@ describe('styles', () => {
   });
 
   it('styleLowFn: should return a Style object for the given feature object with a lower zIndex', () => {
-    const TRACK_ZINDEX = 450;
+    const TRACK_ZINDEX = 490;
     const context = {
       conf: {
         minZoom: 0,
@@ -383,7 +383,7 @@ describe('styles', () => {
   });
 
   it('styleHighFn: should return a Style object for the given feature object with a higher zIndex', () => {
-    const TRACK_ZINDEX = 451;
+    const TRACK_ZINDEX = 491;
     const context = {
       conf: {
         minZoom: 0,

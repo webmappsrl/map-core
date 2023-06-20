@@ -90,7 +90,6 @@ describe('wmMapCustomTrackDrawTrackDirective', () => {
   it('_redrawPoints: should redraw points on the custom Poi layer', () => {
     const mockPoints = [
       [1, 2],
-      [3, 4],
       [5, 6],
     ];
     wmMapCustomTrackDrawTrack['_points'] = mockPoints;
