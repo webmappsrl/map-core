@@ -399,8 +399,12 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   const properties = feature.getProperties();
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
+  const featureStrokeColor =
+    properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : null;
   let strokeStyle: StrokeStyle = new StrokeStyle();
-  if (this.currentLayer != null) {
+  if (featureStrokeColor != null) {
+    strokeStyle.setColor(featureStrokeColor);
+  } else if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
