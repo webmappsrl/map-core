@@ -23,6 +23,15 @@
   },
   "private": true,
   "dependencies": {
+    "rxjs": "~6.6.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.11.4",
+    "graphhopper-js-api-client": "^5.0.2",
+    "localforage": "^1.10.0",
+    "ol": "7.1.0",
+    "ol-ext": "^4.0.2"
+  },
+  "peerDependencies": {
     "@angular/animations": "~12.2.0",
     "@angular/common": "~12.2.0",
     "@angular/compiler": "~12.2.0",
@@ -32,13 +41,6 @@
     "@angular/platform-browser-dynamic": "~12.2.0",
     "@angular/router": "~12.2.0",
     "@ionic/angular": "^5.5.2",
-    "rxjs": "~6.6.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.11.4",
-    "graphhopper-js-api-client": "^5.0.2",
-    "localforage": "^1.10.0",
-    "ol": "7.1.0",
-    "ol-ext": "^4.0.2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~12.2.18",
