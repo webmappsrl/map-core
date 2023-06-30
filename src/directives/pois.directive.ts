@@ -28,6 +28,7 @@ import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
+import {ILAYER} from '../types/layer';
 
 const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 4;
@@ -43,6 +44,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectCluster: any;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  private _currentLayer: ILAYER;
+
+  @Input() set wmMapLayerLayer(l: ILAYER) {
+    this._currentLayer = l;
+  }
 
   @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
     this._disabled = disabled;
@@ -550,8 +556,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (this._poisClusterLayer != null) {
       const clusterSource: Cluster = this._poisClusterLayer.getSource();
       const featureSource = clusterSource.getSource();
+      const layerIdentifiers = [
+        ...(this._currentLayer?.taxonomy_activities ?? []),
+        ...(this._currentLayer?.taxonomy_themes ?? []),
+      ];
       featureSource.clear();
-      if (this.wmMapInputTyped != '' || this.wmMapPoisFilters.length > 0) {
+      if (
+        this.wmMapInputTyped != '' ||
+        this.wmMapPoisFilters.length > 0 ||
+        layerIdentifiers.length > 0
+      ) {
         const featuresToAdd = this._olFeatures
           .filter(f => {
             if (this.wmMapInputTyped != null && this.wmMapInputTyped != '') {
@@ -567,6 +581,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             if (this.wmMapPoisFilters.length > 0) {
               const p = f.getProperties().properties;
               return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
+            }
+            return true;
+          })
+          .filter(f => {
+            if (layerIdentifiers.length > 0) {
+              const p = f.getProperties().properties;
+              const layerIdentifier: string = layerIdentifiers[0].identifier;
+              const isContained = this._isArrayContained([layerIdentifier], p.taxonomyIdentifiers);
+              return this._isArrayContained([layerIdentifier], p.taxonomyIdentifiers);
             }
             return true;
           });

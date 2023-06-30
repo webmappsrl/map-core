@@ -10,7 +10,7 @@ export interface IHIT {
   layers: number[];
   name: string;
   ref: string;
-  size?:any;
+  size?: any;
   taxonomyActivities: string[];
   taxonomyWheres: string[];
 }
@@ -29,4 +29,6 @@ export interface ILAYER {
   subtitle: string;
   title: string;
   tracks?: {[name: string]: IHIT[]};
+  taxonomy_activities?: any[];
+  taxonomy_themes?: any[];
 }
