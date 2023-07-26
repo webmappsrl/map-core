@@ -208,14 +208,18 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
     this._olFeatures = featureSource.getFeatures();
     this.mapCmp.map.on('moveend', e => {
-      this._checkZoom(this._poisClusterLayer);
+      if (this._disabled === false) {
+        this._checkZoom(this._poisClusterLayer);
+      }
     });
     this.mapCmp.map.on('pointermove', evt => {
-      var pixel = this.mapCmp.map.getEventPixel(evt.originalEvent);
-      try {
-        var hit = this.mapCmp.map.hasFeatureAtPixel(pixel);
-        this.mapCmp.map.getViewport().style.cursor = hit ? 'pointer' : '';
-      } catch (_) {}
+      if (this._disabled === false) {
+        var pixel = this.mapCmp.map.getEventPixel(evt.originalEvent);
+        try {
+          var hit = this.mapCmp.map.hasFeatureAtPixel(pixel);
+          this.mapCmp.map.getViewport().style.cursor = hit ? 'pointer' : '';
+        } catch (_) {}
+      }
     });
   }
 

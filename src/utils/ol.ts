@@ -305,6 +305,7 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
       img: img,
       imgSize: [32, 32],
       opacity: 1,
+      crossOrigin: 'anonymous',
     }),
     zIndex: 999999999,
   });

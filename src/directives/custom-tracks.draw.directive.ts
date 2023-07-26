@@ -143,67 +143,73 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     }
     this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       if (this._enabled$.value) {
-        stopPropagation(evt);
-        const oldCoordinates = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
-        if (oldCoordinates != null && oldCoordinates.length > 0) {
-          const oldCoordinate: Feature<Geometry> = oldCoordinates[0] as Feature<Geometry>;
-          this._customPoiSource.removeFeature(oldCoordinate);
-          const coords = toLonLat((oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates());
-          this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
-        } else {
-          const lonLat = toLonLat(evt.coordinate);
-          const startFeature = createIconFeatureFromHtml(startIconHtml, lonLat);
-          this._customPoiSource.addFeature(startFeature);
-          this._points.push(lonLat);
-        }
-        this._customPoiSource.changed();
-        this._customPoiLayer.changed();
-        if (this._points.length > 1) {
-          this._graphHopperRoutingObj.doRequest({points: this._points}).then(
-            (res: GraphHopperResponse) => {
-              this._customTrack.geometry = res.paths[0].points;
-              this._customTrack.properties.ascent = res.paths[0].ascend
-                ? Math.round(res.paths[0].ascend)
-                : this._customTrack.properties.ascent;
-              this._customTrack.properties.descent = res.paths[0].descend
-                ? Math.round(res.paths[0].descend)
-                : this._customTrack.properties.descent;
-              this._customTrack.properties.distance = res.paths[0].distance
-                ? res.paths[0].distance / 1000
-                : this._customTrack.properties.distance;
-              let time: number =
-                res.paths[0].distance && res.paths[0].ascend
-                  ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
-                  : res.paths[0].time
-                  ? res.paths[0].time / (1000 * 60 * 60)
-                  : undefined;
+        let featuresAvailableInClick = null;
+        try {
+          featuresAvailableInClick = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
+        } catch (error) {}
+        try {
+          stopPropagation(evt);
+          if (featuresAvailableInClick != null && featuresAvailableInClick.length > 0) {
+            // se featuresAvailableInClick esiste vuol dire che ho cliccato su un marker gia esistente
+            const oldCoordinate: Feature<Geometry> =
+              featuresAvailableInClick[0] as Feature<Geometry>;
+            const coords = toLonLat(
+              (oldCoordinate.getGeometry() as SimpleGeometry).getCoordinates(),
+            );
+            this._points = this._points.filter(c => c[0] != coords[0] && c[1] != coords[1]);
+          } else {
+            const lonLat = toLonLat(evt.coordinate);
+            this._points.push(lonLat);
+          }
+          if (this._points.length > 1) {
+            this._graphHopperRoutingObj.doRequest({points: this._points}).then(
+              (res: GraphHopperResponse) => {
+                this._customTrack.geometry = res.paths[0].points;
+                this._customTrack.properties.ascent = res.paths[0].ascend
+                  ? Math.round(res.paths[0].ascend)
+                  : this._customTrack.properties.ascent;
+                this._customTrack.properties.descent = res.paths[0].descend
+                  ? Math.round(res.paths[0].descend)
+                  : this._customTrack.properties.descent;
+                this._customTrack.properties.distance = res.paths[0].distance
+                  ? res.paths[0].distance / 1000
+                  : this._customTrack.properties.distance;
+                let time: number =
+                  res.paths[0].distance && res.paths[0].ascend
+                    ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
+                    : res.paths[0].time
+                    ? res.paths[0].time / (1000 * 60 * 60)
+                    : undefined;
 
-              if (time !== undefined)
-                this._customTrack.properties['duration:forward'] =
-                  Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
+                if (time !== undefined)
+                  this._customTrack.properties['duration:forward'] =
+                    Math.floor(time) + ':' + ('0' + Math.round((time % 1) * 60)).slice(-2) + ' h';
 
-              this._updateTrack();
-              this._redrawPoints();
-              this.currentCustomTrack.emit(this._customTrack);
-            },
-            (err: Error) => {
-              console.warn(err);
-              if (err.message.indexOf('Specify at least 2 points') !== -1) {
-                this._customTrack.geometry.coordinates = [];
-                this._customTrack.properties.ascent = undefined;
-                this._customTrack.properties.descent = undefined;
-                this._customTrack.properties.distance = undefined;
-                this._customTrack.properties['duration:forward'] = undefined;
                 this._updateTrack();
-              } else if (err.message.indexOf('Cannot find point') !== -1) {
-                this._message(err.message);
-                this._points.pop();
-                this._redrawPoints();
-              }
-            },
-          );
-        } else {
-          this._customTrackLayer.getSource().clear();
+                this.currentCustomTrack.emit(this._customTrack);
+              },
+              (err: Error) => {
+                console.warn(err);
+                if (err.message.indexOf('Specify at least 2 points') !== -1) {
+                  this._customTrack.geometry.coordinates = [];
+                  this._customTrack.properties.ascent = undefined;
+                  this._customTrack.properties.descent = undefined;
+                  this._customTrack.properties.distance = undefined;
+                  this._customTrack.properties['duration:forward'] = undefined;
+                  this._updateTrack();
+                } else if (err.message.indexOf('Cannot find point') !== -1) {
+                  this._message(err.message);
+                  this._points.pop();
+                  this._redrawPoints();
+                }
+              },
+            );
+          } else {
+            this._customTrackLayer.getSource().clear();
+          }
+          this._redrawPoints();
+        } catch (err) {
+          console.error(err);
         }
       }
     });
@@ -288,18 +294,23 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    * @memberof wmMapCustomTrackDrawTrackDirective
    */
   private _redrawPoints(): void {
-    let id: number = 0;
-    this._customPoiSource.clear();
-    const startFeature = createIconFeatureFromHtml(startIconHtml, this._points[0]);
-    const endFeature = createIconFeatureFromHtml(
-      endIconHtml,
-      this._points[this._points.length - 1],
-    );
-    this._customPoiSource.addFeature(startFeature);
-    this._customPoiSource.addFeature(endFeature);
-
-    this._customPoiLayer.changed();
-    this.mapCmp.map.render();
+    this.mapCmp.map.once('rendercomplete', () => {
+      setTimeout(() => {
+        console.log('redraw');
+        this._customPoiSource.clear();
+        this._points.forEach((point, index) => {
+          try {
+            if (this._points.length === 1 || index != this._points.length - 1) {
+              const startFeature = createIconFeatureFromHtml(startIconHtml, point);
+              this._customPoiSource.addFeature(startFeature);
+            } else {
+              const endFeature = createIconFeatureFromHtml(endIconHtml, point);
+              this._customPoiSource.addFeature(endFeature);
+            }
+          } catch (_) {}
+        });
+      }, 300);
+    });
   }
 
   /**
@@ -313,18 +324,17 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    * @memberof wmMapCustomTrackDrawTrackDirective
    */
   private _updateTrack(): void {
-    let feature: Feature = new GeoJSON({
-      featureProjection: 'EPSG:3857',
-    }).readFeatures(this._customTrack)[0];
+    this.mapCmp.map.once('rendercomplete', () => {
+      let feature: Feature = new GeoJSON({
+        featureProjection: 'EPSG:3857',
+      }).readFeatures(this._customTrack)[0];
 
-    feature.setId(RECORD_TRACK_ID);
-    if (this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID))
-      this._customTrackLayer
-        .getSource()
-        .removeFeature(this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID));
-    this._customTrackLayer.getSource().addFeature(feature);
-    this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID).changed();
-    this._customTrackLayer.changed();
-    this.mapCmp.map.render();
+      feature.setId(RECORD_TRACK_ID);
+      if (this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID))
+        this._customTrackLayer
+          .getSource()
+          .removeFeature(this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID));
+      this._customTrackLayer.getSource().addFeature(feature);
+    });
   }
 }

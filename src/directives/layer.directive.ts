@@ -135,39 +135,47 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       )
       .subscribe(() => {
         this.mapCmp.map.once('precompose', () => {
-          this._initLayer(this.wmMapConf);
+          if (this._disabled === false) {
+            this._initLayer(this.wmMapConf);
+          }
         });
         this.mapCmp.map.on('moveend', () => {
-          this._resolutionLayerSwitcher();
+          if (this._disabled === false) {
+            this._resolutionLayerSwitcher();
+          }
         });
         this.mapCmp.map.on('movestart', () => {
-          this._resolutionLayerSwitcher();
+          if (this._disabled === false) {
+            this._resolutionLayerSwitcher();
+          }
         });
         this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          try {
-            this.mapCmp.map.forEachFeatureAtPixel(
-              evt.pixel,
-              function (clickedFeature) {
-                const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-                const clickedLayerId =
-                  JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-                if (
-                  clickedFeatureId > -1 &&
-                  this._highVectorTileLayer.getOpacity() === 1 &&
-                  clickedFeature.getType() != null
-                ) {
-                  this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                  const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+          if (this._disabled === false) {
+            try {
+              this.mapCmp.map.forEachFeatureAtPixel(
+                evt.pixel,
+                function (clickedFeature) {
+                  const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+                  const clickedLayerId =
+                    JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+                  if (
+                    clickedFeatureId > -1 &&
+                    this._highVectorTileLayer.getOpacity() === 1 &&
+                    clickedFeature.getType() != null
+                  ) {
+                    this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                    const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
 
-                  this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-                }
-                return true;
-              }.bind(this),
-              {
-                hitTolerance: 100,
-              },
-            );
-          } catch (_) {}
+                    this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+                  }
+                  return true;
+                }.bind(this),
+                {
+                  hitTolerance: 100,
+                },
+              );
+            } catch (_) {}
+          }
         });
       });
   }
