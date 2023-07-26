@@ -33,7 +33,7 @@ import {
   removeFeatureFromLayer,
 } from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
+import {CLUSTER_ZINDEX, DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
 
 @Directive({
@@ -263,7 +263,7 @@ export class WmMapTrackRelatedPoisDirective
    * @param poiCollection - The collection of POIs to be added as markers.
    */
   private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
-    this._poisLayer = createLayer(this._poisLayer, FLAG_TRACK_ZINDEX);
+    this._poisLayer = createLayer(this._poisLayer, CLUSTER_ZINDEX);
     this.mapCmp.map.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
