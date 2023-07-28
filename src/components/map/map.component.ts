@@ -45,7 +45,6 @@ import {IMAP} from '../../types/model';
 })
 export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
-  private _debounceFitTimer = null;
   private _view: View;
 
   @Input() set wmMapCloseTopRightBtns(selector: string) {
@@ -111,20 +110,17 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
    * @returns {void}
    */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    if (optOptions == null) {
-      optOptions = {
-        duration: 500,
-      };
+    if (this.map != null) {
+      if (optOptions == null) {
+        optOptions = {
+          duration: 500,
+        };
+      }
+      this.map.once('rendercomplete', () => {
+        this._view.fit(geometryOrExtent, optOptions);
+      });
     }
-    if (this._debounceFitTimer !== null) {
-      clearTimeout(this._debounceFitTimer);
-    }
-    this._debounceFitTimer = setTimeout(() => {
-      this._view.fit(geometryOrExtent, optOptions);
-      this._debounceFitTimer = null;
-    }, 500);
   }
-
   /**
    * @description
    * Executes initialization of the map after view initialization.
