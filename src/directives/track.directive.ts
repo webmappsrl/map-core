@@ -32,15 +32,11 @@ import {
   getLineStyle,
 } from '../../src/utils';
 import {getFlowPopoverText} from '../../src/utils/popover';
-import {
-  FLAG_TRACK_ZINDEX,
-  POINTER_TRACK_ZINDEX,
-  SELECTED_TRACK_ZINDEX,
-  endIconHtml,
-  startIconHtml,
-} from '../readonly';
+import {TRACK_DIRECTIVE_ZINDEX, endIconHtml, startIconHtml} from '../readonly';
 import {Location} from '../types/location';
 import {ILineString} from '../types/model';
+const POINTER_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 1;
+const FLAG_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 2;
 
 @Directive({
   selector: '[wmMapTrack]',
@@ -107,7 +103,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle(this.wmMapTrackColor),
       updateWhileAnimating: true,
       updateWhileInteracting: true,
-      zIndex: SELECTED_TRACK_ZINDEX,
+      zIndex: TRACK_DIRECTIVE_ZINDEX,
     });
 
     this.mapCmp.map.addLayer(this._trackLayer);

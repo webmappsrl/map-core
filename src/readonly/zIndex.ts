@@ -6,3 +6,5 @@ export const FEATURE_COLLECTION_ZINDEX = 480;
 export const POINTER_TRACK_ZINDEX = 480;
 export const FLAG_TRACK_ZINDEX = 470;
 export const ALERT_POI_RADIUS = 100;
+
+export const TRACK_DIRECTIVE_ZINDEX = 495;
