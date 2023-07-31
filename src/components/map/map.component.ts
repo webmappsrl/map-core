@@ -116,11 +116,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
           duration: 500,
         };
       }
-      this.map.once('rendercomplete', () => {
-        this._view.fit(geometryOrExtent, optOptions);
-      });
+
+      this._view.fit(geometryOrExtent, optOptions);
+      this.map.on('rendercomplete', () => {});
     }
   }
+
   /**
    * @description
    * Executes initialization of the map after view initialization.
@@ -236,11 +237,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       showFullExtent: true,
     });
 
-    if (conf.bbox) {
-      this.fitView(this._centerExtent, {
-        maxZoom: conf.defZoom,
-      });
-    }
     if (conf.controls.tiles) {
       const confTiles = conf.controls.tiles;
       this.tileLayers = buildTileLayers(confTiles);
@@ -269,6 +265,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
     this.map$.next(this.map);
     this._view.setZoom(conf.defZoom);
+    if (conf.bbox) {
+      this._view.fit(this._centerExtent, {
+        maxZoom: conf.defZoom,
+      });
+    }
     this.map.updateSize();
     this.isInit$.next(true);
   }
