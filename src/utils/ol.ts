@@ -314,6 +314,24 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
   return feature;
 }
 
+export function createIconFeatureFromSrc(src: string, position: Coordinate): Feature<Point> {
+  const feature = new Feature({
+    geometry: new Point(fromLonLat(position)),
+  });
+  const style = new Style({
+    image: new Icon({
+      anchor: [0.5, 0.5],
+      src: src,
+      imgSize: [32, 32],
+      opacity: 1,
+      crossOrigin: 'anonymous',
+    }),
+    zIndex: 999999999,
+  });
+  feature.setStyle(style);
+
+  return feature;
+}
 /**
  * @description
  * Creates an OpenLayers Style object with an Icon created from an SVG string and a geometry.
