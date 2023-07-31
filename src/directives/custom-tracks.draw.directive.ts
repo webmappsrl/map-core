@@ -334,6 +334,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
           .getSource()
           .removeFeature(this._customTrackLayer.getSource().getFeatureById(RECORD_TRACK_ID));
       this._customTrackLayer.getSource().addFeature(feature);
+      this._customTrackLayer.getSource().changed();
     });
   }
 }
