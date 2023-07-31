@@ -75,7 +75,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this._lowVectorTileLayer.setVisible(!disable);
     }
   }
-  @Input() wmMapInputTyped: string;
 
   /**
    * @description
@@ -85,7 +84,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
-      this.fitViewFromLonLat(l.bbox);
+      this.fitViewFromLonLat(l.bbox,null,400);
     }
   }
 
@@ -109,6 +108,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._updateMap();
   }
 
+  @Input() wmMapInputTyped: string;
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
   /**
