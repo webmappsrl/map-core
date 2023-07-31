@@ -18,14 +18,11 @@ import {toLonLat} from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 
 import {filter, take} from 'rxjs/operators';
-import {createIconFeatureFromHtml} from '../../src/utils/ol';
+import {createIconFeatureFromSrc} from '../../src/utils/ol';
 import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
-import Stroke from 'ol/style/Stroke';
-import Fill from 'ol/style/Fill';
-import {endIconHtml, startIconHtml} from '../readonly';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
@@ -145,7 +142,9 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
       if (this._enabled$.value) {
         let featuresAvailableInClick = null;
         try {
-          featuresAvailableInClick = this.mapCmp.map.getFeaturesAtPixel(evt.pixel);
+          featuresAvailableInClick = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+            hitTolerance: 20,
+          });
         } catch (error) {}
         try {
           stopPropagation(evt);
@@ -301,10 +300,10 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         this._points.forEach((point, index) => {
           try {
             if (this._points.length === 1 || index != this._points.length - 1) {
-              const startFeature = createIconFeatureFromHtml(startIconHtml, point);
+              const startFeature = createIconFeatureFromSrc('assets/start-icon.svg', point);
               this._customPoiSource.addFeature(startFeature);
             } else {
-              const endFeature = createIconFeatureFromHtml(endIconHtml, point);
+              const endFeature = createIconFeatureFromSrc('assets/end-icon.svg', point);
               this._customPoiSource.addFeature(endFeature);
             }
           } catch (_) {}
