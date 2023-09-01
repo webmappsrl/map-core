@@ -467,17 +467,19 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
       zIndex: TRACK_ZINDEX + 1,
     }),
   ];
-  if (
-    this.conf.start_end_icons_show &&
-    this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
-  ) {
-    styles = [...styles, ...buildStartEndIcons(geometry)];
-  }
-  if (
-    this.conf.ref_on_track_show &&
-    this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
-  ) {
-    styles = [...styles, buildRefStyle.bind(this)(feature)];
+  if (strokeStyle.getColor() != 'rgba(0,0,0,0)') {
+    if (
+      this.conf.start_end_icons_show &&
+      this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
+    ) {
+      styles = [...styles, ...buildStartEndIcons(geometry)];
+    }
+    if (
+      this.conf.ref_on_track_show &&
+      this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
+    ) {
+      styles = [...styles, buildRefStyle.bind(this)(feature)];
+    }
   }
 
   return styles;
