@@ -775,7 +775,9 @@ export function initVectorTileLayer(
  * @param tiles An array of objects containing the tile name and URL.
  * @returns An array of TileLayers.
  */
-export function buildTileLayers(tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[]): TileLayer<XYZ>[] {
+export function buildTileLayers(
+  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[] | null,
+): TileLayer<XYZ>[] {
   /**
    * @description
    * Initialize the base source of the map
@@ -791,6 +793,17 @@ export function buildTileLayers(tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[]): Ti
       cacheSize: 50000,
     });
   };
+  if (tiles == null) {
+    return [
+      new TileLayer({
+        preload: Infinity,
+        source: initBaseSource(DEF_XYZ_URL),
+        visible: true,
+        zIndex: 0,
+        className: 'webmapp',
+      }),
+    ];
+  }
   const tilesMap = tiles
     .filter(tile => tile.type === 'button')
     .map((tile: ICONTROLSBUTTON, index) => {

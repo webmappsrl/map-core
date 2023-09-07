@@ -54,6 +54,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   @Input() set wmMapConf(conf: IMAP) {
     this.wmMapConf$.next(conf);
   }
+  @Input() wmMapOnly: boolean = false;
 
   @Input('wmMapFilters') filters: any;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
@@ -83,7 +84,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   tileLayers: TileLayer<XYZ>[] = [];
   wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  constructor() {}
+  constructor() {
+    this.wmMapTarget = `${this.wmMapTarget}-${this._generateUniqueId()}`;
+  }
 
   @Input() initBaseSource(tile: string): XYZ {
     if (tile === '') {
@@ -217,6 +220,15 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  private _disableInteractions(): Collection<Interaction> {
+    return defaultInteractions({
+      doubleClickZoom: false,
+      dragPan: false,
+      mouseWheelZoom: false,
+      pinchRotate: false,
+      altShiftDragRotate: false,
+    });
+  }
   /**
    * @description
    * Initializes the map with the given configuration object
@@ -237,23 +249,26 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       showFullExtent: true,
     });
 
-    if (conf.controls.tiles) {
-      const confTiles = conf.controls.tiles;
-      this.tileLayers = buildTileLayers(confTiles);
-    }
+    const confTiles = conf?.controls?.tiles || null;
+    this.tileLayers = buildTileLayers(confTiles);
     this.map = new Map({
       view: this._view,
       controls: defaultControls({
         rotate: false,
         attribution: false,
-      }).extend([
-        new ScaleLineControl({
-          units: scaleUnits,
-          minWidth: scaleMinWidth,
-          target: this.scaleLineContainer.nativeElement,
-        }),
-      ]),
-      interactions: this._initDefaultInteractions(),
+        zoom: !this.wmMapOnly,
+      }).extend(
+        this.wmMapOnly
+          ? []
+          : [
+              new ScaleLineControl({
+                units: scaleUnits,
+                minWidth: scaleMinWidth,
+                target: this.scaleLineContainer.nativeElement,
+              }),
+            ],
+      ),
+      interactions: this.wmMapOnly ? this._disableInteractions() : this._initDefaultInteractions(),
       layers: this.tileLayers,
       moveTolerance: 3,
       target: this.wmMapTarget,
@@ -299,5 +314,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
     this.mapDegrees = degree;
     this.map.updateSize();
+  }
+  private _generateUniqueId(): string {
+    const timestamp: number = new Date().getTime();
+    const random: number = Math.floor(Math.random() * 1000000);
+    const uniqueId: string = `${timestamp}${random}`;
+    return uniqueId;
   }
 }

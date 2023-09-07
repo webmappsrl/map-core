@@ -4,7 +4,6 @@ import {WmMapPopover} from './components/popover/popover.map';
 
 import {IonicModule} from '@ionic/angular';
 
-import {WmMapControls} from './components/controls/controls.map';
 import {WmMapComponent} from './components/map/map.component';
 import {WmMapSaveCustomTrackControls} from './components/save-custom-track/save-custom-track.map';
 import {
@@ -21,6 +20,7 @@ import {
   WmMapTrackRelatedPoisDirective,
 } from './directives';
 import {WmMapControlsModule} from './components/controls/controls.module';
+import {WmMapGeojsonDirective} from './directives/geojson.directive';
 
 const directives = [
   WmMapTrackDirective,
@@ -34,6 +34,7 @@ const directives = [
   WmMapOverlayDirective,
   WmMapPositionDirective,
   WmMapFeatureCollectionDirective,
+  WmMapGeojsonDirective,
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
