@@ -34,6 +34,34 @@ wm-map {
         margin: 0 0 16px 10px;
       }
     }
+    .bottom-center {
+      position: absolute;
+      right: 0;
+      left: 0;
+      bottom: 40px;
+      display: inline-flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-content: stretch;
+      align-items: center;
+      z-index: 2;
+      > * {
+        order: 0;
+        flex: 0 1 auto;
+        align-self: auto;
+        margin-bottom: 10px;
+      }
+      ion-fab {
+        position: relative;
+      }
+      ion-fab-button,
+      .wm-btn-track-recording {
+        height: 42px;
+        width: 42px;
+        margin: 0 0 16px 10px;
+      }
+    }
     .top-right {
       position: absolute;
       right: 22px;
