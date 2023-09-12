@@ -67,10 +67,19 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
       }
       this.mapCmp.map.addLayer(this._featureCollectionLayer);
       const extent = this._featureCollectionLayer.getSource().getExtent();
+      const newView = new View({
+        extent,
+        projection: 'EPSG:3857',
+        zoom: 12,
+        maxZoom: 17,
+        minZoom: 12,
+        constrainOnlyCenter: true,
+      });
+      this.mapCmp.map.setView(newView);
       this.mapCmp.map.getView().fit(extent, {
         duration: 0,
-        minResolution: 50,
         maxZoom: 17,
+        size: this.mapCmp.map.getSize(),
       });
       this._featureCollectionLayer.changed();
     }
