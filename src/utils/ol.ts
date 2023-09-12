@@ -1,4 +1,3 @@
-import {filter} from 'rxjs/operators';
 import {Feature, MapBrowserEvent} from 'ol';
 import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
@@ -30,7 +29,6 @@ import {
   CLUSTER_DISTANCE,
   DEF_MAP_CLUSTER_CLICK_TOLERANCE,
   DEF_XYZ_URL,
-  ICN_PATH,
 } from '../readonly/constants';
 import {Location} from '../types/location';
 import {loadFeaturesXhr} from './httpRequest';
@@ -791,6 +789,7 @@ export function buildTileLayers(
     return new XYZ({
       url: tile,
       cacheSize: 50000,
+      projection: 'EPSG:3857',
     });
   };
   if (tiles == null) {

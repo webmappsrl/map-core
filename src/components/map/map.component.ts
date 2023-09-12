@@ -47,15 +47,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _view: View;
 
-  @Input() set wmMapCloseTopRightBtns(selector: string) {
-    this.wmMapCloseTopRightBtnsEVT$.emit(selector);
-  }
-
-  @Input() set wmMapConf(conf: IMAP) {
-    this.wmMapConf$.next(conf);
-  }
-  @Input() wmMapOnly: boolean = false;
-
   @Input('wmMapFilters') filters: any;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
     if (value == null) return '';
@@ -66,14 +57,15 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       }
     }
   };
+  @Input() wmMapOnly: boolean = false;
   @Input() wmMapPadding: number[] | null;
-  @Input() wmMapTarget = 'ol-map';
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
   >();
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
+  @ViewChild('mapContainer') mapContainer: ElementRef;
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
   customTrackEnabled$: Observable<boolean>;
@@ -84,8 +76,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   tileLayers: TileLayer<XYZ>[] = [];
   wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  constructor() {
-    this.wmMapTarget = `${this.wmMapTarget}-${this._generateUniqueId()}`;
+  constructor() {}
+
+  @Input() set wmMapCloseTopRightBtns(selector: string) {
+    this.wmMapCloseTopRightBtnsEVT$.emit(selector);
+  }
+
+  @Input() set wmMapConf(conf: IMAP) {
+    this.wmMapConf$.next(conf);
   }
 
   @Input() initBaseSource(tile: string): XYZ {
@@ -121,7 +119,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       }
 
       this._view.fit(geometryOrExtent, optOptions);
-      this.map.on('rendercomplete', () => {});
     }
   }
 
@@ -200,8 +197,18 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
-  setOverlay(overlay: any | null) {
+  setOverlay(overlay: any | null): void {
     this.wmMapOverlayEVT$.emit(overlay);
+  }
+
+  private _disableInteractions(): Collection<Interaction> {
+    return defaultInteractions({
+      doubleClickZoom: false,
+      dragPan: false,
+      mouseWheelZoom: false,
+      pinchRotate: false,
+      altShiftDragRotate: false,
+    });
   }
 
   /**
@@ -220,15 +227,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
-  private _disableInteractions(): Collection<Interaction> {
-    return defaultInteractions({
-      doubleClickZoom: false,
-      dragPan: false,
-      mouseWheelZoom: false,
-      pinchRotate: false,
-      altShiftDragRotate: false,
-    });
-  }
   /**
    * @description
    * Initializes the map with the given configuration object
@@ -271,7 +269,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       interactions: this.wmMapOnly ? this._disableInteractions() : this._initDefaultInteractions(),
       layers: this.tileLayers,
       moveTolerance: 3,
-      target: this.wmMapTarget,
+      target: this.mapContainer.nativeElement,
     });
 
     this.map.on('postrender', () => {
@@ -285,6 +283,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         maxZoom: conf.defZoom,
       });
     }
+    this.map.updateSize();
+    this.map.render();
+    this.map.changed();
     this.map.updateSize();
     this.isInit$.next(true);
   }
@@ -314,11 +315,5 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
     this.mapDegrees = degree;
     this.map.updateSize();
-  }
-  private _generateUniqueId(): string {
-    const timestamp: number = new Date().getTime();
-    const random: number = Math.floor(Math.random() * 1000000);
-    const uniqueId: string = `${timestamp}${random}`;
-    return uniqueId;
   }
 }

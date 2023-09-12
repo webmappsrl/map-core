@@ -1,4 +1,4 @@
-import {Directive, Host, Input, OnDestroy} from '@angular/core';
+import {Directive, Host, Input} from '@angular/core';
 import {filter, take} from 'rxjs/operators';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
@@ -12,41 +12,23 @@ import {Icon, Style} from 'ol/style';
 @Directive({
   selector: '[wmMapGeojson]',
 })
-export class WmMapGeojsonDirective extends WmMapBaseDirective implements OnDestroy {
+export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
+  }
+
+  @Input('wmMapGeojson') set geojson(geojson: any) {
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
         take(1),
       )
       .subscribe(() => {
-        this.mapCmp.map.once('precompose', () => {
-          if (this._featureCollectionLayer != null) {
-            const extent = this._featureCollectionLayer.getSource().getExtent();
-            this.mapCmp.map.addLayer(this._featureCollectionLayer);
-            this.mapCmp.map.setView(
-              new View({
-                center: extent,
-                zoom: 15,
-                padding: [80, 80, 80, 80],
-                projection: 'EPSG:3857',
-                constrainOnlyCenter: true,
-              }),
-            );
-            this.mapCmp.map.updateSize();
-          }
-        });
+        this._buildGeojson(this._getFeatureCollection(geojson));
       });
   }
-
-  @Input('wmMapGeojson') set geojson(geojson: any) {
-    this._buildGeojson(this._getFeatureCollection(geojson));
-  }
-
-  ngOnDestroy(): void {}
 
   private _buildGeojson(geojson: any): void {
     if (geojson != null) {
@@ -83,7 +65,13 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective implements OnDestr
         this._featureCollectionLayer.getSource().clear();
         this._featureCollectionLayer.getSource().addFeatures(features);
       }
-
+      this.mapCmp.map.addLayer(this._featureCollectionLayer);
+      const extent = this._featureCollectionLayer.getSource().getExtent();
+      this.mapCmp.map.getView().fit(extent, {
+        duration: 0,
+        minResolution: 50,
+        maxZoom: 17,
+      });
       this._featureCollectionLayer.changed();
     }
   }
