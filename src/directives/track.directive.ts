@@ -35,6 +35,7 @@ import {getFlowPopoverText} from '../../src/utils/popover';
 import {TRACK_DIRECTIVE_ZINDEX, endIconHtml, startIconHtml} from '../readonly';
 import {Location} from '../types/location';
 import {ILineString} from '../types/model';
+import {filter, take} from 'rxjs/operators';
 const POINTER_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 1;
 const FLAG_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 2;
 
@@ -121,46 +122,61 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * @returns void
    */
   ngOnChanges(changes: SimpleChanges): void {
-    const resetCondition =
-      (changes.track &&
-        changes.track.previousValue != null &&
-        changes.track.currentValue != null &&
-        changes.track.previousValue.properties.id != changes.track.currentValue.properties.id) ??
-      false;
-    if (this.track == null || this.mapCmp.map == null || resetCondition) {
-      this._resetView();
-      this._initTrack = false;
-    }
-    if (
-      this.wmMapConf != null &&
-      this.track != null &&
-      this.mapCmp.map != null &&
-      this._initTrack === false
-    ) {
-      this._init();
-      this._initTrack = true;
-    }
-    if (this.track != null && this.mapCmp.map != null && this.trackElevationChartElements != null) {
-      if (this._popoverRef != null) {
-        const altitude = this.trackElevationChartElements?.location?.altitude || undefined;
-        this._popoverRef.instance.message$.next(
-          getFlowPopoverText(
-            altitude,
-            this.wmMapConf.flow_line_quote_orange,
-            this.wmMapConf.flow_line_quote_red,
-          ),
-        );
-      }
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f),
+        take(1),
+      )
+      .subscribe(() => {
+        if (changes.track.currentValue != null) {
+          this.track = changes.track.currentValue;
+        }
+        const resetCondition =
+          (changes.track &&
+            changes.track.previousValue != null &&
+            changes.track.currentValue != null &&
+            changes.track.previousValue.properties.id !=
+              changes.track.currentValue.properties.id) ??
+          false;
+        if (this.track == null || this.mapCmp.map == null || resetCondition) {
+          this._resetView();
+          this._initTrack = false;
+        }
+        if (
+          this.wmMapConf != null &&
+          this.track != null &&
+          this.mapCmp.map != null &&
+          this._initTrack === false
+        ) {
+          this._init();
+          this._initTrack = true;
+        }
+        if (
+          this.track != null &&
+          this.mapCmp.map != null &&
+          this.trackElevationChartElements != null
+        ) {
+          if (this._popoverRef != null) {
+            const altitude = this.trackElevationChartElements?.location?.altitude || undefined;
+            this._popoverRef.instance.message$.next(
+              getFlowPopoverText(
+                altitude,
+                this.wmMapConf.flow_line_quote_orange,
+                this.wmMapConf.flow_line_quote_red,
+              ),
+            );
+          }
 
-      this._drawTemporaryLocationFeature(
-        this.trackElevationChartElements?.location,
-        this.trackElevationChartElements?.track,
-      );
-    }
-    if (changes.wmMapTrackColor != null && changes.wmMapTrackColor.firstChange === false) {
-      this._trackLayer?.setStyle(getLineStyle(this.wmMapTrackColor));
-      this._trackLayer?.changed();
-    }
+          this._drawTemporaryLocationFeature(
+            this.trackElevationChartElements?.location,
+            this.trackElevationChartElements?.track,
+          );
+        }
+        if (changes.wmMapTrackColor != null && changes.wmMapTrackColor.firstChange === false) {
+          this._trackLayer?.setStyle(getLineStyle(this.wmMapTrackColor));
+          this._trackLayer?.changed();
+        }
+      });
   }
 
   /**
