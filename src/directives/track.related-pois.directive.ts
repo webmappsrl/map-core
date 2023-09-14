@@ -35,6 +35,7 @@ import {
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
+import {FeatureCollection} from 'geojson';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -51,6 +52,7 @@ export class WmMapTrackRelatedPoisDirective
   private _relatedPois: IGeojsonFeature[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
+  private _iconList: {[identifier: string]: string} = {};
 
   /**
    * @description
@@ -63,7 +65,20 @@ export class WmMapTrackRelatedPoisDirective
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
     }
   }
-
+  @Input() set wmMapPoisPois(pois: FeatureCollection) {
+    if (pois != null) {
+      pois.features.forEach(feature => {
+        if (feature.properties.svgIcon != null) {
+          const poiIdentifiers = feature.properties.taxonomyIdentifiers.filter(
+            t => t.indexOf('poi_type') > -1,
+          );
+          poiIdentifiers.forEach(poiIdentiufier => {
+            this._iconList[poiIdentiufier] = feature.properties.svgIcon;
+          });
+        }
+      });
+    }
+  }
   /**
    * @description
    * Setter for the 'setPoi' input.
@@ -349,6 +364,10 @@ export class WmMapTrackRelatedPoisDirective
     selected = false,
   ): Promise<{marker: PoiMarker; style: Style}> {
     const img = await this._createPoiCavasImage(poi, selected);
+    const poiTaxonomies: string[] =
+      poi && poi.properties && poi.properties.taxonomyIdentifiers
+        ? poi.properties.taxonomyIdentifiers.filter(p => p.indexOf('poi_type') > -1)
+        : [];
     const {iconFeature, style} = await this._createIconFeature(
       geometry
         ? geometry
@@ -357,6 +376,21 @@ export class WmMapTrackRelatedPoisDirective
       46,
     );
     iconFeature.setId(poi.properties.id);
+    if (poiTaxonomies.length === 1 && this._iconList[poiTaxonomies[0]] != null) {
+      const svgIcon = this._iconList[poiTaxonomies[0]] as any;
+      iconFeature.setStyle(
+        new Style({
+          zIndex: 200,
+
+          image: new Icon({
+            anchor: [0.5, 0.5],
+            scale: 1,
+            src: `data:image/svg+xml;utf8,${svgIcon}`,
+          }),
+        }),
+      );
+    }
+
     return {
       marker: {
         poi,
