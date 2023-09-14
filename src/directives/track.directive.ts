@@ -70,48 +70,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   /**
    * @description
-   * This function draws a track on the map.
-   * The function reads the trackgeojson data and converts it to a feature vector,
-   * which is then added as a layer to the map. The style of the layer is determined
-   * by the value of isFlowLine configuration parameter. If isFlowLine is true, the
-   * track is drawn as a FlowLine, otherwise it is drawn as a simple LineString. If the
-   * track is drawn as a FlowLine, the orangeTreshold and redTreshold configuration
-   * parameters are used to determine the style of the line. The function also
-   * initializes a popover if isFlowLine is true.
-   *
-   * @param trackgeojson The track to be drawn on the map in GeoJSON format.
-   * @returns void
-   *
-   */
-  drawTrack(trackgeojson: any): void {
-    const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
-    const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
-    const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
-    const geojson: any = this._getGeoJson(trackgeojson);
-
-    if (isFlowLine) {
-      this._initPopover();
-    }
-    this._trackFeatures = new GeoJSON({
-      featureProjection: 'EPSG:3857',
-    }).readFeatures(geojson);
-    this._trackLayer = new VectorLayer({
-      source: new VectorSource({
-        format: new GeoJSON(),
-        features: this._trackFeatures,
-      }),
-      style: () =>
-        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle(this.wmMapTrackColor),
-      updateWhileAnimating: true,
-      updateWhileInteracting: true,
-      zIndex: TRACK_DIRECTIVE_ZINDEX,
-    });
-
-    this.mapCmp.map.addLayer(this._trackLayer);
-  }
-
-  /**
-   * @description
    * Method that handles changes in input properties.
    * If the track, map or configuration have not been set yet, it does nothing.
    * If the track or configuration have been set and the map is initialized, it initializes the track.
@@ -128,7 +86,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         take(1),
       )
       .subscribe(() => {
-        if (changes.track.currentValue != null) {
+        if (changes.track && changes?.track.currentValue != null) {
           this.track = changes.track.currentValue;
         }
         const resetCondition =
@@ -177,6 +135,48 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
           this._trackLayer?.changed();
         }
       });
+  }
+
+  /**
+   * @description
+   * This function draws a track on the map.
+   * The function reads the trackgeojson data and converts it to a feature vector,
+   * which is then added as a layer to the map. The style of the layer is determined
+   * by the value of isFlowLine configuration parameter. If isFlowLine is true, the
+   * track is drawn as a FlowLine, otherwise it is drawn as a simple LineString. If the
+   * track is drawn as a FlowLine, the orangeTreshold and redTreshold configuration
+   * parameters are used to determine the style of the line. The function also
+   * initializes a popover if isFlowLine is true.
+   *
+   * @param trackgeojson The track to be drawn on the map in GeoJSON format.
+   * @returns void
+   *
+   */
+  drawTrack(trackgeojson: any): void {
+    const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
+    const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
+    const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
+    const geojson: any = this._getGeoJson(trackgeojson);
+
+    if (isFlowLine) {
+      this._initPopover();
+    }
+    this._trackFeatures = new GeoJSON({
+      featureProjection: 'EPSG:3857',
+    }).readFeatures(geojson);
+    this._trackLayer = new VectorLayer({
+      source: new VectorSource({
+        format: new GeoJSON(),
+        features: this._trackFeatures,
+      }),
+      style: () =>
+        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle(this.wmMapTrackColor),
+      updateWhileAnimating: true,
+      updateWhileInteracting: true,
+      zIndex: TRACK_DIRECTIVE_ZINDEX,
+    });
+
+    this.mapCmp.map.addLayer(this._trackLayer);
   }
 
   /**
