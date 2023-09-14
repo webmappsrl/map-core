@@ -36,6 +36,7 @@ const TRESHOLD_ENABLE_FIT = 4;
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {
+  private _currentLayer: ILAYER;
   private _disabled = false;
   private _hullClusterLayer: VectorLayer<Cluster>;
   private _olFeatures = [];
@@ -44,20 +45,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectCluster: any;
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
-  private _currentLayer: ILAYER;
-
-  @Input() set wmMapLayerLayer(l: ILAYER) {
-    this._currentLayer = l;
-  }
-
-  @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
-    this._disabled = disabled;
-    this._poisClusterLayer?.setVisible(!disabled);
-  }
-
-  @Input() set wmMapPoisPois(pois: any) {
-    this._wmMapPoisPois.next(pois);
-  }
 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapInputTyped: string;
@@ -86,6 +73,19 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             });
         });
       });
+  }
+
+  @Input() set wmMapLayerLayer(l: ILAYER) {
+    this._currentLayer = l;
+  }
+
+  @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
+    this._disabled = disabled;
+    this._poisClusterLayer?.setVisible(!disabled);
+  }
+
+  @Input() set wmMapPoisPois(pois: any) {
+    this._wmMapPoisPois.next(pois);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -533,7 +533,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           this._popupOverlay.show(coordinates, content);
           setTimeout(() => {
             this.mapCmp.map.updateSize();
-            this.mapCmp.map.setTarget('ol-map');
             this.mapCmp.map.changed();
             this._cdr.detectChanges();
           }, 500);
