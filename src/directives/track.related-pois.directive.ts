@@ -33,9 +33,8 @@ import {
   removeFeatureFromLayer,
 } from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {CLUSTER_ZINDEX, DEF_LINE_COLOR, FLAG_TRACK_ZINDEX, logoBase64} from '../readonly';
+import {CLUSTER_ZINDEX, DEF_LINE_COLOR, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
-import {FeatureCollection} from 'geojson';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -47,12 +46,12 @@ export class WmMapTrackRelatedPoisDirective
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
   private _onClickSub: Subscription = Subscription.EMPTY;
+  private _poiIcons: {[identifier: string]: string} = {};
   private _poiMarkers: PoiMarker[] = [];
   private _poisLayer: VectorLayer<VectorSource>;
   private _relatedPois: IGeojsonFeature[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
-  private _iconList: {[identifier: string]: string} = {};
 
   /**
    * @description
@@ -65,20 +64,7 @@ export class WmMapTrackRelatedPoisDirective
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
     }
   }
-  @Input() set wmMapPoisPois(pois: FeatureCollection) {
-    if (pois != null) {
-      pois.features.forEach(feature => {
-        if (feature.properties.svgIcon != null) {
-          const poiIdentifiers = feature.properties.taxonomyIdentifiers.filter(
-            t => t.indexOf('poi_type') > -1,
-          );
-          poiIdentifiers.forEach(poiIdentiufier => {
-            this._iconList[poiIdentiufier] = feature.properties.svgIcon;
-          });
-        }
-      });
-    }
-  }
+
   /**
    * @description
    * Setter for the 'setPoi' input.
@@ -101,6 +87,10 @@ export class WmMapTrackRelatedPoisDirective
         this.relatedPoiEvt.next(this.currentRelatedPoi$.value);
       }
     }
+  }
+
+  @Input() set wmTrackRelatedPoiIcons(poiIcons: {[identifier: string]: string}) {
+    this._poiIcons = poiIcons;
   }
 
   /**
@@ -376,8 +366,14 @@ export class WmMapTrackRelatedPoisDirective
       46,
     );
     iconFeature.setId(poi.properties.id);
-    if (poiTaxonomies.length === 1 && this._iconList[poiTaxonomies[0]] != null) {
-      const svgIcon = this._iconList[poiTaxonomies[0]] as any;
+    if (poiTaxonomies.length === 1 && this._poiIcons[poiTaxonomies[0]] != null) {
+      let svgIcon = this._poiIcons[poiTaxonomies[0]] as string;
+      if (selected) {
+        svgIcon = svgIcon
+          .replace('darkorange', 'temp')
+          .replace('white', 'darkorange')
+          .replace('temp', 'white');
+      }
       iconFeature.setStyle(
         new Style({
           zIndex: 200,
