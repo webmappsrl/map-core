@@ -20,7 +20,7 @@ import VectorSource from 'ol/source/Vector';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 import {FitOptions} from 'ol/View';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, from} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
 import {clearLayer, createCluster, createHull, createLayer} from '../../src/utils';
@@ -350,71 +350,82 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @memberof WmMapPoisDirective
    */
   private _initDirective(): void {
-    this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
-    this._poisClusterLayer = createCluster(this._poisClusterLayer, CLUSTER_ZINDEX);
-    const clusterSource: Cluster = this._poisClusterLayer.getSource();
-    this._hullClusterLayer = new VectorLayer({
-      style: clusterHullStyle,
-      source: clusterSource,
-    });
-    this._selectCluster = createHull();
-    this.mapCmp.map.addInteraction(this._selectCluster);
-    this._popupOverlay = new Popup({
-      popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
-      closeBox: true,
-      offset: [0, -16],
-      positioning: 'bottom-center',
-      onclose: () => {
-        clearLayer(this._selectedPoiLayer);
-      },
-      autoPan: {
-        animation: {
-          duration: 100,
-        },
-      },
-    });
-    this._checkZoom(this._poisClusterLayer);
-    this.mapCmp.map.addLayer(this._poisClusterLayer);
-    this.mapCmp.map.addLayer(this._hullClusterLayer);
-    this.mapCmp.map.addLayer(this._selectedPoiLayer);
-    this.mapCmp.map.addOverlay(this._popupOverlay);
+    from(
+      this._loadingCtrl.create({
+        message: 'Rendering pois...',
+      }),
+    )
+      .pipe(take(1))
+      .subscribe(loading => {
+        loading.present();
+        this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
+        this._poisClusterLayer = createCluster(this._poisClusterLayer, CLUSTER_ZINDEX);
+        const clusterSource: Cluster = this._poisClusterLayer.getSource();
+        this._hullClusterLayer = new VectorLayer({
+          style: clusterHullStyle,
+          source: clusterSource,
+        });
+        this._selectCluster = createHull();
+        this.mapCmp.map.addInteraction(this._selectCluster);
+        this._popupOverlay = new Popup({
+          popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
+          closeBox: true,
+          offset: [0, -16],
+          positioning: 'bottom-center',
+          onclose: () => {
+            clearLayer(this._selectedPoiLayer);
+          },
+          autoPan: {
+            animation: {
+              duration: 100,
+            },
+          },
+        });
+        this._checkZoom(this._poisClusterLayer);
+        this.mapCmp.map.addLayer(this._poisClusterLayer);
+        this.mapCmp.map.addLayer(this._hullClusterLayer);
+        this.mapCmp.map.addLayer(this._selectedPoiLayer);
+        this.mapCmp.map.addOverlay(this._popupOverlay);
 
-    this._selectCluster.getFeatures().on(['add'], e => {
-      var c = e.element.get('features');
-      if (c != null && c.length === 1) {
-        const poi = c[0].getProperties();
-        this._selectIcon(poi);
-      }
-    });
-
-    this.mapCmp.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
-      this._poisClusterLayer.getFeatures(event.pixel).then(features => {
-        if (features.length > 0) {
-          const clusterMembers = features[0].get('features');
-          if (clusterMembers.length > 4) {
-            setTimeout(() => {
-              // Zoom to the extent of the cluster members.
-              const view = this.mapCmp.map.getView();
-              const extent = createEmpty();
-              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
-              view.fit(extent, {duration: 500, padding: PADDING});
-            }, 400);
-          }
-          if (clusterMembers.length === 1) {
-            const poi = clusterMembers[0].getProperties();
+        this._selectCluster.getFeatures().on(['add'], e => {
+          var c = e.element.get('features');
+          if (c != null && c.length === 1) {
+            const poi = c[0].getProperties();
             this._selectIcon(poi);
           }
-        }
-      });
-    });
-    this.mapCmp.map.once('rendercomplete', () => {
-      setTimeout(() => {
-        this._updatePois();
-        this._poisClusterLayer.once('postrender', () => {
-          this._loadingCtrl.dismiss('pois');
         });
-      }, 500);
-    });
+
+        this.mapCmp.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
+          this._poisClusterLayer.getFeatures(event.pixel).then(features => {
+            if (features.length > 0) {
+              const clusterMembers = features[0].get('features');
+              if (clusterMembers.length > 4) {
+                setTimeout(() => {
+                  // Zoom to the extent of the cluster members.
+                  const view = this.mapCmp.map.getView();
+                  const extent = createEmpty();
+                  clusterMembers.forEach(feature =>
+                    extend(extent, feature.getGeometry().getExtent()),
+                  );
+                  view.fit(extent, {duration: 500, padding: PADDING});
+                }, 400);
+              }
+              if (clusterMembers.length === 1) {
+                const poi = clusterMembers[0].getProperties();
+                this._selectIcon(poi);
+              }
+            }
+          });
+        });
+        this.mapCmp.map.once('rendercomplete', () => {
+          setTimeout(() => {
+            this._updatePois();
+            this._poisClusterLayer.once('postrender', () => {
+              loading.dismiss();
+            });
+          }, 500);
+        });
+      });
   }
 
   private _isArrayContained(needle: any[], haystack: any[]): boolean {
