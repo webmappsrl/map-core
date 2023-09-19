@@ -352,7 +352,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _initDirective(): void {
     from(
       this._loadingCtrl.create({
-        message: 'Rendering pois...',
+        message: 'Rendering...',
       }),
     )
       .pipe(take(1))
@@ -423,6 +423,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             this._poisClusterLayer.once('postrender', () => {
               loading.dismiss();
             });
+            if (this._olFeatures.length === 0) {
+              loading.dismiss();
+            }
           }, 500);
         });
       });
