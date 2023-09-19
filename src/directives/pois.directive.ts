@@ -29,6 +29,7 @@ import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {ILAYER} from '../types/layer';
+import {LoadingController} from '@ionic/angular';
 
 const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 4;
@@ -68,7 +69,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() wmMapPoisPoi: number | 'reset';
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
+  constructor(
+    private _cdr: ChangeDetectorRef,
+    @Host() mapCmp: WmMapComponent,
+    private _loadingCtrl: LoadingController,
+  ) {
     super(mapCmp);
     this.mapCmp.isInit$
       .pipe(
@@ -405,6 +410,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.once('rendercomplete', () => {
       setTimeout(() => {
         this._updatePois();
+        this._poisClusterLayer.once('postrender', () => {
+          this._loadingCtrl.dismiss('pois');
+        });
       }, 500);
     });
   }
