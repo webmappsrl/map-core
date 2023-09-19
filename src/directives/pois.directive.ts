@@ -46,6 +46,22 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
+  @Input() set wmMapLayerLayer(l: ILAYER) {
+    this._currentLayer = l;
+  }
+
+  @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
+    this._disabled = disabled;
+    this._poisClusterLayer?.setVisible(!disabled);
+  }
+
+  @Input() set wmMapPoisPois(pois: any) {
+    if (this._popupOverlay != null) {
+      this._popupOverlay.hide();
+    }
+    this._wmMapPoisPois.next(pois);
+  }
+
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapInputTyped: string;
   @Input() wmMapPoisFilters: any[] = [];
@@ -73,19 +89,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             });
         });
       });
-  }
-
-  @Input() set wmMapLayerLayer(l: ILAYER) {
-    this._currentLayer = l;
-  }
-
-  @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
-    this._disabled = disabled;
-    this._poisClusterLayer?.setVisible(!disabled);
-  }
-
-  @Input() set wmMapPoisPois(pois: any) {
-    this._wmMapPoisPois.next(pois);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
