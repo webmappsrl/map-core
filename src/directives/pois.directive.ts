@@ -60,9 +60,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       this._popupOverlay.hide();
     }
     this._wmMapPoisPois.next(pois);
-    if (pois != null) {
-      this.wmMapPoiStateEvt.emit('rendering:start');
-    }
   }
 
   @Input() WmMapPoisUnselectPoi: boolean;
@@ -81,6 +78,14 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       )
       .subscribe(() => {
         this._initDirective();
+        this._wmMapPoisPois
+          .pipe(
+            filter(f => f != null),
+            take(1),
+          )
+          .subscribe(_ => {
+            this.wmMapPoiStateEvt.emit('rendering:start');
+          });
         this.mapCmp.map.once('rendercomplete', () => {
           this._wmMapPoisPois
             .pipe(
@@ -409,11 +414,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.once('rendercomplete', () => {
       setTimeout(() => {
         this._updatePois();
-        this._poisClusterLayer.once('postrender', () => {
-          this.wmMapPoiStateEvt.emit('rendering:done');
-        });
         if (this._olFeatures.length === 0) {
           this.wmMapPoiStateEvt.emit('rendering:done');
+        } else {
+          this._poisClusterLayer.once('postrender', () => {
+            this.wmMapPoiStateEvt.emit('rendering:done');
+          });
         }
       }, 500);
     });
