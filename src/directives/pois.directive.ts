@@ -67,7 +67,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() wmMapPoisFilters: any[] = [];
   @Input() wmMapPoisPoi: number | 'reset';
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
-  @Output() wmMapPoiStateEvt: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -84,7 +83,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             take(1),
           )
           .subscribe(_ => {
-            this.wmMapPoiStateEvt.emit('rendering:start');
+            this.wmMapStateEvt.emit('rendering:pois_start');
           });
         this.mapCmp.map.once('rendercomplete', () => {
           this._wmMapPoisPois
@@ -412,16 +411,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       });
     });
     this.mapCmp.map.once('rendercomplete', () => {
-      setTimeout(() => {
-        this._updatePois();
-        if (this._olFeatures.length === 0) {
-          this.wmMapPoiStateEvt.emit('rendering:done');
-        } else {
-          this._poisClusterLayer.once('postrender', () => {
-            this.wmMapPoiStateEvt.emit('rendering:done');
-          });
-        }
-      }, 500);
+      this.wmMapStateEvt.emit('rendering:pois_done');
     });
   }
 

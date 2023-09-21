@@ -84,7 +84,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     if (l != null && l.bbox != null) {
-      this.fitViewFromLonLat(l.bbox,null,400);
+      this.fitViewFromLonLat(l.bbox, null);
     }
   }
 
@@ -197,13 +197,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initLayer(map: IMAP) {
+    this.wmMapStateEvt.emit('rendering:layer_start');
     this._initializeDataLayers(map);
     initInteractions().forEach(interaction => {
       this.mapCmp.map.addInteraction(interaction);
     });
     this._resolutionLayerSwitcher();
-
     this.mapCmp.map.updateSize();
+    this.wmMapStateEvt.emit('rendering:layer_done');
   }
 
   /**

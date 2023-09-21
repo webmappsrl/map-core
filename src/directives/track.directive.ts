@@ -187,15 +187,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._trackLayer) {
       const ext = this._trackLayer.getSource().getExtent();
       if (ext && this.mapCmp != null && this.mapCmp.map != null) {
-        this.mapCmp.map.once('rendercomplete', () => {
-          this.fitView(
-            ext,
-            {
-              padding: [80, 80, 80, 80],
-              duration: 500,
-            },
-            500,
-          );
+        this.fitView(ext, {
+          padding: [80, 80, 80, 80],
+          duration: 500,
         });
       }
     }

@@ -1,4 +1,4 @@
-import {Directive, Host, Input} from '@angular/core';
+import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 
 import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
@@ -12,10 +12,9 @@ import {IMAP} from '../types/model';
   selector: '[wmMapBase]',
 })
 export class WmMapBaseDirective {
-  static priority = 0;
-
   @Input() wmMapConf: IMAP;
   @Input() wmMapPadding: number[];
+  @Output() wmMapStateEvt: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(@Host() public mapCmp: WmMapComponent) {}
 
@@ -30,11 +29,7 @@ export class WmMapBaseDirective {
    * @param {FitOptions} [optOptions]
    * @memberof WmMapBaseDirective
    */
-  fitView(
-    geometryOrExtent: SimpleGeometry | Extent,
-    optOptions?: FitOptions,
-    priority?: number,
-  ): void {
+  fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (this.mapCmp.map != null) {
       const view = this.mapCmp.map.getView();
       if (view != null) {
@@ -44,14 +39,7 @@ export class WmMapBaseDirective {
             padding: this.wmMapPadding ?? undefined,
           };
         }
-        if (priority == null || (priority != null && priority >= WmMapBaseDirective.priority)) {
-          WmMapBaseDirective.priority = priority ?? 0;
-          this.mapCmp.map.once('rendercomplete', () => {
-            view.fit(geometryOrExtent as any, optOptions);
-          });
-        } else {
-          WmMapBaseDirective.priority = 0;
-        }
+        view.fit(geometryOrExtent as any, optOptions);
       }
     }
   }
@@ -68,11 +56,7 @@ export class WmMapBaseDirective {
    * @param {FitOptions} [optOptions]
    * @memberof WmMapBaseDirective
    */
-  fitViewFromLonLat(
-    geometryOrExtent: SimpleGeometry | Extent,
-    optOptions?: FitOptions,
-    priority?: number,
-  ): void {
+  fitViewFromLonLat(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (this.mapCmp.map != null) {
       const view = this.mapCmp.map.getView();
       if (view != null) {
@@ -84,12 +68,9 @@ export class WmMapBaseDirective {
           };
         }
 
-        if (priority == null || (priority != null && priority > WmMapBaseDirective.priority)) {
-          WmMapBaseDirective.priority = priority ?? 0;
-          this.mapCmp.map.once('rendercomplete', () => {
-            view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
-          });
-        }
+        this.mapCmp.map.once('rendercomplete', () => {
+          view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
+        });
       }
     }
   }
