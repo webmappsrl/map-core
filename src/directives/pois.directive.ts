@@ -123,6 +123,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     ) {
       this._updatePois();
     }
+    if (changes.wmMapLayerLayer && changes.wmMapLayerLayer.currentValue == undefined) {
+      this._popupOverlay && this._popupOverlay.hide();
+    }
   }
 
   /**
