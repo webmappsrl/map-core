@@ -1,15 +1,18 @@
-import {filter} from 'rxjs/operators';
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
-import {FeatureLike} from 'ol/Feature';
+import Feature, {FeatureLike} from 'ol/Feature';
 import {Point, Polygon} from 'ol/geom';
 import {Circle, Fill, RegularShape, Text} from 'ol/style';
 import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
-
-import {DEF_LINE_COLOR, TRACK_ZINDEX} from '../readonly';
+import GeoJSON from 'ol/format/GeoJSON';
+import {DEF_LINE_COLOR, ITINERARY_ZINDEX, TRACK_DIRECTIVE_ZINDEX, TRACK_ZINDEX} from '../readonly';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {ILAYER} from '../types/layer';
-import {intersectionBetweenArrays} from './ol';
+export var animatedLayer = null;
+export var currentTrackID = null;
 
 /**
  * @description
@@ -148,7 +151,6 @@ export function getLineStyle(color?: string): Style[] {
   const strokeOpacity: number = 1;
   const lineDash: Array<number> = [];
   const lineCap: CanvasLineCap = 'round';
-  const zIndex: number = 50;
 
   if (!color) color = '255, 177, 0';
   if (color[0] === '#') {
@@ -167,7 +169,7 @@ export function getLineStyle(color?: string): Style[] {
         color: 'rgba(255, 255, 255, 0.9)',
         width: strokeWidth * 2,
       }),
-      zIndex: zIndex + 1,
+      zIndex: TRACK_DIRECTIVE_ZINDEX + 1,
     }),
   );
 
@@ -179,7 +181,7 @@ export function getLineStyle(color?: string): Style[] {
         lineDash,
         lineCap,
       }),
-      zIndex: zIndex + 2,
+      zIndex: TRACK_DIRECTIVE_ZINDEX + 2,
     }),
   );
 
@@ -395,8 +397,10 @@ export function clusterHullStyle(cluster) {
  * const feature = new Feature(new LineString([[0, 0], [1, 1], [2, 0]]));
  * const styles = styleCoreFn(feature);
  */
-export function styleCoreFn(this: any, feature: FeatureLike) {
+export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean) {
   const properties = feature.getProperties();
+  let maxWidth = this.conf.maxStrokeWidth;
+  let minStrokeWidth = this.minStrokeWidth;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
   const featureStrokeColor =
@@ -404,13 +408,73 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
   let strokeStyle: StrokeStyle = new StrokeStyle();
   if (featureStrokeColor != null) {
     strokeStyle.setColor(featureStrokeColor);
-  } else if (this.currentLayer != null) {
+  }
+  if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
       strokeStyle.setColor(color);
     } else {
       strokeStyle.setColor('rgba(0,0,0,0)');
+    }
+    if (
+      routing &&
+      this.currentLayer != null &&
+      this.currentLayer.edges != null &&
+      this.currentTrack != null
+    ) {
+      minStrokeWidth += 10;
+      maxWidth = 40;
+
+      if (animatedLayer == null) {
+        animatedLayer = new VectorLayer({
+          source: new VectorSource({
+            format: new GeoJSON(),
+          }),
+          zIndex: ITINERARY_ZINDEX,
+          updateWhileAnimating: true,
+          updateWhileInteracting: true,
+        });
+        this.map.addLayer(animatedLayer);
+      }
+      const edges = this.currentLayer.edges;
+      const currentTrackOfLayer = properties.id;
+      if (currentTrackID != this.currentTrack.properties.id) {
+        currentTrackID = this.currentTrack.properties.id;
+        if (animatedLayer != null) {
+          animatedLayer.getSource().clear();
+        }
+      }
+      if (edges[currentTrackID] != null) {
+        const edgesOfCurrentTrack = edges[currentTrackID];
+        const nextIndex = edgesOfCurrentTrack.next.indexOf(currentTrackOfLayer);
+        if (nextIndex > -1) {
+          strokeStyle.setColor(nextColors[nextIndex]);
+          strokeStyle.setWidth(90000);
+          minStrokeWidth += 20;
+          animateFeatureFn(this, toFeature(feature), nextColors[nextIndex]);
+        }
+        const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
+        if (prevIndex > -1) {
+          strokeStyle.setColor(prevColors[prevIndex]);
+          minStrokeWidth += 20;
+          animateFeatureFn(this, toFeature(feature), prevColors[prevIndex], false);
+        }
+        if (currentTrackOfLayer === currentTrackID) {
+          strokeStyle.setColor('red');
+          strokeStyle.setLineCap('round');
+          strokeStyle.setLineDash([2, 7]);
+          strokeStyle.setLineDashOffset(10);
+          strokeStyle.setLineJoin('bevel');
+          strokeStyle.setWidth(90000);
+          minStrokeWidth += 40;
+        }
+      }
+    } else {
+      currentTrackID = null;
+      if (animatedLayer != null) {
+        animatedLayer.getSource().clear();
+      }
     }
   } else {
     const layerId = +layers[0];
@@ -455,7 +519,7 @@ export function styleCoreFn(this: any, feature: FeatureLike) {
     strokeStyle,
     minZoom: this.conf.minZoom,
     maxZoom: this.conf.maxZoom,
-    minStrokeWidth: this.minStrokeWidth,
+    minStrokeWidth,
     maxStrokeWidth: this.conf.maxStrokeWidth,
     currentZoom: this.map.getView().getZoom(),
   };
@@ -631,7 +695,7 @@ export function styleLowFn(this: any, feature: FeatureLike) {
 export function styleHighFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  return styleCoreFn.bind(this)(feature);
+  return styleCoreFn.bind(this)(feature, true);
 }
 
 /**
@@ -838,6 +902,8 @@ export const fromNameToHEX = {
   'yellow': '#ffff00',
   'yellowgreen': '#9acd32',
 };
+export const nextColors = ['#FFF500', '#FFA13D', '#2DFE54', '#3F8DFF'];
+export const prevColors = ['#B0B0B0', '#8DAFD3', '#88C5A7', '#E9B1C2'];
 
 export const fromHEXToColor = {
   '#f0f8ff': 'aliceblue',
@@ -980,3 +1046,32 @@ export const fromHEXToColor = {
   '#ffff00': 'yellow',
   '#9acd32': 'yellowgreen',
 };
+
+export function animateFeatureFn(mythis: any, feature: Feature, color, next = true) {
+  function getAnimationStrokeStyle() {
+    return new Style({
+      stroke: new Stroke({
+        color: [204, 204, 255, 1],
+        width: 1,
+        lineDash: [2, 7],
+        lineDashOffset: feature.get('dashOffset'),
+      }),
+    });
+  }
+  var outlineStroke = new Style({
+    stroke: new Stroke({
+      color: [25, 25, 255, 1],
+      width: 2,
+    }),
+  });
+  function getStyle() {
+    return [outlineStroke, getAnimationStrokeStyle()];
+  }
+  feature.setStyle(getStyle);
+  setInterval(() => {
+    let offset = feature.get('dashOffset') ?? 0;
+    offset = offset == 8 ? 0 : next ? offset - 1 : offset + 1;
+    feature.set('dashOffset', offset);
+  }, 100);
+  animatedLayer.getSource().addFeature(feature);
+}
