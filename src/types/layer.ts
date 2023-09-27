@@ -31,4 +31,5 @@ export interface ILAYER {
   tracks?: {[name: string]: IHIT[]};
   taxonomy_activities?: any[];
   taxonomy_themes?: any[];
+  edges?: {[trackID: string]: {prev: number[]; next: number[]}};
 }

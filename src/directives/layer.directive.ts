@@ -39,6 +39,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _lowVectorTileLayer: VectorTileLayer;
   private _opacity = 1;
 
+  @Input() track;
   /**
    * @description
    * The input property for the JIDO update time.
@@ -220,8 +221,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _initializeDataLayers(map: IMAP): void {
     this._lowVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.low,
-      f => {
-        return styleLowFn.bind({
+      f =>
+        styleLowFn.bind({
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
           map: this.mapCmp.map,
@@ -229,24 +230,24 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           filters: this.mapCmp.filters,
           tileLayer: this._lowVectorTileLayer,
           inputTyped: this.wmMapInputTyped,
-        })(f);
-      },
+          currentTrack: this.track,
+        })(f),
       lowTileLoadFn,
       true,
     );
     this._highVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.high,
-      f => {
-        return styleHighFn.bind({
+      f =>
+        styleHighFn.bind({
           currentLayer: this._currentLayer,
           conf: this.wmMapConf,
           map: this.mapCmp.map,
           opacity: this.wmMapLayerOpacity,
           filters: this.mapCmp.filters,
-          tileLayer: this._highVectorTileLayer,
+          tileLayer: this._lowVectorTileLayer,
           inputTyped: this.wmMapInputTyped,
-        })(f);
-      },
+          currentTrack: this.track,
+        })(f),
       tileLoadFn,
       true,
     );
