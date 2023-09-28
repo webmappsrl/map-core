@@ -63,8 +63,9 @@ export class WmMapBaseDirective {
         if (optOptions == null) {
           optOptions = {
             padding: this.wmMapPadding ?? undefined,
-            maxZoom: this.wmMapConf.defZoom,
+            maxZoom: this.wmMapConf.maxZoom,
             duration: 500,
+            nearest: true,
           };
         }
 
