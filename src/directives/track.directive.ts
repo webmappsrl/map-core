@@ -36,6 +36,8 @@ import {TRACK_DIRECTIVE_ZINDEX, endIconHtml, startIconHtml} from '../readonly';
 import {Location} from '../types/location';
 import {ILineString} from '../types/model';
 import {filter, take} from 'rxjs/operators';
+import {Icon} from 'ol/style';
+import {fromLonLat} from 'ol/proj';
 const POINTER_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 1;
 const FLAG_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 2;
 
@@ -58,6 +60,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   @Input() track;
   @Input() trackElevationChartElements: any;
   @Input() wmMapTrackColor = '#caaf15';
+  @Input() wmMapLayerLayer;
 
   constructor(
     private element: ElementRef,
@@ -152,7 +155,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * @returns void
    *
    */
-  drawTrack(trackgeojson: any): void {
+  drawTrack(trackgeojson: any, drawTrack = true): void {
     const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
     const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
@@ -170,7 +173,11 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         features: this._trackFeatures,
       }),
       style: () =>
-        isFlowLine ? getFlowStyle(orangeTreshold, redTreshold) : getLineStyle(this.wmMapTrackColor),
+        isFlowLine
+          ? getFlowStyle(orangeTreshold, redTreshold)
+          : drawTrack
+          ? getLineStyle(this.wmMapTrackColor)
+          : null,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: TRACK_DIRECTIVE_ZINDEX,
@@ -324,6 +331,71 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const endPosition = this.track.geometry.coordinates[this.track.geometry.coordinates.length - 1];
     this._startFeature = createIconFeatureFromHtml(startIconHtml, startPosition);
     this._endFeature = createIconFeatureFromHtml(endIconHtml, endPosition);
+    let drawTrack = true;
+    if (this.wmMapLayerLayer != null && this.wmMapLayerLayer.edges != null) {
+      const edges = this.wmMapLayerLayer.edges;
+      console.log(this.track);
+      const properties = this.track.properties;
+      const trackID = properties.id;
+      const zIndex = 500;
+      if (trackID != null && edges[trackID] != null) {
+        const edge = edges[trackID];
+        const crossroadsIcon = new Icon({
+          src: 'assets/men-crossroads-icon.svg',
+          scale: 0.08,
+          size: [512, 512],
+        });
+        const moveIcon = new Icon({
+          src: 'assets/walk-next-icon.svg',
+          scale: 0.08,
+          size: [512, 512],
+        });
+
+        drawTrack = false;
+        if (edge.prevCrossroads) {
+          const styles = new Style({
+            geometry: new Point(fromLonLat(startPosition)),
+            image: crossroadsIcon,
+            zIndex,
+          });
+          this._startFeature = new Feature({
+            geometry: new Point(fromLonLat(startPosition)),
+          });
+          this._startFeature.setStyle(styles);
+        } else if (edge.prev.length > 0) {
+          const styles = new Style({
+            geometry: new Point(fromLonLat(startPosition)),
+            image: moveIcon,
+            zIndex,
+          });
+          this._startFeature = new Feature({
+            geometry: new Point(fromLonLat(startPosition)),
+          });
+          this._startFeature.setStyle(styles);
+        }
+        if (edge.nextCrossroads) {
+          const styles = new Style({
+            geometry: new Point(fromLonLat(endPosition)),
+            image: crossroadsIcon,
+            zIndex,
+          });
+          this._endFeature = new Feature({
+            geometry: new Point(fromLonLat(endPosition)),
+          });
+          this._endFeature.setStyle(styles);
+        } else if (edge.next.length > 0) {
+          const styles = new Style({
+            geometry: new Point(fromLonLat(endPosition)),
+            image: moveIcon,
+            zIndex,
+          });
+          this._endFeature = new Feature({
+            geometry: new Point(fromLonLat(endPosition)),
+          });
+          this._endFeature.setStyle(styles);
+        }
+      }
+    }
     this._startEndLayer = new VectorLayer({
       zIndex: FLAG_TRACK_ZINDEX,
       source: new VectorSource({
@@ -331,7 +403,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       }),
     });
     this.mapCmp.map.addLayer(this._startEndLayer);
-    this.drawTrack(this.track);
+    this.drawTrack(this.track, drawTrack);
     this.mapCmp.map.getInteractions().extend([new PinchRotate()]);
     this._centerMapToTrack();
   }

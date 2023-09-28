@@ -2,16 +2,15 @@ import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
 import Feature, {FeatureLike} from 'ol/Feature';
 import {Point, Polygon} from 'ol/geom';
-import {Circle, Fill, RegularShape, Text} from 'ol/style';
+import {Circle, Fill, Icon, RegularShape, Text} from 'ol/style';
 import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import GeoJSON from 'ol/format/GeoJSON';
-import {DEF_LINE_COLOR, ITINERARY_ZINDEX, TRACK_DIRECTIVE_ZINDEX, TRACK_ZINDEX} from '../readonly';
+import {DEF_LINE_COLOR, TRACK_DIRECTIVE_ZINDEX, TRACK_ZINDEX} from '../readonly';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {ILAYER} from '../types/layer';
-export var animatedLayer = null;
 export var currentTrackID = null;
 
 /**
@@ -426,54 +425,46 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       minStrokeWidth += 10;
       maxWidth = 40;
 
-      if (animatedLayer == null) {
-        animatedLayer = new VectorLayer({
+      if (this.animatedLayer == null) {
+        this.animatedLayer = new VectorLayer({
           source: new VectorSource({
             format: new GeoJSON(),
           }),
-          zIndex: ITINERARY_ZINDEX,
+          zIndex: 100,
           updateWhileAnimating: true,
           updateWhileInteracting: true,
         });
-        this.map.addLayer(animatedLayer);
+        this.map.addLayer(this.animatedLayer);
       }
       const edges = this.currentLayer.edges;
       const currentTrackOfLayer = properties.id;
       if (currentTrackID != this.currentTrack.properties.id) {
         currentTrackID = this.currentTrack.properties.id;
-        if (animatedLayer != null) {
-          animatedLayer.getSource().clear();
+        if (this.animatedLayer != null) {
+          this.animatedLayer.getSource().clear();
         }
       }
       if (edges[currentTrackID] != null) {
         const edgesOfCurrentTrack = edges[currentTrackID];
         const nextIndex = edgesOfCurrentTrack.next.indexOf(currentTrackOfLayer);
+        minStrokeWidth += 20;
         if (nextIndex > -1) {
           strokeStyle.setColor(nextColors[nextIndex]);
-          strokeStyle.setWidth(90000);
-          minStrokeWidth += 20;
           animateFeatureFn(this, toFeature(feature), nextColors[nextIndex]);
         }
         const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
         if (prevIndex > -1) {
           strokeStyle.setColor(prevColors[prevIndex]);
-          minStrokeWidth += 20;
           animateFeatureFn(this, toFeature(feature), prevColors[prevIndex], false);
         }
         if (currentTrackOfLayer === currentTrackID) {
           strokeStyle.setColor('red');
-          strokeStyle.setLineCap('round');
-          strokeStyle.setLineDash([2, 7]);
-          strokeStyle.setLineDashOffset(10);
-          strokeStyle.setLineJoin('bevel');
-          strokeStyle.setWidth(90000);
-          minStrokeWidth += 40;
         }
       }
     } else {
       currentTrackID = null;
-      if (animatedLayer != null) {
-        animatedLayer.getSource().clear();
+      if (this.animatedLayer != null) {
+        this.animatedLayer.getSource().clear();
       }
     }
   } else {
@@ -1073,5 +1064,5 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
     offset = offset == 8 ? 0 : next ? offset - 1 : offset + 1;
     feature.set('dashOffset', offset);
   }, 100);
-  animatedLayer.getSource().addFeature(feature);
+  mythis.animatedLayer.getSource().addFeature(feature);
 }

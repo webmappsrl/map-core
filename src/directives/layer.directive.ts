@@ -24,10 +24,12 @@ import {
   tileLoadFn,
 } from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
+import {ITINERARY_ZINDEX, SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
 import {IDATALAYER, ILAYER} from '../types/layer';
 import {IMAP} from '../types/model';
-
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
 @Directive({
   selector: '[wmMapLayer]',
 })
@@ -37,6 +39,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _disabled = false;
   private _highVectorTileLayer: VectorTileLayer;
   private _lowVectorTileLayer: VectorTileLayer;
+  private _animatedVectorLayer: VectorLayer<VectorSource> = new VectorLayer({
+    source: new VectorSource({
+      format: new GeoJSON(),
+    }),
+    zIndex: 500,
+    updateWhileAnimating: true,
+    updateWhileInteracting: true,
+  });
   private _opacity = 1;
 
   @Input() track;
@@ -181,9 +191,19 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       });
   }
 
-  ngOnChanges(_: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
     if (this._lowVectorTileLayer != null || this._highVectorTileLayer != null) {
       this._updateMap();
+    }
+    if (
+      changes.track != null &&
+      changes.track.currentValue != null &&
+      changes.track.previousValue != null &&
+      changes.track.currentValue != changes.track.previousValue
+    ) {
+      if (this._animatedVectorLayer != null) {
+        this._animatedVectorLayer.getSource().clear();
+      }
     }
   }
 
@@ -247,6 +267,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           tileLayer: this._lowVectorTileLayer,
           inputTyped: this.wmMapInputTyped,
           currentTrack: this.track,
+          animatedLayer: this._animatedVectorLayer,
         })(f),
       tileLoadFn,
       true,
@@ -259,6 +280,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     });
     this.mapCmp.map.addLayer(this._lowVectorTileLayer);
     this.mapCmp.map.addLayer(this._highVectorTileLayer);
+    this.mapCmp.map.addLayer(this._animatedVectorLayer);
     this._resolutionLayerSwitcher();
   }
 
