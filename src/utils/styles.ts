@@ -1042,16 +1042,16 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
   function getAnimationStrokeStyle() {
     return new Style({
       stroke: new Stroke({
-        color: [204, 204, 255, 1],
-        width: 1,
-        lineDash: [2, 7],
+        color: hexToRgba(color),
+        width: 2,
+        lineDash: [10, 20],
         lineDashOffset: feature.get('dashOffset'),
       }),
     });
   }
   var outlineStroke = new Style({
     stroke: new Stroke({
-      color: [25, 25, 255, 1],
+      color: [25, 25, 255, 0.8],
       width: 2,
     }),
   });
@@ -1065,4 +1065,12 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
     feature.set('dashOffset', offset);
   }, 100);
   mythis.animatedLayer.getSource().addFeature(feature);
+}
+
+export function hexToRgba(hex: string): [number, number, number, number] {
+  const bigint = parseInt(hex.substring(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return [r, g, b, 1];
 }
