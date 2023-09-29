@@ -15,10 +15,6 @@ import {Icon, Style} from 'ol/style';
 export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
 
-  constructor(@Host() mapCmp: WmMapComponent) {
-    super(mapCmp);
-  }
-
   @Input('wmMapGeojson') set geojson(geojson: any) {
     this.mapCmp.isInit$
       .pipe(
@@ -28,6 +24,10 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
       .subscribe(() => {
         this._buildGeojson(this._getFeatureCollection(geojson));
       });
+  }
+
+  constructor(@Host() mapCmp: WmMapComponent) {
+    super(mapCmp);
   }
 
   private _buildGeojson(geojson: any): void {
@@ -61,11 +61,11 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
           },
           zIndex: 450,
         });
+        this.mapCmp.map.addLayer(this._featureCollectionLayer);
       } else {
         this._featureCollectionLayer.getSource().clear();
         this._featureCollectionLayer.getSource().addFeatures(features);
       }
-      this.mapCmp.map.addLayer(this._featureCollectionLayer);
       const extent = this._featureCollectionLayer.getSource().getExtent();
       const newView = new View({
         extent,
