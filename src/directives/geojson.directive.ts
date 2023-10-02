@@ -14,6 +14,7 @@ import {Icon, Style} from 'ol/style';
 })
 export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _init = false;
 
   @Input('wmMapGeojson') set geojson(geojson: any) {
     this.mapCmp.isInit$
@@ -66,22 +67,16 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
         this._featureCollectionLayer.getSource().clear();
         this._featureCollectionLayer.getSource().addFeatures(features);
       }
-      const extent = this._featureCollectionLayer.getSource().getExtent();
-      const newView = new View({
-        extent,
-        projection: 'EPSG:3857',
-        zoom: 12,
-        maxZoom: 17,
-        minZoom: 12,
-        constrainOnlyCenter: true,
-      });
-      this.mapCmp.map.setView(newView);
-      this.mapCmp.map.getView().fit(extent, {
-        duration: 0,
-        maxZoom: 17,
-        size: this.mapCmp.map.getSize(),
-      });
-      this._featureCollectionLayer.changed();
+      if (this._init === false) {
+        const extent = this._featureCollectionLayer.getSource().getExtent();
+        this.mapCmp.map.getView().fit(extent, {
+          duration: 0,
+          maxZoom: 17,
+          size: this.mapCmp.map.getSize(),
+        });
+        this._featureCollectionLayer.changed();
+        this._init = true;
+      }
     }
   }
 
