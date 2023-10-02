@@ -740,7 +740,6 @@ export function initVectorTileLayer(
   url: any,
   styleFn: (feature: FeatureLike) => [Style] | Style,
   tileLoadFn: LoadFunction,
-  preload = false,
 ): VectorTileLayer {
   if (!url) {
     return;
@@ -748,7 +747,6 @@ export function initVectorTileLayer(
 
   const layer = new VectorTileLayer({
     zIndex: TRACK_ZINDEX,
-    renderMode: 'vector',
     renderBuffer: 2048,
     source: new VectorTileSource({
       format: new MVT(),

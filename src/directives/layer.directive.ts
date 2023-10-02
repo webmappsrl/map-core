@@ -34,11 +34,6 @@ import GeoJSON from 'ol/format/GeoJSON';
   selector: '[wmMapLayer]',
 })
 export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges {
-  private _currentLayer: ILAYER;
-  private _dataLayerUrls: IDATALAYER;
-  private _disabled = false;
-  private _highVectorTileLayer: VectorTileLayer;
-  private _lowVectorTileLayer: VectorTileLayer;
   private _animatedVectorLayer: VectorLayer<VectorSource> = new VectorLayer({
     source: new VectorSource({
       format: new GeoJSON(),
@@ -47,9 +42,13 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     updateWhileAnimating: true,
     updateWhileInteracting: true,
   });
+  private _currentLayer: ILAYER;
+  private _dataLayerUrls: IDATALAYER;
+  private _disabled = false;
+  private _highVectorTileLayer: VectorTileLayer;
+  private _lowVectorTileLayer: VectorTileLayer;
   private _opacity = 1;
 
-  @Input() track;
   /**
    * @description
    * The input property for the JIDO update time.
@@ -119,6 +118,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._updateMap();
   }
 
+  @Input() track;
   @Input() wmMapInputTyped: string;
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
@@ -253,7 +253,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           currentTrack: this.track,
         })(f),
       lowTileLoadFn,
-      true,
     );
     this._highVectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.high,
@@ -270,7 +269,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           animatedLayer: this._animatedVectorLayer,
         })(f),
       tileLoadFn,
-      true,
     );
     this._lowVectorTileLayer.setProperties({
       'high': false,
