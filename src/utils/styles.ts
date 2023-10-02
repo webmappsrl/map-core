@@ -12,7 +12,10 @@ import VectorSource from 'ol/source/Vector';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {ILAYER} from '../types/layer';
 export var currentTrackID = null;
-
+export const cacheStyle = {
+  'noColor': new StrokeStyle({color: 'rgba(0,0,0,0)'}),
+  'red': new StrokeStyle({color: 'red'}),
+};
 /**
  * @description
  * Generates a Mapbox Style JSON object to style vector layers in OpenLayers.
@@ -402,19 +405,27 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   let minStrokeWidth = this.minStrokeWidth;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
+  let strokeStyle = null;
   const featureStrokeColor =
     properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : null;
-  let strokeStyle: StrokeStyle = new StrokeStyle();
-  if (featureStrokeColor != null) {
-    strokeStyle.setColor(featureStrokeColor);
+  if (cacheStyle[featureStrokeColor] != null) {
+    strokeStyle = cacheStyle[featureStrokeColor];
+  } else if (featureStrokeColor != null) {
+    cacheStyle[featureStrokeColor] = new StrokeStyle();
+    cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
+    strokeStyle = cacheStyle[featureStrokeColor];
   }
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
-    if (layers.indexOf(currentIDLayer) >= 0) {
+    if (cacheStyle[currentIDLayer] != null) {
+      strokeStyle = cacheStyle[currentIDLayer];
+    } else if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
-      strokeStyle.setColor(color);
+      cacheStyle[currentIDLayer] = new StrokeStyle();
+      cacheStyle[currentIDLayer].setColor(color);
+      strokeStyle = cacheStyle[currentIDLayer];
     } else {
-      strokeStyle.setColor('rgba(0,0,0,0)');
+      strokeStyle = cacheStyle['noColor'];
     }
     if (
       routing &&
@@ -458,7 +469,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
           animateFeatureFn(this, toFeature(feature), prevColors[prevIndex], false);
         }
         if (currentTrackOfLayer === currentTrackID) {
-          strokeStyle.setColor('red');
+          strokeStyle = cacheStyle['red'];
         }
       }
     } else {
@@ -469,7 +480,13 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
     }
   } else {
     const layerId = +layers[0];
-    strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
+    const color = getColorFromLayer(layerId, this.conf.layers);
+    if (cacheStyle[color] != null) {
+      strokeStyle = cacheStyle[color];
+    } else {
+      cacheStyle[color] = new StrokeStyle({color});
+      strokeStyle = cacheStyle[color];
+    }
   }
   if (this.filters != null && this.filters.filterTracks.length > 0) {
     this.filters.filterTracks.forEach(filter => {
@@ -480,7 +497,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
             (filter.lower != null && identifierValue < filter.lower) ||
             (filter.upper != null && identifierValue > filter.upper)
           ) {
-            strokeStyle.setColor('rgba(0,0,0,0)');
+            strokeStyle = cacheStyle['noColor'];
           }
         }
       }
@@ -490,7 +507,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
           properties[filter.taxonomy] != null &&
           properties[filter.taxonomy].indexOf(filter.identifier) < 0
         ) {
-          strokeStyle.setColor('rgba(0,0,0,0)');
+          strokeStyle = cacheStyle['noColor'];
         }
       }
     });
@@ -502,7 +519,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       searchable != '' &&
       searchable.toLowerCase().indexOf(this.inputTyped.toLocaleLowerCase()) < 0
     ) {
-      strokeStyle.setColor('rgba(0,0,0,0)');
+      strokeStyle = cacheStyle['noColor'];
     }
   }
 
