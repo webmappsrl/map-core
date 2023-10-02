@@ -295,7 +295,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
   private _redrawPoints(): void {
     this.mapCmp.map.once('rendercomplete', () => {
       setTimeout(() => {
-        console.log('redraw');
         this._customPoiSource.clear();
         this._points.forEach((point, index) => {
           try {
