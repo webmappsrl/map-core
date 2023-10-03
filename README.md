@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fwebmappsrl%2Fmap-core%2Fmain%2Fpackage.json&query=version&label=map-core
+)
 ![Make a release](https://github.com/webmappsrl/map-core/actions/workflows/release_please.yml/badge.svg)
 # MapCore
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.18.
