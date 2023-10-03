@@ -1,6 +1,5 @@
+![Make a release](https://github.com/webmappsrl/map-core/actions/workflows/release_please.yml/badge.svg)
 # MapCore
-https://github.com/webmappsrl/map-core/actions/workflows/release_please.yml/badge.svg
-[![Make a release](https://github.com/webmappsrl/map-core/actions/workflows/release_please.yml/badge.svg)]
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.18.
 
 ## coverage
