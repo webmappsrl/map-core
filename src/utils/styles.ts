@@ -417,9 +417,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   }
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
-    if (cacheStyle[currentIDLayer] != null) {
-      strokeStyle = cacheStyle[currentIDLayer];
-    } else if (layers.indexOf(currentIDLayer) >= 0) {
+    if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
       cacheStyle[currentIDLayer] = new StrokeStyle();
       cacheStyle[currentIDLayer].setColor(color);
