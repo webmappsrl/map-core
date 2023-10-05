@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1](https://github.com/webmappsrl/map-core/compare/v1.1.0...v1.1.1) (2023-10-05)
+
+
+### Bug Fixes
+
+* Simplify style retrieval logic in styleCoreFn ([be775fd](https://github.com/webmappsrl/map-core/commit/be775fdc51096e2b0cb851270e2da10f56884d2a))
+
+
+### Miscellaneous
+
+* Update README.md ([ad5bcf6](https://github.com/webmappsrl/map-core/commit/ad5bcf68c227026a3cff79b6b0a85bc7e4b8d506))
+
 ## [1.1.0](https://github.com/webmappsrl/map-core/compare/v1.0.5...v1.1.0) (2023-10-03)
 
 
