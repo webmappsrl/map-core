@@ -96,6 +96,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                 : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
               width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
             }),
+            fill: new Fill({
+              color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+            }),
           });
           return this._http.get(overlay.url);
         }),
