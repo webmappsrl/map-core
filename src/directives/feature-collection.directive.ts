@@ -27,8 +27,6 @@ import {
   selector: '[wmMapFeatureCollection]',
 })
 export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
-  private _referenceZoom: number = 15;
-
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>(null);
@@ -132,21 +130,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     });
     if (this.mapCmp.map != null) {
       this.mapCmp.map.addLayer(this._featureCollectionLayer);
-      const extent = vectorSource.getExtent();
-      if (extent != null) {
-        const optOptions: FitOptions = {
-          duration: 500,
-          maxZoom: 18,
-          padding: [10, 10, 10, 10],
-        };
-        const mapView = this.mapCmp.map.getView();
-        const currentZoom = mapView.getZoom();
-        console.log('currentZoom:', currentZoom);
-
-        if (currentZoom >= this._referenceZoom) {
-          this.fitView(extent, optOptions);
-        }
-      }
     }
     var over = new Select({
       hitTolerance: 5,
@@ -224,24 +207,18 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this.mapCmp.map.on('click', e => {
       const mapView = this.mapCmp.map.getView();
       const currentZoom = mapView.getZoom();
-
-      if (currentZoom >= this._referenceZoom) {
-        console.log('currentZoomclick:', currentZoom);
-
-        this.mapCmp.map.forEachFeatureAtPixel(e.pixel, feat => {
-          if (feat instanceof Feature) {
-            const properties = feat.getProperties();
-            if (properties != null && properties.layer != null) {
-              const layer = properties.layer;
-              const extent = feat.getGeometry().getExtent();
-              this.fitView(extent);
-              console.log('seleziono nuovo layer', layer.id);
-              this._popupOverlay.hide();
-              this.wmMapFeatureCollectionLayerSelected.emit(layer);
-            }
+      this.mapCmp.map.forEachFeatureAtPixel(e.pixel, feat => {
+        if (feat instanceof Feature) {
+          const properties = feat.getProperties();
+          if (properties != null && properties.layer != null) {
+            const layer = properties.layer;
+            const extent = feat.getGeometry().getExtent();
+            console.log('seleziono nuovo layer', layer.id);
+            this._popupOverlay.hide();
+            this.wmMapFeatureCollectionLayerSelected.emit(layer);
           }
-        });
-      }
+        }
+      });
     });
   }
 }
