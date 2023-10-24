@@ -159,17 +159,6 @@ export function createCluster(
  *   - color: 'rgba(0,255,255,0.3)'
  */
 export function createHull(): any {
-  var img = new Circle({
-    radius: 5,
-    stroke: new Stroke({
-      color: 'rgba(0,255,255,1)',
-      width: 1,
-    }),
-    fill: new Fill({
-      color: 'rgba(0,255,255,0.3)',
-    }),
-  });
-
   const selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
     pointRadius: 34,
@@ -180,7 +169,7 @@ export function createHull(): any {
     animate: true,
     name: 'selectCluster',
     // Feature style when it springs apart
-    style: function (f: any, res: any) {
+    style: (f: any, res: any) => {
       var cluster = f.get('features');
       if (cluster != null) {
         if (cluster.length > 1) {
@@ -218,6 +207,8 @@ export function createHull(): any {
             });
           }
         }
+      } else {
+        return f.getStyle();
       }
     },
   });
