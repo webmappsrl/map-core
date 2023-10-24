@@ -3,15 +3,12 @@ import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 
 import {BehaviorSubject} from 'rxjs';
 import {filter, switchMap} from 'rxjs/operators';
-import {getCenter} from 'ol/extent';
 import {Feature} from 'ol';
-import {FitOptions} from 'ol/View';
 import GeoJSON from 'ol/format/GeoJSON';
-import {Geometry, MultiPolygon, Polygon} from 'ol/geom';
+import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style} from 'ol/style';
-import Popup from 'ol-ext/overlay/popup';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {Select} from 'ol/interaction';
@@ -30,16 +27,16 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>(null);
-  private _popupOverlay: Popup;
   private _primaryColor: string | null = null;
   private _selectedFeature: Feature | null = null;
+  private _selectedFeatureID: number | null = null;
   private _selectedStyle = new Style({
     stroke: new Stroke({
       color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
       width: FEATURE_COLLECTION_STROKE_WIDTH,
     }),
     fill: new Fill({
-      color: FEATURE_COLLECTION_FILL_COLOR as unknown as Color,
+      color: 'rgba(245, 159, 26, 0)',
     }),
   });
   private _unselectedStyle = new Style({
@@ -89,6 +86,17 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._overlay$),
         filter(overlay => overlay != null),
         switchMap(overlay => {
+          this._selectedStyle = new Style({
+            stroke: new Stroke({
+              color: overlay.strokeColor
+                ? overlay.strokeColor
+                : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+              width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+            }),
+            fill: new Fill({
+              color: 'rgba(245, 159, 26, 0)',
+            }),
+          });
           this._unselectedStyle = new Style({
             stroke: new Stroke({
               color: overlay.strokeColor
@@ -111,6 +119,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   }
 
   private _buildGeojson(geojson: any): void {
+    let count = 0;
     const features = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
@@ -123,7 +132,11 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
     this._featureCollectionLayer = new VectorLayer({
       source: vectorSource,
-      style: this._unselectedStyle,
+      style: (f: Feature<Geometry>) => {
+        f.setId(count);
+        count++;
+        f.setStyle(this._unselectedStyle);
+      },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: FEATURE_COLLECTION_ZINDEX,
@@ -131,92 +144,21 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     if (this.mapCmp.map != null) {
       this.mapCmp.map.addLayer(this._featureCollectionLayer);
     }
-    var over = new Select({
-      hitTolerance: 5,
-      multi: true,
-      condition: pointerMove,
-    });
-    this._popupOverlay = new Popup({
-      popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
-      closeBox: true,
-      offset: [0, -16],
-      positioning: 'bottom-center',
-      select: over,
-      onclose: () => {},
-      autoPan: {
-        animation: {
-          duration: 100,
-        },
-      },
-    });
-    this.mapCmp.map.addOverlay(this._popupOverlay);
-    let _center = null;
-    this.mapCmp.map.on('pointermove', e => {
-      this.mapCmp.map.getViewport().style.cursor = '';
 
-      this.mapCmp.map.forEachFeatureAtPixel(e.pixel, feat => {
-        if (
-          feat instanceof Feature &&
-          (feat.getGeometry() instanceof Polygon || feat.getGeometry() instanceof MultiPolygon)
-        ) {
-          if (feat.getProperties().layer != null) {
-            this.mapCmp.map.getViewport().style.cursor = 'pointer';
-
-            if (this._selectedFeature != null) {
-              this._selectedFeature.setStyle(this._unselectedStyle);
-            }
-            this._selectedFeature = feat;
-            this._selectedFeature.setStyle(this._selectedStyle);
-            const properties = feat.getProperties();
-            if (properties != null && properties.layer != null) {
-              const layer = properties.layer;
-              if (layer.id) {
-                const content = ` 
-                <ion-card style="max-width:300px">
-                ${layer.feature_image ? `<img  src="${layer.feature_image}" />` : ''}
-                  <ion-card-header>
-                    <ion-card-title>${this.translationCallback(layer.title)}</ion-card-title>
-                  </ion-card-header>
-                  <ion-card-content>
-                  ${
-                    layer.description
-                      ? `${this.translationCallback(layer.description).substring(0, 200) + '...'}`
-                      : ''
-                  }
-                  </ion-card-content>
-                </ion-card>`;
-                const center = getCenter(feat.getGeometry().getExtent());
-                if (JSON.stringify(center) != JSON.stringify(_center)) {
-                  this._popupOverlay.show(center, content);
-                  _center = center;
-                }
-              }
-            }
-          } else {
-            if (this._selectedFeature != null) {
-              this._selectedFeature.setStyle(this._unselectedStyle);
-            }
-            this._popupOverlay.hide();
-            _center = null;
-          }
-
-          return true;
-        }
-      });
-    });
     this.mapCmp.map.on('click', e => {
-      const mapView = this.mapCmp.map.getView();
-      const currentZoom = mapView.getZoom();
-      this.mapCmp.map.forEachFeatureAtPixel(e.pixel, feat => {
-        if (feat instanceof Feature) {
-          const properties = feat.getProperties();
-          if (properties != null && properties.layer != null) {
-            const layer = properties.layer;
-            const extent = feat.getGeometry().getExtent();
-            console.log('seleziono nuovo layer', layer.id);
-            this._popupOverlay.hide();
-            this.wmMapFeatureCollectionLayerSelected.emit(layer);
-          }
+      if (this._selectedFeatureID != null) {
+        const feature = vectorSource.getFeatureById(this._selectedFeatureID);
+        feature.setStyle(this._unselectedStyle);
+      }
+      this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
+        if (features.length > 0) {
+          const selectedFeature = features[0]; // Seleziona il primo elemento
+          this._selectedFeatureID = selectedFeature.getId() as number;
+          selectedFeature.setStyle(this._selectedStyle); // Cambia lo stile
+          this.mapCmp.map.updateSize();
+          this.mapCmp.map.render();
+          this.mapCmp.map.changed();
+          this.mapCmp.map.updateSize();
         }
       });
     });
