@@ -169,7 +169,7 @@ export function createHull(): any {
     animate: true,
     name: 'selectCluster',
     // Feature style when it springs apart
-    style: (f: any, res: any) => {
+    style: (f: Feature, res: any) => {
       var cluster = f.get('features');
       if (cluster != null) {
         if (cluster.length > 1) {

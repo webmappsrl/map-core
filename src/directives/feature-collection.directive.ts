@@ -11,8 +11,6 @@ import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style} from 'ol/style';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
-import {Select} from 'ol/interaction';
-import {pointerMove} from 'ol/events/condition';
 import {Color} from 'ol/color';
 import {
   FEATURE_COLLECTION_STROKE_COLOR,
@@ -146,25 +144,23 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
 
     this.mapCmp.map.on('click', e => {
-      setTimeout(() => {
-        if (this._selectedFeatureID != null) {
-          const feature = vectorSource.getFeatureById(this._selectedFeatureID);
-          if (feature) {
-            feature.setStyle(this._unselectedStyle);
-          }
+      if (this._selectedFeatureID != null) {
+        const feature = vectorSource.getFeatureById(this._selectedFeatureID);
+        if (feature) {
+          feature.setStyle(this._unselectedStyle);
         }
-        this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
-          if (features.length > 0) {
-            const selectedFeature = features[0]; // Seleziona il primo elemento
-            this._selectedFeatureID = selectedFeature.getId() as number;
-            selectedFeature.setStyle(this._selectedStyle); // Cambia lo stile
-            this.mapCmp.map.updateSize();
-            this.mapCmp.map.render();
-            this.mapCmp.map.changed();
-            this.mapCmp.map.updateSize();
-          }
-        });
-      }, 500);
+      }
+      this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
+        if (features.length > 0) {
+          const selectedFeature = features[0]; // Seleziona il primo elemento
+          this._selectedFeatureID = selectedFeature.getId() as number;
+          selectedFeature.setStyle(this._selectedStyle); // Cambia lo stile
+          this.mapCmp.map.updateSize();
+          this.mapCmp.map.render();
+          this.mapCmp.map.changed();
+          this.mapCmp.map.updateSize();
+        }
+      });
     });
   }
 }
