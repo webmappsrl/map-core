@@ -27,16 +27,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>(null);
   private _primaryColor: string | null = null;
   private _selectedFeature: Feature | null = null;
-  private _selectedFeatureID: number | null = null;
-  private _selectedStyle = new Style({
-    stroke: new Stroke({
-      color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
-      width: FEATURE_COLLECTION_STROKE_WIDTH,
-    }),
-    fill: new Fill({
-      color: 'rgba(245, 159, 26, 0)',
-    }),
-  });
   private _unselectedStyle = new Style({
     stroke: new Stroke({
       color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
@@ -84,17 +74,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._overlay$),
         filter(overlay => overlay != null),
         switchMap(overlay => {
-          this._selectedStyle = new Style({
-            stroke: new Stroke({
-              color: overlay.strokeColor
-                ? overlay.strokeColor
-                : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
-              width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
-            }),
-            fill: new Fill({
-              color: 'rgba(245, 159, 26, 0)',
-            }),
-          });
           this._unselectedStyle = new Style({
             stroke: new Stroke({
               color: overlay.strokeColor
@@ -144,21 +123,14 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
 
     this.mapCmp.map.on('click', e => {
-      if (this._selectedFeatureID != null) {
-        const feature = vectorSource.getFeatureById(this._selectedFeatureID);
-        if (feature) {
-          feature.setStyle(this._unselectedStyle);
-        }
+      if (this._selectedFeature != null) {
+        this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
       }
       this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
         if (features.length > 0) {
           const selectedFeature = features[0]; // Seleziona il primo elemento
-          this._selectedFeatureID = selectedFeature.getId() as number;
-          selectedFeature.setStyle(this._selectedStyle); // Cambia lo stile
-          this.mapCmp.map.updateSize();
-          this.mapCmp.map.render();
-          this.mapCmp.map.changed();
-          this.mapCmp.map.updateSize();
+          this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+          this._selectedFeature = selectedFeature;
         }
       });
     });
