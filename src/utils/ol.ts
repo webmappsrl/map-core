@@ -208,7 +208,7 @@ export function createHull(): any {
           }
         }
       } else {
-        return f.getStyle();
+        return null;
       }
     },
   });
