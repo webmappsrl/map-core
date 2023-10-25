@@ -148,7 +148,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this.mapCmp.map.on('click', e => {
       if (this._selectedFeatureID != null) {
         const feature = vectorSource.getFeatureById(this._selectedFeatureID);
-        feature.setStyle(this._unselectedStyle);
+        if (feature) {
+          feature.setStyle(this._unselectedStyle);
+        }
       }
       this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
         if (features.length > 0) {
