@@ -146,9 +146,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       )
       .subscribe(() => {
         this.mapCmp.map.once('precompose', () => {
-          if (this._disabled === false) {
-            this._initLayer(this.wmMapConf);
-          }
+          this._initLayer(this.wmMapConf);
         });
         this.mapCmp.map.on('moveend', () => {
           if (this._disabled === false) {
