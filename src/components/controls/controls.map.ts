@@ -4,16 +4,19 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnInit,
   Output,
   SimpleChanges,
   ViewEncapsulation,
 } from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
-
 import TileLayer from 'ol/layer/Tile';
-import {DomSanitizer} from '@angular/platform-browser';
-import {ICONTROLS} from '../../types/model';
+import {BehaviorSubject} from 'rxjs';
+import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
 
+/**
+ * @component WmMapControls
+ * @description Gestisce i controlli della mappa, permettendo agli utenti di interagire con diversi aspetti della mappa.
+ */
 @Component({
   selector: 'wm-map-controls',
   template: `
@@ -26,8 +29,14 @@ import {ICONTROLS} from '../../types/model';
         <ion-item *ngFor="let tile of tiles;let idx = index">
           <wm-map-button-control [wmMapButtonControl]="tile" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectTileLayer($event)" [wmMapButtonControlSelect]="currentTileLayerIdx$.value === idx"></wm-map-button-control>
         </ion-item>
-        <ion-item-divider *ngIf="conf.overlays != null && conf.overlays.length > 0"></ion-item-divider>
+        <ion-item-divider *ngIf="conf.data != null && conf.data.length > 0"></ion-item-divider>
       </ng-container>
+    </ng-container>
+    <ng-container *ngIf="conf.data as datas">
+      <ion-item *ngFor="let data of datas;let idx = index">
+          <wm-map-button-control [wmMapButtonControl]="data" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectDirective($event,data)" [wmMapButtonControlSelect]="currentDataIdx[idx]"></wm-map-button-control>
+      </ion-item>
+      <ion-item-divider *ngIf="conf.overlays != null && conf.overlays.length > 0"></ion-item-divider>
     </ng-container>
     <ng-container *ngIf="conf.overlays as overlays">
       <ion-item *ngFor="let overlay of overlays;let idx = index">
@@ -40,54 +49,94 @@ import {ICONTROLS} from '../../types/model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
 })
-export class WmMapControls implements OnChanges {
+export class WmMapControls implements OnChanges, OnInit {
+  /**
+   * @input wmMapControlClose
+   * @description Permette di chiudere i controlli della mappa dall'esterno.
+   * @param {string} selector Il selettore dell'elemento da chiudere.
+   */
   @Input() set wmMapControlClose(selector: string) {
-    if (selector != 'wm-map-controls') {
+    if (selector !== 'wm-map-controls') {
       this.toggle$.next(false);
       this.currentOverlayIdx$.next(null);
     }
   }
 
+  /**
+   * Configurazione dei controlli della mappa.
+   */
   @Input() conf: ICONTROLS;
+  /**
+   * Livelli della mappa di tipo TileLayer.
+   */
   @Input() tileLayers: TileLayer<any>[];
+  /**
+   * Funzione di traduzione personalizzabile passata dall'esterno.
+   */
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
-  @Output('wmMapControlOverlay') overlayEVT: EventEmitter<any | null> = new EventEmitter<
-    any | null
-  >(null);
-
-  currentOverlayIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(-1);
-  currentTileLayerIdx$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-  showButton$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  toggle$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-
-  constructor(public sanitizer: DomSanitizer) {}
+  /**
+   * Evento emesso quando si selezionano i dati.
+   */
+  @Output('wmMapControlData') dataEVT = new EventEmitter<{
+    type: 'layers' | 'pois';
+    toggle: boolean;
+  }>(false);
+  /**
+   * Evento emesso quando si seleziona un overlay.
+   */
+  @Output('wmMapControlOverlay') overlayEVT = new EventEmitter<ICONTROLSBUTTON | null>(null);
 
   /**
-   * @description
-   * This method is called by Angular when the input properties of the component change.
-   * If the tileLayers input property has more than one layer, it sets the showButton$
-   * observable to true.
-   * @param changes - An object containing the changes detected by Angular.
+   * Stato interno per tracciare i dati selezionati.
    */
+  currentDataIdx: {[id: number]: boolean} = {};
+  /**
+   * Stato interno per tracciare l'overlay selezionato.
+   */
+  currentOverlayIdx$ = new BehaviorSubject<number>(-1);
+  /**
+   * Stato interno per tracciare il livello della mappa selezionato.
+   */
+  currentTileLayerIdx$ = new BehaviorSubject<number>(0);
+  /**
+   * Stato interno per determinare se mostrare il pulsante dei controlli della mappa.
+   */
+  showButton$ = new BehaviorSubject<boolean>(false);
+  /**
+   * Stato interno per tracciare lo stato di visibilità dei controlli della mappa.
+   */
+  toggle$ = new BehaviorSubject<boolean>(false);
+
+  // Metodo chiamato da Angular quando cambiano le proprietà di input del componente.
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes?.tileLayers != null &&
-      changes?.tileLayers?.currentValue != null &&
-      changes.tileLayers.currentValue.length > 1
-    ) {
-      this.showButton$.next(true);
-    }
-    if (
-      changes?.conf != null &&
-      changes?.conf?.currentValue != null &&
-      changes?.conf?.currentValue.overlays != null &&
-      changes?.conf?.currentValue.overlays.length > 1
-    ) {
-      this.showButton$.next(true);
-    }
+    this._handleTileLayerChanges(changes);
+    this._handleOverlayChanges(changes);
   }
 
-  selectOverlay(idx, overlay): void {
+  ngOnInit(): void {
+    this._initializeData();
+    this._setDefaultOverlay();
+  }
+
+  /**
+   * Seleziona i dati e invia un evento.
+   * @param {number} idx L'indice dei dati selezionati.
+   * @param {ICONTROLSBUTTON} data I dati selezionati.
+   */
+  selectDirective(idx: number, data: ICONTROLSBUTTON): void {
+    this.currentDataIdx[idx] = !this.currentDataIdx[idx];
+    this.dataEVT.emit({
+      type: data.url as 'layers' | 'pois',
+      toggle: this.currentDataIdx[idx],
+    });
+  }
+
+  /**
+   * Seleziona un overlay e invia un evento.
+   * @param {number} idx L'indice dell'overlay selezionato.
+   * @param {any} overlay L'overlay selezionato.
+   */
+  selectOverlay(idx: number, overlay: ICONTROLSBUTTON): void {
     if (idx === this.currentOverlayIdx$.value) {
       this.currentOverlayIdx$.next(-1);
       this.overlayEVT.emit(null);
@@ -98,27 +147,79 @@ export class WmMapControls implements OnChanges {
   }
 
   /**
-   * @description
-   * Changes the selected tile layer and toggles its visibility.
-   * This function updates the current tile layer index and changes the visibility of all tile layers
-   * based on the provided index.
-   * If the index of the new tile layer is the same as the current index, this function toggles
-   * the visibility of the tile layer.
-   *
-   * @param idx - The index of the tile layer to select.
-   * @returns void.
-   *
-   * @example
-   * selectTileLayer(0); // Selects the first tile layer and makes it visible.
-   * selectTileLayer(1); // Selects the second tile layer and makes it visible.
-   * selectTileLayer(0); // Toggles the visibility of the first tile layer.
+   * Seleziona un livello della mappa e aggiorna la sua visibilità.
+   * @param {number} idx L'indice del livello della mappa selezionato.
    */
   selectTileLayer(idx: number): void {
     this.currentTileLayerIdx$.next(idx);
-    this.tileLayers.forEach(tile => {
+    this.tileLayers.forEach((tile, index) => {
       const visibility = idx === tile.getProperties().id;
       tile.setVisible(visibility);
     });
-    this.toggle$.next(!this.toggle$.value);
+  }
+
+  /**
+   * Metodo privato per gestire i cambiamenti degli overlay.
+   * @param {SimpleChanges} changes Oggetto che contiene i cambiamenti delle proprietà di input.
+   */
+  private _handleOverlayChanges(changes: SimpleChanges): void {
+    const overlaysChange = changes.conf?.currentValue?.overlays;
+    if (overlaysChange && overlaysChange.length > 1) {
+      this.showButton$.next(true);
+    }
+  }
+
+  /**
+   * Metodo privato per gestire i cambiamenti dei livelli della mappa.
+   * @param {SimpleChanges} changes Oggetto che contiene i cambiamenti delle proprietà di input.
+   */
+  private _handleTileLayerChanges(changes: SimpleChanges): void {
+    const tileLayersChange = changes.tileLayers;
+    if (tileLayersChange && this._hasMultipleLayers(tileLayersChange.currentValue)) {
+      this.showButton$.next(true);
+      this._setDefaultTileLayer();
+    }
+  }
+
+  /**
+   * Metodo privato per controllare se ci sono più di un livello della mappa.
+   * @param {TileLayer<any>[]} layers Array di livelli della mappa.
+   * @returns {boolean} True se ci sono più di un livello della mappa, altrimenti false.
+   */
+  private _hasMultipleLayers(layers: TileLayer<any>[]): boolean {
+    return layers && layers.length > 1;
+  }
+
+  /**
+   * Metodo privato per inizializzare i dati.
+   */
+  private _initializeData(): void {
+    (this.conf?.data || [])
+      .filter(data => data.type === 'button')
+      .forEach((data: ICONTROLSBUTTON) => {
+        this.currentDataIdx[data.id] = data.default ?? true;
+        this.dataEVT.emit({
+          type: data.url as 'layers' | 'pois',
+          toggle: this.currentDataIdx[data.id],
+        });
+      });
+  }
+
+  /**
+   * Metodo privato per impostare l'overlay predefinito.
+   */
+  private _setDefaultOverlay(): void {
+    (this.conf?.overlays || [])
+      .filter(overlay => overlay.type === 'button' && overlay.default)
+      .forEach((overlay: ICONTROLSBUTTON) => this.selectOverlay(overlay.id, overlay));
+  }
+
+  /**
+   * Metodo privato per impostare il livello della mappa predefinito.
+   */
+  private _setDefaultTileLayer(): void {
+    this.conf?.tiles
+      ?.filter(tile => tile.type === 'button' && tile.default)
+      .forEach((tile: ICONTROLSBUTTON) => this.selectTileLayer(tile.id));
   }
 }

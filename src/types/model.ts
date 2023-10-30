@@ -208,14 +208,17 @@ export interface ICONTROLSTITLE {
   type: 'title';
 }
 export interface ICONTROLSBUTTON {
+  icon?: string;
+  id?: number;
   label: iLocalString;
   type: 'button';
-  icon: string;
-  url: string;
-  id: number;
+  url?: string;
+  default?: boolean;
 }
 export interface ICONTROLS {
-  [key: string]: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+  overlays: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+  data: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
 }
 export interface IMAP {
   /**
@@ -223,6 +226,7 @@ export interface IMAP {
    */
   bbox: [number, number, number, number];
   center?: [number, number];
+  controls: ICONTROLS;
   defZoom: number;
   flow_line_quote_orange: number;
   flow_line_quote_red: number;
@@ -238,7 +242,6 @@ export interface IMAP {
   start_end_icons_min_zoom: number;
   start_end_icons_show: boolean;
   tiles: {[name: string]: string}[];
-  controls: ICONTROLS;
 }
 export interface IPOI {
   apppoisApiLayer: boolean;

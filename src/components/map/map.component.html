@@ -29,6 +29,7 @@
         [wmMapTranslationCallback]="translationCallback"
         [wmMapControlClose]="wmMapCloseTopRightBtnsEVT$|async"
         (wmMapControlOverlay)="setOverlay($event)"
+        (wmMapControlData)="toggleData($event)"
         (click)="wmMapCloseTopRightBtns = 'wm-map-controls'"
       ></wm-map-controls>
       <ng-content select="[top-right]"></ng-content>

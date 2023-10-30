@@ -7,6 +7,7 @@ import {
   Input,
   OnChanges,
   Output,
+  SimpleChange,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation,
@@ -47,6 +48,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   private _centerExtent: Extent;
   private _view: View;
 
+  @Input() set wmMapCloseTopRightBtns(selector: string) {
+    this.wmMapCloseTopRightBtnsEVT$.emit(selector);
+  }
+
+  @Input() set wmMapConf(conf: IMAP) {
+    this.wmMapConf$.next(conf);
+  }
+
   @Input('wmMapFilters') filters: any;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
     if (value == null) return '';
@@ -65,6 +74,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
+  @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois'; toggle: boolean}> =
+    new EventEmitter();
   @ViewChild('mapContainer') mapContainer: ElementRef;
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
 
@@ -78,14 +89,46 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   constructor() {}
 
-  @Input() set wmMapCloseTopRightBtns(selector: string) {
-    this.wmMapCloseTopRightBtnsEVT$.emit(selector);
+  /**
+   * @description
+   * Method that gets called whenever there are changes to the input properties.
+   * This method is used to detect changes in the input properties of the component.
+   * If the reset property changes and its new value is not null, the _reset method is called.
+   * If the wmMapPadding property changes and _view is not null, the _view.fit() method is called to fit the centerExtent with the specified padding and maxZoom.
+   *
+   * @param changes An object containing all input property changes.
+   * @returns void.
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    this._handleResetChange(changes.reset);
+    this._handleWmMapPaddingChange(changes.wmMapPadding);
+    this._handleFiltersChange(changes.filters);
   }
 
-  @Input() set wmMapConf(conf: IMAP) {
-    this.wmMapConf$.next(conf);
+  /**
+   * @description
+   * Executes initialization of the map after view initialization.
+   * This function subscribes to the _wmMapConf$ observable and initializes the map with the given configuration
+   * after view initialization. If the observable emits a value that is null, then nothing happens.
+   *
+   * @returns void
+   */
+  ngAfterViewInit(): void {
+    this.wmMapConf$
+      .pipe(
+        take(3),
+        filter(f => f != null),
+      )
+      .subscribe(conf => {
+        this._initMap(conf);
+      });
   }
 
+  /**
+   * Sets the base tile layer source for the map.
+   * @param tile The URL template for the tile layer.
+   * @returns The XYZ source object for the tile layer.
+   */
   @Input() initBaseSource(tile: string): XYZ {
     if (tile === '') {
       return null;
@@ -124,58 +167,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
   /**
    * @description
-   * Executes initialization of the map after view initialization.
-   * This function subscribes to the _wmMapConf$ observable and initializes the map with the given configuration
-   * after view initialization. If the observable emits a value that is null, then nothing happens.
-   *
-   * @returns void
-   */
-  ngAfterViewInit(): void {
-    this.wmMapConf$
-      .pipe(
-        take(3),
-        filter(f => f != null),
-      )
-      .subscribe(conf => {
-        this._initMap(conf);
-      });
-  }
-
-  /**
-   * @description
-   * Method that gets called whenever there are changes to the input properties.
-   * This method is used to detect changes in the input properties of the component.
-   * If the reset property changes and its new value is not null, the _reset method is called.
-   * If the wmMapPadding property changes and _view is not null, the _view.fit() method is called to fit the centerExtent with the specified padding and maxZoom.
-   *
-   * @param changes An object containing all input property changes.
-   * @returns void.
-   */
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.reset && changes.reset.currentValue != null) {
-      this._reset();
-    }
-    if (changes.wmMapPadding && this._view != null) {
-      this._view.fit(this._centerExtent, {
-        padding: this.wmMapPadding,
-        maxZoom: this._view.getZoom(),
-      });
-    }
-    if (changes.filters) {
-      if (this.map != null) {
-        setTimeout(() => {
-          this.map?.changed();
-          this.map.renderSync();
-          this.map.render();
-          this.map.updateSize();
-          this.map.dispatchEvent('over');
-        }, 300);
-      }
-    }
-  }
-
-  /**
-   * @description
    * Resets the rotation of the map to north.
    * @returns {void}
    */
@@ -197,8 +188,21 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     });
   }
 
+  /**
+   * Sets the map overlay.
+   * @param overlay The overlay to set.
+   */
   setOverlay(overlay: any | null): void {
     this.wmMapOverlayEVT$.emit(overlay);
+  }
+
+  /**
+   * Toggles map data visibility.
+   * @param data Object specifying the type of data to toggle and its new visibility state.
+   */
+  toggleData(data: {type: 'layers' | 'pois'; toggle: boolean}): void {
+    console.log(data);
+    this.wmMapToggleDataEVT$.emit(data);
   }
 
   private _disableInteractions(): Collection<Interaction> {
@@ -209,6 +213,39 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       pinchRotate: false,
       altShiftDragRotate: false,
     });
+  }
+
+  /**
+   * Handles changes to the map's filters.
+   * @param filtersChange The change object for the filters property.
+   */
+  private _handleFiltersChange(filtersChange: SimpleChange): void {
+    if (filtersChange && this.map) {
+      this._updateMap();
+    }
+  }
+
+  /**
+   * Handles changes to the map's reset state.
+   * @param resetChange The change object for the reset property.
+   */
+  private _handleResetChange(resetChange: SimpleChange): void {
+    if (resetChange?.currentValue != null) {
+      this._reset();
+    }
+  }
+
+  /**
+   * Handles changes to the map's reset state.
+   * @param resetChange The change object for the reset property.
+   */
+  private _handleWmMapPaddingChange(wmMapPaddingChange: SimpleChange): void {
+    if (wmMapPaddingChange && this._view) {
+      this._view.fit(this._centerExtent, {
+        padding: this.wmMapPadding,
+        maxZoom: this._view.getZoom(),
+      });
+    }
   }
 
   /**
@@ -315,5 +352,18 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     }
     this.mapDegrees = degree;
     this.map.updateSize();
+  }
+
+  /**
+   * Updates the map to reflect any changes in its state.
+   */
+  private _updateMap(): void {
+    setTimeout(() => {
+      this.map?.changed();
+      this.map?.renderSync();
+      this.map?.render();
+      this.map?.updateSize();
+      this.map?.dispatchEvent('over');
+    }, 300);
   }
 }
