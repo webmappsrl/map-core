@@ -194,7 +194,7 @@ export class WmMapControls implements OnChanges, OnInit {
    * Metodo privato per inizializzare i dati.
    */
   private _initializeData(): void {
-    this.conf?.data
+    (this.conf?.data || [])
       .filter(data => data.type === 'button')
       .forEach((data: ICONTROLSBUTTON) => {
         this.currentDataIdx[data.id] = data.default ?? true;
@@ -209,7 +209,7 @@ export class WmMapControls implements OnChanges, OnInit {
    * Metodo privato per impostare l'overlay predefinito.
    */
   private _setDefaultOverlay(): void {
-    this.conf?.overlays
+    (this.conf?.overlays || [])
       .filter(overlay => overlay.type === 'button' && overlay.default)
       .forEach((overlay: ICONTROLSBUTTON) => this.selectOverlay(overlay.id, overlay));
   }
