@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.2.0](https://github.com/webmappsrl/map-core/compare/v1.1.1...v1.2.0) (2023-10-31)
+
+
+### Features
+
+* Add support for data buttons in map controls ([299a303](https://github.com/webmappsrl/map-core/commit/299a303bcb526dd034b332c33545e80e98e1ee9b))
+* **directives:** add fill color to feature collection directive ([9af86d8](https://github.com/webmappsrl/map-core/commit/9af86d807e18cec585dc532887480cd888d6d14f)), closes [#1875](https://github.com/webmappsrl/map-core/issues/1875)
+
+
+### Bug Fixes
+
+* Add click interaction for feature collection and pois directives ([e788001](https://github.com/webmappsrl/map-core/commit/e788001a731b4a96da75c3ccd0b3751fa98ef3e6))
+* Fix bug in feature-collection directive ([87a634a](https://github.com/webmappsrl/map-core/commit/87a634a7b17beeb7daa0a6440a492ef1a75a4382))
+
+
+### Miscellaneous
+
+* Add controls.map.html and update controls.map.ts ([0823d83](https://github.com/webmappsrl/map-core/commit/0823d8392c96fa671b7abef2a1c5c28cf2f63f5d))
+* Refactor controls.map ([299a303](https://github.com/webmappsrl/map-core/commit/299a303bcb526dd034b332c33545e80e98e1ee9b))
+* Remove unused code and optimize feature collection directive ([0211cc3](https://github.com/webmappsrl/map-core/commit/0211cc302fe802429a94c0ba57126a4221deba0c)), closes [#1876](https://github.com/webmappsrl/map-core/issues/1876)
+* Remove unused code and refactor feature selection logic ([6a5c4a1](https://github.com/webmappsrl/map-core/commit/6a5c4a1ef75b90292c035ded070deb8fc4788840))
+* Remove unused code in createHull function ([a5cceda](https://github.com/webmappsrl/map-core/commit/a5cceda863210373b3a6a10efaec5c835a510d63))
+* Update controls.map.html ([cd0ebd9](https://github.com/webmappsrl/map-core/commit/cd0ebd984e4a241e05284943f049f0eefc6962c9))
+* Update controls.map.ts to handle empty data and overlays arrays ([980896b](https://github.com/webmappsrl/map-core/commit/980896b7a40f5546dd2f28a0d416d027f5b03c95))
+* Update createHull function in ol.ts ([85bc0e9](https://github.com/webmappsrl/map-core/commit/85bc0e973c2b021a725ce7a643b4aec5ff7eb545))
+* Update feature-collection.directive.ts ([565db9d](https://github.com/webmappsrl/map-core/commit/565db9dd6a0fd99cf54cec61c55e05cb7f69ed16))
+* Update map component, feature collection directive, and pois directive ([4845df6](https://github.com/webmappsrl/map-core/commit/4845df610c91e154f26d365f4031c7829b66ff79))
+* Update ol-ext dependency to version 4.0.11 ([a0e8ef9](https://github.com/webmappsrl/map-core/commit/a0e8ef94914948ebc72689f2a7b7e99ecf61a160))
+* Update WmMapFeatureCollectionDirective ([e9dbca4](https://github.com/webmappsrl/map-core/commit/e9dbca4210f220c129bf5aa1a35074f8e871b039)), closes [#1876](https://github.com/webmappsrl/map-core/issues/1876)
+
 ## [1.1.1](https://github.com/webmappsrl/map-core/compare/v1.1.0...v1.1.1) (2023-10-05)
 
 
