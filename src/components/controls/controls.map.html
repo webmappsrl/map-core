@@ -8,7 +8,7 @@
         <wm-map-button-control
           [wmMapButtonControl]="tile"
           [wmMapTranslationCallback]="translationCallback"
-          [wmMapButtonControlSelect]="currentTileLayerIdx$.value === idx"
+          [wmMapButtonControlSelect]="currentTileLayerIdx$.value === tile.id"
           (wmMapButtonContolClicked)="selectTileLayer($event)"
         ></wm-map-button-control>
       </ion-item>
@@ -32,7 +32,7 @@
         [wmMapButtonControl]="overlay"
         [wmMapTranslationCallback]="translationCallback"
         (wmMapButtonContolClicked)="selectOverlay($event,overlay)"
-        [wmMapButtonControlSelect]="currentOverlayIdx$.value === idx"
+        [wmMapButtonControlSelect]="currentOverlayIdx$.value === overlay.id"
       ></wm-map-button-control>
     </ion-item>
   </ng-container>
