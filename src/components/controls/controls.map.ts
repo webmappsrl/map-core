@@ -19,32 +19,7 @@ import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
  */
 @Component({
   selector: 'wm-map-controls',
-  template: `
-  <div class="layer-button" *ngIf="showButton$|async" (click)="toggle$.next(!toggle$.value)">
-    <ion-icon name="layers-outline" ></ion-icon>
-  </div>
-  <ion-list class="layer-content" lines="none"   *ngIf="toggle$|async"> 
-    <ng-container *ngIf="conf.tiles as tiles">
-      <ng-container *ngIf="tiles.length > 2">
-        <ion-item *ngFor="let tile of tiles;let idx = index">
-          <wm-map-button-control [wmMapButtonControl]="tile" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectTileLayer($event)" [wmMapButtonControlSelect]="currentTileLayerIdx$.value === idx"></wm-map-button-control>
-        </ion-item>
-        <ion-item-divider *ngIf="conf.data != null && conf.data.length > 0"></ion-item-divider>
-      </ng-container>
-    </ng-container>
-    <ng-container *ngIf="conf.data as datas">
-      <ion-item *ngFor="let data of datas;let idx = index">
-          <wm-map-button-control [wmMapButtonControl]="data" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectDirective($event,data)" [wmMapButtonControlSelect]="currentDataIdx[idx]"></wm-map-button-control>
-      </ion-item>
-      <ion-item-divider *ngIf="conf.overlays != null && conf.overlays.length > 0"></ion-item-divider>
-    </ng-container>
-    <ng-container *ngIf="conf.overlays as overlays">
-      <ion-item *ngFor="let overlay of overlays;let idx = index">
-          <wm-map-button-control [wmMapButtonControl]="overlay" [wmMapTranslationCallback]="translationCallback" (wmMapButtonContolClicked)="selectOverlay($event,overlay)" [wmMapButtonControlSelect]="currentOverlayIdx$.value === idx"></wm-map-button-control>
-      </ion-item>
-    </ng-container>
-  </ion-list>
-`,
+  templateUrl: 'controls.map.html',
   styleUrls: ['controls.map.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
@@ -97,7 +72,7 @@ export class WmMapControls implements OnChanges, OnInit {
   /**
    * Stato interno per tracciare il livello della mappa selezionato.
    */
-  currentTileLayerIdx$ = new BehaviorSubject<number>(0);
+  currentTileLayerIdx$ = new BehaviorSubject<number>(1);
   /**
    * Stato interno per determinare se mostrare il pulsante dei controlli della mappa.
    */
