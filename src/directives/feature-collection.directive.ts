@@ -122,15 +122,29 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       this.mapCmp.map.addLayer(this._featureCollectionLayer);
     }
 
-    this.mapCmp.map.on('click', e => {
-      if (this._selectedFeature != null) {
-        this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+    this.mapCmp.map.on('pointermove', evt => {
+      const pixel = this.mapCmp.map.getEventPixel(evt.originalEvent);
+      const features = this.mapCmp.map.getFeaturesAtPixel(pixel);
+      if (features.length > 0) {
+        const feature = features[0];
+        const prop = feature.getProperties();
+        this.mapCmp.map.getViewport().style.cursor =
+          prop != null && prop['clickable'] ? 'pointer' : '';
       }
+    });
+    this.mapCmp.map.on('click', e => {
       this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
-        if (features.length > 0) {
-          const selectedFeature = features[0]; // Seleziona il primo elemento
-          this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
-          this._selectedFeature = selectedFeature;
+        const selectedFeature = features[0]; // Seleziona il primo elemento
+        const prop = selectedFeature.getProperties();
+        if (prop != null && prop['clickable'] === true) {
+          if (this._selectedFeature != null) {
+            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+            this._selectedFeature = null;
+          }
+          if (features.length > 0) {
+            this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+            this._selectedFeature = selectedFeature;
+          }
         }
       });
     });

@@ -227,13 +227,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }
     });
     this.mapCmp.map.on('pointermove', evt => {
-      if (this._disabled === false) {
-        var pixel = this.mapCmp.map.getEventPixel(evt.originalEvent);
-        try {
-          var hit = this.mapCmp.map.hasFeatureAtPixel(pixel);
-          this.mapCmp.map.getViewport().style.cursor = hit ? 'pointer' : '';
-        } catch (_) {}
-      }
+      try {
+        if (this._disabled === false) {
+          var pixel = this.mapCmp.map.getEventPixel(evt.originalEvent);
+          var hit = this.mapCmp.map.getFeaturesAtPixel(pixel);
+
+          this.mapCmp.map.getViewport().style.cursor =
+            hit.length > 0 && hit[0].getGeometry().getType() === 'Point' ? 'pointer' : '';
+        }
+      } catch (_) {}
     });
   }
 
@@ -364,7 +366,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       source: clusterSource,
     });
     this._selectCluster = createHull();
-    this.mapCmp.map.addInteraction(this._selectCluster);
     this._popupOverlay = new Popup({
       popupClass: 'default anim', //"tooltips", "warning" "black" "default", "tips", "shadow",
       closeBox: true,
@@ -385,17 +386,17 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
 
-    this._selectCluster.getFeatures().on(['add'], e => {
-      var c = e.element.get('features');
-      if (c != null && c.length === 1) {
-        const poi = c[0].getProperties();
-        this._selectIcon(poi);
-      }
-    });
-
     this.mapCmp.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
       this._poisClusterLayer.getFeatures(event.pixel).then(features => {
         if (features.length > 0) {
+          this.mapCmp.map.addInteraction(this._selectCluster);
+          this._selectCluster.getFeatures().on(['add'], e => {
+            var c = e.element.get('features');
+            if (c != null && c.length === 1) {
+              const poi = c[0].getProperties();
+              this._selectIcon(poi);
+            }
+          });
           const clusterMembers = features[0].get('features');
           if (clusterMembers.length > 4) {
             setTimeout(() => {
@@ -412,6 +413,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }
         }
       });
+      this.mapCmp.map.removeInteraction(this._selectCluster);
     });
     this.mapCmp.map.once('rendercomplete', () => {
       this.wmMapStateEvt.emit('rendering:pois_done');
