@@ -312,7 +312,25 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
     this.map.on('postrender', () => {
       this._updateDegrees();
     });
-
+    this.map.on('pointermove', evt => {
+      try {
+        let cursor = '';
+        const pixel = this.map.getEventPixel(evt.originalEvent);
+        const features = this.map.getFeaturesAtPixel(pixel);
+        if (features.length > 0) {
+          const feature = features[0];
+          const geometry = feature.getGeometry();
+          const prop = feature.getProperties();
+          const type = geometry.getType();
+          if (type === 'Point' || prop['clickable'] === true) {
+            cursor = 'pointer';
+          }
+        }
+        if (this.map.getViewport().style.cursor != cursor) {
+          this.map.getViewport().style.cursor = cursor;
+        }
+      } catch (_) {}
+    });
     this.map$.next(this.map);
     this._view.setZoom(conf.defZoom);
     if (conf.bbox) {

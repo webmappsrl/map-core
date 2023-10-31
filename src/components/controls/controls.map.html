@@ -2,7 +2,7 @@
   <ion-icon name="layers-outline"></ion-icon>
 </div>
 <ion-list class="layer-content" lines="none" *ngIf="toggle$|async">
-  <ng-container *ngIf="conf.tiles as tiles">
+  <ng-container *ngIf="conf.tiles|controlIsBtn as tiles">
     <ng-container *ngIf="tiles.length > 2">
       <ion-item *ngFor="let tile of tiles;let idx = index">
         <wm-map-button-control
@@ -15,7 +15,7 @@
       <ion-item-divider *ngIf="conf.data != null && conf.data.length > 0"></ion-item-divider>
     </ng-container>
   </ng-container>
-  <ng-container *ngIf="conf.data as datas">
+  <ng-container *ngIf="conf.data|controlIsBtn as datas">
     <ion-item *ngFor="let data of datas;let idx = index">
       <wm-map-button-control
         [wmMapButtonControl]="data"
@@ -26,7 +26,7 @@
     </ion-item>
     <ion-item-divider *ngIf="conf.overlays != null && conf.overlays.length > 0"></ion-item-divider>
   </ng-container>
-  <ng-container *ngIf="conf.overlays as overlays">
+  <ng-container *ngIf="conf.overlays|controlIsBtn as overlays">
     <ion-item *ngFor="let overlay of overlays;let idx = index">
       <wm-map-button-control
         [wmMapButtonControl]="overlay"
