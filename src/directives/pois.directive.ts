@@ -402,7 +402,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }
         }
       });
-      this.mapCmp.map.removeInteraction(this._selectCluster);
     });
     this.mapCmp.map.once('rendercomplete', () => {
       this.wmMapStateEvt.emit('rendering:pois_done');
@@ -543,6 +542,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       }
       this.mapCmp.map.once('rendercomplete', () => {
         this._fitView(geometry as any);
+        this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
   }
