@@ -16,7 +16,8 @@ wm-map-controls {
   .layer-content {
     position: fixed;
     background-color: rgba($color: white, $alpha: 0.8);
-    top: calc(2% + 50px);
+    top: calc(2% + 60px + constant(safe-area-inset-top));
+    top: calc(2% + 60px + env(safe-area-inset-top));
     right: 2%;
     z-index: 1;
   }
