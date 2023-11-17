@@ -1,11 +1,11 @@
-import {ChangeDetectionStrategy, Component, ViewEncapsulation} from '@angular/core';
+import {ChangeDetectionStrategy, Component, Input, ViewEncapsulation} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 
 @Component({
   selector: 'wm-map-popover',
   template: `
   <ng-container *ngIf="message$|async as message">
-    <ion-card>
+    <ion-card [ngClass]="cssClass">
       <ion-card-content>
         <div> <span [innerHTML]="message"></span> <a (click)="message$.next(null)"> X</a></div>
       </ion-card-content>
@@ -17,5 +17,7 @@ import {BehaviorSubject} from 'rxjs';
   encapsulation: ViewEncapsulation.None,
 })
 export class WmMapPopover {
+  @Input() cssClass;
+
   message$: BehaviorSubject<string | null> = new BehaviorSubject<string>(null);
 }

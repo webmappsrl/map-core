@@ -1,4 +1,13 @@
-import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
+import {
+  ComponentRef,
+  Directive,
+  ElementRef,
+  EventEmitter,
+  Host,
+  Input,
+  Output,
+  ViewContainerRef,
+} from '@angular/core';
 import {BehaviorSubject, Subject} from 'rxjs';
 
 import {ToastController} from '@ionic/angular';
@@ -20,7 +29,7 @@ import VectorSource from 'ol/source/Vector';
 import {filter, take} from 'rxjs/operators';
 import {createIconFeatureFromSrc} from '../../src/utils/ol';
 import {getLineStyle} from '../../src/utils/styles';
-import {WmMapComponent} from '../components';
+import {WmMapComponent, WmMapPopover} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
@@ -74,9 +83,18 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    * An array of `Coordinate` objects that define a path or shape on the map.
    */
   private _points: Coordinate[] = [];
+  private _popoverMsg: string = 'Clicca sulla mappa per avviare la creazione di un percorso';
+  private _popoverRef: ComponentRef<WmMapPopover> = null;
 
   @Input('wmMapCustomTrackDrawTrack') set enabled(val: boolean) {
     this._enabled$.next(val);
+    if (this._popoverRef != null && this._popoverRef.instance != null) {
+      if (val) {
+        this._popoverRef.instance.message$.next(this._popoverMsg);
+      } else {
+        this._popoverRef.instance.message$.next(null);
+      }
+    }
   }
 
   @Input() set reloadCustomTracks(val) {
@@ -97,7 +115,12 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    * @param {ToastController} _toastCtrl - An instance of the ToastController, used for displaying toast messages.
    * @param {WmMapComponent} mapCmp - An instance of the WmMapComponent, the parent component of this service.
    */
-  constructor(private _toastCtrl: ToastController, @Host() mapCmp: WmMapComponent) {
+  constructor(
+    private _toastCtrl: ToastController,
+    private _viewContainerRef: ViewContainerRef,
+    private _element: ElementRef,
+    @Host() mapCmp: WmMapComponent,
+  ) {
     super(mapCmp);
     this.mapCmp.isInit$
       .pipe(
@@ -140,6 +163,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     }
     this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       if (this._enabled$.value) {
+        this._popoverRef.instance.message$.next(null);
         let featuresAvailableInClick = null;
         try {
           featuresAvailableInClick = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
@@ -218,6 +242,14 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         this._clear();
       }
     });
+    this._initPopover();
+  }
+
+  _initPopover(): void {
+    this._popoverRef = this._viewContainerRef.createComponent(WmMapPopover);
+    this._popoverRef.setInput('cssClass', 'draw-path-alert');
+    const host = this._element.nativeElement;
+    host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
   }
 
   /**
@@ -233,6 +265,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._customTrackLayer.getSource().clear();
     this._customPoiLayer.getSource().clear();
     this._points = [];
+    this._popoverRef.instance.message$.next(this._popoverMsg);
   }
 
   /**
