@@ -90,7 +90,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._enabled$.next(val);
     if (this._popoverRef != null && this._popoverRef.instance != null) {
       if (val) {
-        this._popoverRef.instance.message$.next(this._popoverMsg);
+        this._popoverRef.instance.message$.next(this.translationCallback(this._popoverMsg));
       } else {
         this._popoverRef.instance.message$.next(null);
       }
@@ -103,6 +103,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
 
   @Input() customTracks: any[];
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
+  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input() wmMapCustomTrackDrawTrackHost: string;
   @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
 
@@ -266,7 +267,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._customPoiLayer.getSource().clear();
     this._points = [];
 
-    this._popoverRef?.instance?.message$.next(this._popoverMsg);
+    this._popoverRef?.instance?.message$.next(this.translationCallback(this._popoverMsg));
   }
 
   /**
