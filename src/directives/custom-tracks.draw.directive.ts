@@ -265,7 +265,8 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._customTrackLayer.getSource().clear();
     this._customPoiLayer.getSource().clear();
     this._points = [];
-    this._popoverRef.instance.message$.next(this._popoverMsg);
+
+    this._popoverRef?.instance?.message$.next(this._popoverMsg);
   }
 
   /**

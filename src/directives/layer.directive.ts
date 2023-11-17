@@ -84,6 +84,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     if (this._lowVectorTileLayer != null) {
       this._lowVectorTileLayer.setVisible(!disable);
     }
+    if (this._disabled === false) {
+      this._resolutionLayerSwitcher();
+    }
   }
 
   /**

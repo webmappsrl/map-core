@@ -18,8 +18,13 @@ wm-map-popover {
   .draw-path-alert {
     right: 230px;
     height: 40px;
+    --background: antiquewhite;
+    --color: black;
     ion-card-content {
       line-height: unset;
+    }
+    .message {
+      font-size: 16px;
     }
   }
 }
