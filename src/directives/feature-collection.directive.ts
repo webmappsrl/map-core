@@ -137,6 +137,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
             this._selectedFeature = selectedFeature;
           }
         }
+        if (prop != null && prop['layer_id'] != null) {
+          this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+        }
       });
     });
   }
