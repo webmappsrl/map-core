@@ -96,6 +96,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   }
 
   private _buildGeojson(geojson: any): void {
+    this._resetSelectedFeature();
     let count = 0;
     const features = new GeoJSON({
       featureProjection: 'EPSG:3857',
@@ -138,5 +139,14 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         }
       });
     });
+  }
+
+  private _resetSelectedFeature(): void {
+    const featureCollectionSourceLayer =
+      this._featureCollectionLayer != null ? this._featureCollectionLayer.getSource() : null;
+    if (this._selectedFeature != null && featureCollectionSourceLayer != null) {
+      featureCollectionSourceLayer.removeFeature(this._selectedFeature);
+      this._selectedFeature = null;
+    }
   }
 }
