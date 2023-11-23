@@ -8,7 +8,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import Popup from 'ol-ext/overlay/popup';
+import {Popup} from 'ol-ext/overlay/popup';
 import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
