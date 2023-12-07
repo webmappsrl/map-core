@@ -16,13 +16,25 @@ wm-map-controls {
   .layer-content {
     position: fixed;
     background-color: rgba($color: white, $alpha: 0.8);
+
     top: calc(2% + 60px + constant(safe-area-inset-top));
     top: calc(2% + 60px + env(safe-area-inset-top));
     right: 2%;
     z-index: 1;
+    max-height: 80%;
   }
-
+  ion-list {
+    background-color: rgba($color: white, $alpha: 0.8) !important;
+  }
+  ion-content {
+    width: 200px;
+  }
   ion-item {
     --background: rgba($color: white, $alpha: 0.8) !important;
+  }
+
+  @media only screen and (max-width: 480px) {
+    .layer-content {
+    }
   }
 }
