@@ -21,7 +21,7 @@ wm-map-controls {
     top: calc(2% + 60px + env(safe-area-inset-top));
     right: 2%;
     z-index: 1;
-    max-height: 80%;
+    height: calc(50vh);
   }
   ion-list {
     background-color: rgba($color: white, $alpha: 0.8) !important;
