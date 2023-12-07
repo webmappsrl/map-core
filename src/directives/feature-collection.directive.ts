@@ -63,6 +63,8 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   };
   @Output('wmMapFeatureCollectionLayerSelected')
   wmMapFeatureCollectionLayerSelected: EventEmitter<number> = new EventEmitter<number>();
+  @Output()
+  wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient) {
     super(mapCmp);
@@ -126,7 +128,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this.mapCmp.map.on('click', e => {
       this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
         const selectedFeature = features[0]; // Seleziona il primo elemento
-        const prop = selectedFeature.getProperties() ?? null;
+        const prop = selectedFeature?.getProperties() ?? null;
         if (prop != null && prop['clickable'] === true) {
           if (this._selectedFeature != null) {
             this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
@@ -139,6 +141,11 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         }
         if (prop != null && prop['layer_id'] != null) {
           this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+        }
+        if (prop != null && prop['popup'] != null) {
+          this.wmMapFeatureCollectionPopup.emit(prop['popup']);
+        } else {
+          this.wmMapFeatureCollectionPopup.emit(null);
         }
       });
     });
