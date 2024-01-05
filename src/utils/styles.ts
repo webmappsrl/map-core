@@ -141,7 +141,10 @@ export function buildArrowStyle(
  * feature.setProperties({ref: 'A'});
  * const style = buildRefStyle.bind(this)(feature);
  */
-export function buildRefStyle(lineString: LineString, opt: any = {map: this.map}): Style[] {
+export function buildRefStyle(
+  lineString: LineString,
+  opt: any = {map: this.map, featureStrokeColor: 'rgba(255, 255, 255, 0.9)'},
+): Style[] {
   let size = 450;
   let styles: Style[] = [];
   let splitPoints = [];
@@ -150,6 +153,13 @@ export function buildRefStyle(lineString: LineString, opt: any = {map: this.map}
   let extent = null;
   const resolution = opt.map.getView().getResolution();
   const properties = lineString.getProperties();
+  if (properties['layers'] != null) {
+    const layers: number[] = JSON.parse(properties['layers']);
+    const layerId = +layers[0];
+    const color = getColorFromLayer(layerId, this.conf.layers);
+    opt.featureStrokeColor =
+      properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : color;
+  }
   try {
     n = lineString.getLength() / (size * resolution);
   } catch (e) {
@@ -178,7 +188,7 @@ export function buildRefStyle(lineString: LineString, opt: any = {map: this.map}
       new Style({
         geometry: new Point([point[0], point[1]]),
         text: new Text({
-          font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
+          font: 'bold 14px "Open Sans", "Arial Unicode MS", "sans-serif"',
           placement: 'point',
           rotateWithView: false, //true,
           rotation: 0, //point[2],
@@ -186,7 +196,7 @@ export function buildRefStyle(lineString: LineString, opt: any = {map: this.map}
           overflow: false,
           // textBaseline: "bottom",
           fill: new Fill({
-            color: this._defaultFeatureColor,
+            color: opt.featureStrokeColor,
           }),
           stroke: new Stroke({
             color: '#fff',
