@@ -52,6 +52,72 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
   mythis.animatedLayer.getSource().addFeature(feature);
 }
 
+export function buildArrowStyle(
+  lineString: LineString,
+  opt: any = {
+    featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+    map: this.map,
+    width: 3,
+  },
+): Style[] {
+  let size = 85;
+  let scale = 0.2 - (17 - opt.map.getView().getZoom()) / 75;
+  scale += opt.width / 60;
+  let styles: Style[] = [];
+  let mapSize: number[] = opt.map.getSize();
+  let extent = null;
+  let splitPoints = [];
+  let n = 0;
+  const resolution = opt.map.getView().getResolution();
+  let properties = lineString.getProperties();
+  if (properties['layers'] != null) {
+    const layers: number[] = JSON.parse(properties['layers']);
+    const layerId = +layers[0];
+    const color = getColorFromLayer(layerId, this.conf.layers);
+    opt.featureStrokeColor =
+      properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : color;
+  }
+  try {
+    n = lineString.getLength() / (size * resolution);
+  } catch (e) {
+    console.warn('WARNING: wrong geometry in feature ' + properties);
+    return styles;
+  }
+  if (n < 2) return styles;
+  if (n > 1000000) {
+    n = Math.sqrt(n / 100);
+    extent = opt.map.getView().calculateExtent([mapSize[0] * n, mapSize[1] * n]);
+    splitPoints = splitLineString(lineString, size * resolution * n, {
+      extent: extent,
+      vertices: false,
+    });
+    lineString = new LineString(splitPoints);
+  }
+  extent = opt.map.getView().calculateExtent([mapSize[0] + size * 2, mapSize[1] + size * 2]);
+  splitPoints = splitLineString(lineString, size * resolution, {
+    alwaysUp: false,
+    midPoints: true,
+    extent: extent,
+  });
+  splitPoints.forEach(point => {
+    styles.push(
+      new Style({
+        geometry: new Point([point[0], point[1]]),
+        image: new Icon({
+          src: 'map-core/assets/line-icon-arrow.png',
+          scale: scale,
+          rotation: point[2],
+          color: opt.featureStrokeColor,
+          rotateWithView: true,
+        }),
+        zIndex: TRACK_DIRECTIVE_ZINDEX + 10,
+      }),
+    );
+  });
+
+  return styles;
+}
+
 /**
  * @description
  * Builds a reference point style for a given feature.
@@ -75,28 +141,64 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
  * feature.setProperties({ref: 'A'});
  * const style = buildRefStyle.bind(this)(feature);
  */
-export function buildRefStyle(feature: {getProperties: () => any}): Style {
-  const properties = feature.getProperties();
-  let text = new Text({
-    text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
-    font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
-    placement: 'point',
-    rotateWithView: true,
-    overflow: true,
-    maxAngle: Math.PI / 16,
-    fill: new Fill({
-      color: this._defaultFeatureColor,
-    }),
-    stroke: new Stroke({
-      color: '#fff',
-      width: 4,
-    }),
+export function buildRefStyle(lineString: LineString, opt: any = {map: this.map}): Style[] {
+  let size = 450;
+  let styles: Style[] = [];
+  let splitPoints = [];
+  let mapSize: number[] = opt.map.getSize();
+  let n = 0;
+  let extent = null;
+  const resolution = opt.map.getView().getResolution();
+  const properties = lineString.getProperties();
+  try {
+    n = lineString.getLength() / (size * resolution);
+  } catch (e) {
+    console.warn('WARNING: wrong geometry in feature ' + properties);
+    return styles;
+  }
+  if (n < 2) return styles;
+  if (n > 1000000) {
+    n = Math.sqrt(n / 100);
+    extent = this._view.calculateExtent([mapSize[0] * n, mapSize[1] * n]);
+    splitPoints = this._splitLineString(lineString, size * resolution * n, {
+      extent: extent,
+      vertices: false,
+    });
+    lineString = new LineString(splitPoints);
+  }
+  extent = opt.map.getView().calculateExtent([mapSize[0] + size * 2, mapSize[1] + size * 2]);
+  splitPoints = splitLineString(lineString, size * resolution, {
+    alwaysUp: false,
+    midPoints: true,
+    extent: extent,
+  });
+  splitPoints.forEach(point => {
+    if (Math.abs(point[2]) > Math.PI / 2) point[2] += Math.PI;
+    styles.push(
+      new Style({
+        geometry: new Point([point[0], point[1]]),
+        text: new Text({
+          font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
+          placement: 'point',
+          rotateWithView: false, //true,
+          rotation: 0, //point[2],
+          text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
+          overflow: false,
+          // textBaseline: "bottom",
+          fill: new Fill({
+            color: this._defaultFeatureColor,
+          }),
+          stroke: new Stroke({
+            color: '#fff',
+            width: 4,
+          }),
+        }),
+        zIndex: TRACK_DIRECTIVE_ZINDEX + 11,
+      }),
+    );
   });
 
-  return new Style({
-    zIndex: TRACK_ZINDEX + 1,
-    text,
-  });
+  return styles;
 }
 
 /**
@@ -191,71 +293,6 @@ export function clusterHullStyle(cluster) {
       width: 1.5,
     }),
   });
-}
-
-export function createArrowStyle(
-  lineString: LineString,
-  opt: any = {
-    featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
-    map: this.map,
-  },
-): Style[] {
-  let size = 85;
-  let scale = 0.2 - (17 - opt.map.getView().getZoom()) / 75;
-  let styles: Style[] = [];
-  let mapSize: number[] = opt.map.getSize();
-  let extent = null;
-  let splitPoints = [];
-  let n = 0;
-  const resolution = opt.map.getView().getResolution();
-  let properties = lineString.getProperties();
-  if (properties['layers'] != null) {
-    const layers: number[] = JSON.parse(properties['layers']);
-    const layerId = +layers[0];
-    const color = getColorFromLayer(layerId, this.conf.layers);
-    opt.featureStrokeColor =
-      properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : color;
-  }
-  const length = lineString.getLength();
-  try {
-    n = lineString.getLength() / (size * resolution);
-  } catch (e) {
-    console.warn('WARNING: wrong geometry in feature ' + properties);
-    return styles;
-  }
-  if (n < 2) return styles;
-  if (n > 1000000) {
-    n = Math.sqrt(n / 100);
-    extent = opt.map.getView().calculateExtent([mapSize[0] * n, mapSize[1] * n]);
-    splitPoints = splitLineString(lineString, size * resolution * n, {
-      extent: extent,
-      vertices: false,
-    });
-    lineString = new LineString(splitPoints);
-  }
-  extent = opt.map.getView().calculateExtent([mapSize[0] + size * 2, mapSize[1] + size * 2]);
-  splitPoints = splitLineString(lineString, size * resolution, {
-    alwaysUp: false,
-    midPoints: true,
-    extent: extent,
-  });
-  splitPoints.forEach(point => {
-    styles.push(
-      new Style({
-        geometry: new Point([point[0], point[1]]),
-        image: new Icon({
-          src: 'map-core/assets/line-icon-arrow.png',
-          scale: scale,
-          rotation: point[2],
-          color: opt.featureStrokeColor,
-          rotateWithView: true,
-        }),
-        zIndex: TRACK_DIRECTIVE_ZINDEX + 10,
-      }),
-    );
-  });
-
-  return styles;
 }
 
 /**
@@ -446,13 +483,15 @@ export function getLineStyle(color = '255, 177, 0', linestring?: any): Style[] {
       zIndex: TRACK_DIRECTIVE_ZINDEX + 2,
     }),
   );
-  style.push(
-    ...createArrowStyle.bind(this)(linestring, {
-      featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
-      scale: 0.35,
-      map: this.mapCmp.map,
-    }),
-  );
+  if (this != null && this.mapCmp != null) {
+    style.push(
+      ...buildArrowStyle.bind(this)(linestring, {
+        featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+        width: strokeWidth,
+        map: this.mapCmp.map,
+      }),
+    );
+  }
 
   return style;
 }
@@ -755,13 +794,18 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       this.conf.ref_on_track_show &&
       this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
     ) {
-      styles = [...styles, buildRefStyle.bind(this)(feature)];
+      const lineString = getLineStringFromRenderFeature(feature);
+      lineString.setProperties(feature.getProperties());
+      styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
   }
   if (this.high && currentTrackID == null) {
     const lineString = getLineStringFromRenderFeature(feature);
     lineString.setProperties(feature.getProperties());
-    styles = [...styles, ...createArrowStyle.bind(this)(lineString, {map: this.map})];
+    styles = [
+      ...styles,
+      ...buildArrowStyle.bind(this)(lineString, {map: this.map, width: strokeStyle.getWidth()}),
+    ];
   }
   return styles;
 }
