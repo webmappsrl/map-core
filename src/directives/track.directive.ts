@@ -27,6 +27,7 @@ import {WmMapPopover} from '../components/popover/popover.map';
 import {WmMapBaseDirective} from '.';
 import {
   coordsFromLonLat,
+  createArrowStyle,
   createIconFeatureFromHtml,
   getFlowStyle,
   getLineStyle,
@@ -59,8 +60,8 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   @Input() track;
   @Input() trackElevationChartElements: any;
-  @Input() wmMapTrackColor = '#caaf15';
   @Input() wmMapLayerLayer;
+  @Input() wmMapTrackColor = '#caaf15';
 
   constructor(
     private element: ElementRef,
@@ -167,6 +168,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
+    const linestring = this._trackFeatures[0].getGeometry();
     this._trackLayer = new VectorLayer({
       source: new VectorSource({
         format: new GeoJSON(),
@@ -176,13 +178,12 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         isFlowLine
           ? getFlowStyle(orangeTreshold, redTreshold)
           : drawTrack
-          ? getLineStyle(this.wmMapTrackColor)
+          ? getLineStyle.bind(this)(this.wmMapTrackColor, linestring)
           : null,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: TRACK_DIRECTIVE_ZINDEX,
     });
-
     this.mapCmp.map.addLayer(this._trackLayer);
   }
 

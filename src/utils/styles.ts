@@ -1,7 +1,7 @@
 import convexHull from 'ol-ext/geom/ConvexHull';
 import FlowLine from 'ol-ext/style/FlowLine';
 import Feature, {FeatureLike} from 'ol/Feature';
-import {Point, Polygon} from 'ol/geom';
+import {LineString, Point, Polygon} from 'ol/geom';
 import {Circle, Fill, Icon, RegularShape, Text} from 'ol/style';
 import {default as Stroke, default as StrokeStyle} from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
@@ -11,230 +11,9 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {ILAYER} from '../types/layer';
-export var currentTrackID = null;
-export const cacheStyle = {
-  'noColor': new StrokeStyle({color: 'rgba(0,0,0,0)'}),
-  'red': new StrokeStyle({color: 'red'}),
-};
-/**
- * @description
- * Generates a Mapbox Style JSON object to style vector layers in OpenLayers.
- * This style JSON object includes layer styles for different CAI scales ('EEA', 'EE', 'E', 'T').
- * It also includes a text label layer to display the 'ref' property of each feature.
- *
- * @param {string} vectorLayerUrl The URL of the vector layer source.
- * @returns {object} A Mapbox Style JSON object.
- *
- * @example
- * const styleJson = styleJsonFn("https://example.com/vector-layer-url");
- */
-export function styleJsonFn(vectorLayerUrl: string) {
-  return {
-    version: 8,
-    name: 'tracks',
-    metadata: {'maputnik:renderer': 'ol'},
-    sources: {
-      tracks1: {
-        type: 'vector',
-        url: vectorLayerUrl,
-      },
-    },
-    sprite: '',
-    glyphs: 'https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf',
-    layers: [
-      {
-        id: 'EEA',
-        type: 'line',
-        source: 'tracks',
-        'source-layer': 'tracks',
-        filter: ['all', ['==', 'cai_scale', 'EEA']],
-        layout: {'line-join': 'round', 'line-cap': 'round', visibility: 'visible'},
-        paint: {
-          'line-color': 'rgba(255, 0, 218, 0.8)',
-          'line-width': {
-            stops: [
-              [10, 1],
-              [20, 10],
-            ],
-          },
-          'line-dasharray': [0.001, 2],
-        },
-      },
-      {
-        id: 'EE',
-        type: 'line',
-        source: 'tracks',
-        'source-layer': 'tracks',
-        filter: ['all', ['==', 'cai_scale', 'EE']],
-        layout: {'line-join': 'round', 'line-cap': 'round'},
-        paint: {
-          'line-color': 'rgba(255, 57, 0, 0.8)',
-          'line-width': {
-            stops: [
-              [10, 1],
-              [20, 10],
-            ],
-          },
-          'line-dasharray': [0.01, 2],
-        },
-      },
-      {
-        id: 'E',
-        type: 'line',
-        source: 'tracks',
-        'source-layer': 'tracks',
-        filter: ['all', ['==', 'cai_scale', 'E']],
-        layout: {'line-join': 'round', 'line-cap': 'round'},
-        paint: {
-          'line-color': 'rgba(255, 57, 0, 0.8)',
-          'line-width': {
-            stops: [
-              [10, 1],
-              [20, 10],
-            ],
-          },
-          'line-dasharray': [2, 2],
-        },
-      },
-      {
-        id: 'T',
-        type: 'line',
-        source: 'tracks',
-        'source-layer': 'tracks',
-        filter: ['all', ['==', 'cai_scale', 'T']],
-        layout: {'line-join': 'round', 'line-cap': 'round', visibility: 'visible'},
-        paint: {
-          'line-color': 'rgba(255, 57, 0, 0.8)',
-          'line-width': {
-            stops: [
-              [10, 1],
-              [20, 10],
-            ],
-          },
-        },
-      },
-      {
-        id: 'ref',
-        type: 'symbol',
-        source: 'tracks',
-        'source-layer': 'tracks',
-        minzoom: 10,
-        maxzoom: 16,
-        layout: {
-          'text-field': '{ref}',
-          visibility: 'visible',
-          'symbol-placement': 'line',
-          'text-size': 12,
-          'text-allow-overlap': true,
-        },
-        paint: {'text-color': 'rgba(255, 57, 0,0.8)'},
-      },
-    ],
-    id: '63fa0rhhq',
-  };
-}
+import {Coordinate} from 'ol/coordinate';
+import {containsCoordinate} from 'ol/extent';
 
-/**
- * @description
- * This is a JavaScript function that creates and returns an array of ol.style.Style objects that are used to style a line feature in an OpenLayers map.
- * The function takes an optional parameter color which is a string representing the color of the line. If no color is passed, the default color is set to '255, 177, 0', which is a yellow color.
- * The function then checks if the first character of the color string is '#', which indicates that the color is in hex format. If that's the case, it converts the hex color to RGB format.
- * The function then creates two ol.style.Style objects and sets their properties.
- * The first style has a white stroke with double the width of the second style's stroke and a higher z-index, so it will be drawn above the second style. The second style has the color passed as an argument or default color and has a strokeWidth, lineDash set to empty array, lineCap to round and zIndex of 50. It creates an instance of ol.style.Stroke to set stroke property of ol.style.Style object.
- * Finally, the function returns the array of ol.style.Style objects.
- *
- * @export
- * @param {string} [color]
- * @returns {*}  {Style[]}
- */
-export function getLineStyle(color?: string): Style[] {
-  const style: Style[] = [];
-  const strokeWidth: number = 6;
-  const strokeOpacity: number = 1;
-  const lineDash: Array<number> = [];
-  const lineCap: CanvasLineCap = 'round';
-
-  if (!color) color = '255, 177, 0';
-  if (color[0] === '#') {
-    color =
-      parseInt(color.substring(1, 3), 16) +
-      ', ' +
-      parseInt(color.substring(3, 5), 16) +
-      ', ' +
-      parseInt(color.substring(5, 7), 16);
-  }
-  color = 'rgba(' + color + ',' + strokeOpacity + ')';
-
-  style.push(
-    new Style({
-      stroke: new Stroke({
-        color: 'rgba(255, 255, 255, 0.9)',
-        width: strokeWidth * 2,
-      }),
-      zIndex: TRACK_DIRECTIVE_ZINDEX + 1,
-    }),
-  );
-
-  style.push(
-    new Style({
-      stroke: new Stroke({
-        color,
-        width: strokeWidth,
-        lineDash,
-        lineCap,
-      }),
-      zIndex: TRACK_DIRECTIVE_ZINDEX + 2,
-    }),
-  );
-
-  return style;
-}
-
-/**
- * @description
- * This function creates and returns an ol-ext/style/FlowLine style object that represents a flow-style line in an OpenLayers map.
- * The function takes two optional parameters, orangeTreshold and redTreshold, which are numeric values representing altitude thresholds.
- * If these parameters are not provided, their default values are set to 800 and 1500, respectively.
- *
- * The function initializes a FlowLine object with the following properties:
- *  - lineCap: 'butt'
- *  - color: a function that takes a feature 'f' and a step value as arguments, calculates the current altitude based on the feature's geometry and step value, and returns a color ('green', 'orange', or 'red') depending on the altitude.
- *  - width: 10
- *
- * @export
- * @param {number} [orangeTreshold=800] - The altitude threshold for the orange color.
- * @param {number} [redTreshold=1500] - The altitude threshold for the red color.
- * @returns {FlowLine} A FlowLine style object with the specified properties.
- * @example
- * const flowStyle = getFlowStyle();
- * const customFlowStyle = getFlowStyle(900, 1800);
- */
-export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
-  return new FlowLine({
-    lineCap: 'butt',
-    color: function (
-      f: {getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}}},
-      step: number,
-    ) {
-      const geometry = f.getGeometry().getCoordinates();
-      const position = +(geometry.length * step).toFixed();
-      const currentLocation = geometry[position];
-      let currentAltitude = 100;
-      try {
-        currentAltitude = currentLocation[2];
-      } catch (_) {}
-
-      if (currentAltitude >= orangeTreshold && currentAltitude < redTreshold) {
-        return 'orange';
-      }
-      if (currentAltitude >= redTreshold) {
-        return 'red';
-      }
-      return 'green';
-    },
-    width: 10,
-  });
-}
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
   maxStrokeWidth?: number;
@@ -244,39 +23,239 @@ export interface handlingStrokeStyleWidthOptions {
   strokeStyle: StrokeStyle;
 }
 
-export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
-  options = {...{minStrokeWidth: 3, maxStrokeWidth: 6}, ...options};
-  const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
-  const newWidth =
-    options.minStrokeWidth + (options.maxStrokeWidth - options.minStrokeWidth) * delta;
-
-  options.strokeStyle.setWidth(newWidth);
+export function animateFeatureFn(mythis: any, feature: Feature, color, next = true) {
+  function getAnimationStrokeStyle() {
+    return new Style({
+      stroke: new Stroke({
+        color: hexToRgba(color),
+        width: 2,
+        lineDash: [10, 20],
+        lineDashOffset: feature.get('dashOffset'),
+      }),
+    });
+  }
+  var outlineStroke = new Style({
+    stroke: new Stroke({
+      color: [25, 25, 255, 0.8],
+      width: 2,
+    }),
+  });
+  function getStyle() {
+    return [outlineStroke, getAnimationStrokeStyle()];
+  }
+  feature.setStyle(getStyle);
+  setInterval(() => {
+    let offset = feature.get('dashOffset') ?? 0;
+    offset = offset == 8 ? 0 : next ? offset - 1 : offset + 1;
+    feature.set('dashOffset', offset);
+  }, 100);
+  mythis.animatedLayer.getSource().addFeature(feature);
 }
 
 /**
  * @description
- * This function takes a layer ID and an optional array of layer objects (ILAYER[]). It searches for the layer with the
- * specified ID within the layers array and returns the color property of the layer's style object.
- * If the layer is not found, the function returns the default line color (DEF_LINE_COLOR).
- * @export
- * @param {number} id - The ID of the layer whose color should be retrieved.
- * @param {ILAYER[]} [layers=[]] - An optional array of layer objects. If not provided, an empty array will be used.
- * @returns {string} - The color property of the layer's style object, or the default line color if the layer is not found.
+ * Builds a reference point style for a given feature.
+ * This function takes a feature object and generates a new Style object for the reference point, based on
+ * the 'ref' property in the feature's properties and the configuration settings for reference points.
+ *
+ * If the feature has a 'ref' property and the 'ref_on_track_show' configuration option is set to true, a new
+ * Text object will be generated with the text value of the 'ref' property. The font, placement, and other
+ * styling options for the Text object will be set based on the configuration settings.
+ *
+ * If the feature does not have a 'ref' property or the 'ref_on_track_show' configuration option is set to
+ * false, the function will return a new Style object with an empty Text object and default styling options.
+ *
+ * Note that this function is bound to a `this` context, so the calling object should be of the correct type.
+ *
+ * @param feature - The feature object to generate a reference point style for.
+ * @returns A new Style object for the reference point.
+ *
  * @example
- * // Example usage with an array of layer objects
- * const layers = [
- * {id: 1, style: {color: 'red'}},
- * {id: 2, style: {color: 'blue'}}
- * ];
- * const color = getColorFromLayer(1, layers); // Returns 'red'
- * // Example usage without an array of layer objects
- * const color = getColorFromLayer(1); // Returns DEF_LINE_COLOR
+ * const feature = new Feature(new Point([0, 0]));
+ * feature.setProperties({ref: 'A'});
+ * const style = buildRefStyle.bind(this)(feature);
  */
-export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
-  const layer = layers.filter(l => +l.id === +id);
-  return layer[0] && layer[0].style && layer[0].style['color']
-    ? layer[0].style['color']
-    : DEF_LINE_COLOR;
+export function buildRefStyle(feature: {getProperties: () => any}): Style {
+  const properties = feature.getProperties();
+  let text = new Text({
+    text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
+    font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
+    placement: 'point',
+    rotateWithView: true,
+    overflow: true,
+    maxAngle: Math.PI / 16,
+    fill: new Fill({
+      color: this._defaultFeatureColor,
+    }),
+    stroke: new Stroke({
+      color: '#fff',
+      width: 4,
+    }),
+  });
+
+  return new Style({
+    zIndex: TRACK_ZINDEX + 1,
+    text,
+  });
+}
+
+/**
+ * @description
+ * Builds start and end point icons for a given geometry.
+ * This function takes a geometry object and generates a new array of Style objects for the start and end point icons.
+ * The start point icon is a green hexagon shape and the end point icon is a red hexagon shape with a larger radius.
+ * Both icons are centered on the first and last points of the geometry, respectively.
+ *
+ * Note that this function does not handle any error checking or validation on the input geometry object. It is
+ * assumed that the geometry object is a valid format and can be used to generate point icons.
+ *
+ * @param geometry - The geometry object to generate start and end point icons for.
+ * @returns An array of new Style objects for the start and end point icons.
+ *
+ * @example
+ * const geometry = new LineString([[0, 0], [1, 1], [2, 0]]);
+ * const styles = buildStartEndIcons(geometry);
+ * // styles will contain an array of 2 Style objects for the start and end point icons.
+ */
+export function buildStartEndIcons(geometry: string | any[]): Style[] {
+  const start = [geometry[0], geometry[1]];
+  const end = [geometry[geometry.length - 2], geometry[geometry.length - 1]];
+
+  return [
+    new Style({
+      geometry: new Point(start),
+      image: new RegularShape({
+        fill: new Fill({
+          color: 'green',
+        }),
+        stroke: new Stroke({
+          color: 'white',
+        }),
+        points: 6,
+        radius: 6,
+      }),
+      zIndex: TRACK_ZINDEX + 2,
+    }),
+    new Style({
+      geometry: new Point(end),
+      image: new RegularShape({
+        fill: new Fill({
+          color: 'red',
+        }),
+        stroke: new Stroke({
+          color: 'white',
+        }),
+        points: 6,
+        radius: 10,
+        angle: 0,
+      }),
+      zIndex: TRACK_ZINDEX + 1,
+    }),
+  ];
+}
+
+/**
+ * @description
+ * Returns the style for a cluster hull based on its features' geometries.
+ *
+ * @param cluster - The cluster object to style.
+ * @returns A new Style object for the cluster hull.
+ *
+ * @example
+ * const cluster = new Cluster({
+ *   features: [
+ *     new Feature(new Point([0, 0])),
+ *     new Feature(new Point([1, 1])),
+ *     new Feature(new Point([2, 0]))
+ *   ]
+ * });
+ * const style = clusterHullStyle(cluster);
+ */
+export function clusterHullStyle(cluster) {
+  if (cluster != currentCluster || cluster == null) {
+    return;
+  }
+  const originalFeatures = cluster.get('features');
+  const points = originalFeatures.map(
+    (feature: {
+      getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}};
+    }) => feature.getGeometry().getCoordinates(),
+  );
+  return new Style({
+    geometry: new Polygon([convexHull(points)]),
+    fill: new Fill({
+      color: 'rgba(255, 153, 0, 0.4)',
+    }),
+    stroke: new Stroke({
+      color: 'rgba(204, 85, 0, 1)',
+      width: 1.5,
+    }),
+  });
+}
+
+export function createArrowStyle(
+  lineString: LineString,
+  opt: any = {
+    featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+    map: this.map,
+  },
+): Style[] {
+  let size = 85;
+  let scale = 0.2 - (17 - opt.map.getView().getZoom()) / 75;
+  let styles: Style[] = [];
+  let mapSize: number[] = opt.map.getSize();
+  let extent = null;
+  let splitPoints = [];
+  let n = 0;
+  const resolution = opt.map.getView().getResolution();
+  let properties = lineString.getProperties();
+  if (properties['layers'] != null) {
+    const layers: number[] = JSON.parse(properties['layers']);
+    const layerId = +layers[0];
+    const color = getColorFromLayer(layerId, this.conf.layers);
+    opt.featureStrokeColor =
+      properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : color;
+  }
+  const length = lineString.getLength();
+  try {
+    n = lineString.getLength() / (size * resolution);
+  } catch (e) {
+    console.warn('WARNING: wrong geometry in feature ' + properties);
+    return styles;
+  }
+  if (n < 2) return styles;
+  if (n > 1000000) {
+    n = Math.sqrt(n / 100);
+    extent = opt.map.getView().calculateExtent([mapSize[0] * n, mapSize[1] * n]);
+    splitPoints = splitLineString(lineString, size * resolution * n, {
+      extent: extent,
+      vertices: false,
+    });
+    lineString = new LineString(splitPoints);
+  }
+  extent = opt.map.getView().calculateExtent([mapSize[0] + size * 2, mapSize[1] + size * 2]);
+  splitPoints = splitLineString(lineString, size * resolution, {
+    alwaysUp: false,
+    midPoints: true,
+    extent: extent,
+  });
+  splitPoints.forEach(point => {
+    styles.push(
+      new Style({
+        geometry: new Point([point[0], point[1]]),
+        image: new Icon({
+          src: 'map-core/assets/line-icon-arrow.png',
+          scale: scale,
+          rotation: point[2],
+          color: opt.featureStrokeColor,
+          rotateWithView: true,
+        }),
+        zIndex: TRACK_DIRECTIVE_ZINDEX + 10,
+      }),
+    );
+  });
+
+  return styles;
 }
 
 /**
@@ -335,49 +314,275 @@ export function getClusterStyle(
   return style;
 }
 
-export let currentCluster = null;
+/**
+ * @description
+ * This function takes a layer ID and an optional array of layer objects (ILAYER[]). It searches for the layer with the
+ * specified ID within the layers array and returns the color property of the layer's style object.
+ * If the layer is not found, the function returns the default line color (DEF_LINE_COLOR).
+ * @export
+ * @param {number} id - The ID of the layer whose color should be retrieved.
+ * @param {ILAYER[]} [layers=[]] - An optional array of layer objects. If not provided, an empty array will be used.
+ * @returns {string} - The color property of the layer's style object, or the default line color if the layer is not found.
+ * @example
+ * // Example usage with an array of layer objects
+ * const layers = [
+ * {id: 1, style: {color: 'red'}},
+ * {id: 2, style: {color: 'blue'}}
+ * ];
+ * const color = getColorFromLayer(1, layers); // Returns 'red'
+ * // Example usage without an array of layer objects
+ * const color = getColorFromLayer(1); // Returns DEF_LINE_COLOR
+ */
+export function getColorFromLayer(id: number, layers: ILAYER[] = []): string {
+  const layer = layers.filter(l => +l.id === +id);
+  return layer[0] && layer[0].style && layer[0].style['color']
+    ? layer[0].style['color']
+    : DEF_LINE_COLOR;
+}
+
+/**
+ * @description
+ * This function creates and returns an ol-ext/style/FlowLine style object that represents a flow-style line in an OpenLayers map.
+ * The function takes two optional parameters, orangeTreshold and redTreshold, which are numeric values representing altitude thresholds.
+ * If these parameters are not provided, their default values are set to 800 and 1500, respectively.
+ *
+ * The function initializes a FlowLine object with the following properties:
+ *  - lineCap: 'butt'
+ *  - color: a function that takes a feature 'f' and a step value as arguments, calculates the current altitude based on the feature's geometry and step value, and returns a color ('green', 'orange', or 'red') depending on the altitude.
+ *  - width: 10
+ *
+ * @export
+ * @param {number} [orangeTreshold=800] - The altitude threshold for the orange color.
+ * @param {number} [redTreshold=1500] - The altitude threshold for the red color.
+ * @returns {FlowLine} A FlowLine style object with the specified properties.
+ * @example
+ * const flowStyle = getFlowStyle();
+ * const customFlowStyle = getFlowStyle(900, 1800);
+ */
+export function getFlowStyle(orangeTreshold = 800, redTreshold = 1500) {
+  return new FlowLine({
+    lineCap: 'butt',
+    color: function (
+      f: {getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}}},
+      step: number,
+    ) {
+      const geometry = f.getGeometry().getCoordinates();
+      const position = +(geometry.length * step).toFixed();
+      const currentLocation = geometry[position];
+      let currentAltitude = 100;
+      try {
+        currentAltitude = currentLocation[2];
+      } catch (_) {}
+
+      if (currentAltitude >= orangeTreshold && currentAltitude < redTreshold) {
+        return 'orange';
+      }
+      if (currentAltitude >= redTreshold) {
+        return 'red';
+      }
+      return 'green';
+    },
+    width: 10,
+  });
+}
+
+export function getLineStringFromRenderFeature(rfeature: RenderFeature): LineString {
+  const flatCoordinates: number[] = rfeature.getFlatCoordinates();
+
+  // Crea la LineString dalle coordinate piatte
+  const lineString = new LineString([]);
+  lineString.setFlatCoordinates('XY', flatCoordinates);
+  return lineString;
+}
+
+/**
+ * @description
+ * This is a JavaScript function that creates and returns an array of ol.style.Style objects that are used to style a line feature in an OpenLayers map.
+ * The function takes an optional parameter color which is a string representing the color of the line. If no color is passed, the default color is set to '255, 177, 0', which is a yellow color.
+ * The function then checks if the first character of the color string is '#', which indicates that the color is in hex format. If that's the case, it converts the hex color to RGB format.
+ * The function then creates two ol.style.Style objects and sets their properties.
+ * The first style has a white stroke with double the width of the second style's stroke and a higher z-index, so it will be drawn above the second style. The second style has the color passed as an argument or default color and has a strokeWidth, lineDash set to empty array, lineCap to round and zIndex of 50. It creates an instance of ol.style.Stroke to set stroke property of ol.style.Style object.
+ * Finally, the function returns the array of ol.style.Style objects.
+ *
+ * @export
+ * @param {string} [color]
+ * @returns {*}  {Style[]}
+ */
+export function getLineStyle(color = '255, 177, 0', linestring?: any): Style[] {
+  const style: Style[] = [];
+  const strokeWidth: number = 6;
+  const strokeOpacity: number = 1;
+  const lineDash: Array<number> = [];
+  const lineCap: CanvasLineCap = 'round';
+
+  if (color[0] === '#') {
+    color =
+      parseInt(color.substring(1, 3), 16) +
+      ', ' +
+      parseInt(color.substring(3, 5), 16) +
+      ', ' +
+      parseInt(color.substring(5, 7), 16);
+  }
+  color = 'rgba(' + color + ',' + strokeOpacity + ')';
+
+  style.push(
+    new Style({
+      stroke: new Stroke({
+        color: 'rgba(255, 255, 255, 0.9)',
+        width: strokeWidth * 2,
+      }),
+      zIndex: TRACK_DIRECTIVE_ZINDEX + 1,
+    }),
+  );
+
+  style.push(
+    new Style({
+      stroke: new Stroke({
+        color,
+        width: strokeWidth,
+        lineDash,
+        lineCap,
+      }),
+      zIndex: TRACK_DIRECTIVE_ZINDEX + 2,
+    }),
+  );
+  style.push(
+    ...createArrowStyle.bind(this)(linestring, {
+      featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+      scale: 0.35,
+      map: this.mapCmp.map,
+    }),
+  );
+
+  return style;
+}
+
+export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOptions): void {
+  options = {...{minStrokeWidth: 3, maxStrokeWidth: 6}, ...options};
+  const delta = (options.currentZoom - options.minZoom) / (options.maxZoom - options.minZoom);
+  const newWidth =
+    options.minStrokeWidth + (options.maxStrokeWidth - options.minStrokeWidth) * delta;
+
+  options.strokeStyle.setWidth(newWidth);
+}
+
+export function hexToRgba(hex: string): [number, number, number, number] {
+  const bigint = parseInt(hex.substring(1), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return [r, g, b, 1];
+}
 
 export function setCurrentCluster(cluster: null): void {
   currentCluster = cluster;
 }
 
-/**
- * @description
- * Returns the style for a cluster hull based on its features' geometries.
- *
- * @param cluster - The cluster object to style.
- * @returns A new Style object for the cluster hull.
- *
- * @example
- * const cluster = new Cluster({
- *   features: [
- *     new Feature(new Point([0, 0])),
- *     new Feature(new Point([1, 1])),
- *     new Feature(new Point([2, 0]))
- *   ]
- * });
- * const style = clusterHullStyle(cluster);
- */
-export function clusterHullStyle(cluster) {
-  if (cluster != currentCluster || cluster == null) {
+export function splitLineString(
+  geometry: LineString,
+  minSegmentLength: number,
+  options: any,
+): Array<any> {
+  let calculatePointsDistance = (coord1: Coordinate, coord2: Coordinate): number => {
+    let dx: number = coord1[0] - coord2[0];
+    let dy: number = coord1[1] - coord2[1];
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  let calculateSplitPointCoords = (
+    startNode: Coordinate,
+    nextNode: Coordinate,
+    distanceBetweenNodes: number,
+    distanceToSplitPoint: number,
+  ): Coordinate => {
+    let d: number = distanceToSplitPoint / distanceBetweenNodes;
+    let x: number = nextNode[0] + (startNode[0] - nextNode[0]) * d;
+    let y: number = nextNode[1] + (startNode[1] - nextNode[1]) * d;
+    return [x, y];
+  };
+
+  let calculateAngle = (startNode: Coordinate, nextNode: Coordinate, alwaysUp: boolean): number => {
+    let x: number = nextNode[0] - startNode[0];
+    let y: number = nextNode[1] - startNode[1];
+    let angle: number = Math.atan2(y, x);
+    if (!alwaysUp) {
+      angle =
+        y < 0 && x < 0
+          ? angle * -1
+          : y < 0 && x == 0
+          ? Math.PI * 2 - angle
+          : y < 0 && x > 0
+          ? angle * -1
+          : angle * -1;
+    }
+    return angle;
+  };
+
+  let splitPoints: Array<any> = [];
+  let coords: any = geometry.getCoordinates();
+  if (coords.length === 0) {
     return;
   }
-  const originalFeatures = cluster.get('features');
-  const points = originalFeatures.map(
-    (feature: {
-      getGeometry: () => {(): any; new (): any; getCoordinates: {(): any; new (): any}};
-    }) => feature.getGeometry().getCoordinates(),
-  );
-  return new Style({
-    geometry: new Polygon([convexHull(points)]),
-    fill: new Fill({
-      color: 'rgba(255, 153, 0, 0.4)',
-    }),
-    stroke: new Stroke({
-      color: 'rgba(204, 85, 0, 1)',
-      width: 1.5,
-    }),
-  });
+  let coordIndex: number = 0;
+  let startPoint: Coordinate = coords[coordIndex];
+  let nextPoint: Coordinate = coords[coordIndex + 1];
+  let angle: number = options.vertices || calculateAngle(startPoint, nextPoint, options.alwaysUp);
+
+  let n: number = Math.ceil(geometry.getLength() / minSegmentLength);
+  let segmentLength: number = geometry.getLength() / n;
+  let midPoints: boolean = options.midPoints && !options.vertices;
+  let currentSegmentLength: number = midPoints ? segmentLength / 2 : segmentLength;
+
+  for (let i = 0; i <= n; i++) {
+    let distanceBetweenPoints: number = calculatePointsDistance(startPoint, nextPoint);
+    currentSegmentLength += distanceBetweenPoints;
+
+    if (currentSegmentLength < segmentLength) {
+      coordIndex++;
+      if (coordIndex < coords.length - 1) {
+        startPoint = coords[coordIndex];
+        nextPoint = coords[coordIndex + 1];
+        angle = options.vertices || calculateAngle(startPoint, nextPoint, options.alwaysUp);
+        if (
+          options.vertices &&
+          (!options.extent || containsCoordinate(options.extent, startPoint))
+        ) {
+          splitPoints.push(startPoint);
+        }
+        i--;
+        continue;
+      } else {
+        if (!midPoints) {
+          let splitPointCoords: Coordinate = nextPoint;
+          if (!options.extent || containsCoordinate(options.extent, splitPointCoords)) {
+            if (!options.vertices) {
+              splitPointCoords.push(angle);
+            }
+            splitPoints.push(splitPointCoords);
+          }
+        }
+        break;
+      }
+    } else {
+      let distanceToSplitPoint: number = currentSegmentLength - segmentLength;
+      let splitPointCoords: Coordinate = calculateSplitPointCoords(
+        startPoint,
+        nextPoint,
+        distanceBetweenPoints,
+        distanceToSplitPoint,
+      );
+      startPoint = splitPointCoords;
+      if (!options.extent || containsCoordinate(options.extent, splitPointCoords)) {
+        if (!options.vertices) {
+          splitPointCoords.push(angle);
+        }
+        splitPoints.push(splitPointCoords);
+      }
+      currentSegmentLength = 0;
+    }
+  }
+
+  return splitPoints;
 }
 
 /**
@@ -539,169 +744,26 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   ];
   if (strokeStyle.getColor() != 'rgba(0,0,0,0)') {
     if (
+      this.high &&
       this.conf.start_end_icons_show &&
       this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
     ) {
       styles = [...styles, ...buildStartEndIcons(geometry)];
     }
     if (
+      this.high &&
       this.conf.ref_on_track_show &&
       this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
     ) {
       styles = [...styles, buildRefStyle.bind(this)(feature)];
     }
   }
-
+  if (this.high && currentTrackID == null) {
+    const lineString = getLineStringFromRenderFeature(feature);
+    lineString.setProperties(feature.getProperties());
+    styles = [...styles, ...createArrowStyle.bind(this)(lineString, {map: this.map})];
+  }
   return styles;
-}
-
-/**
- * @description
- * Builds a reference point style for a given feature.
- * This function takes a feature object and generates a new Style object for the reference point, based on
- * the 'ref' property in the feature's properties and the configuration settings for reference points.
- *
- * If the feature has a 'ref' property and the 'ref_on_track_show' configuration option is set to true, a new
- * Text object will be generated with the text value of the 'ref' property. The font, placement, and other
- * styling options for the Text object will be set based on the configuration settings.
- *
- * If the feature does not have a 'ref' property or the 'ref_on_track_show' configuration option is set to
- * false, the function will return a new Style object with an empty Text object and default styling options.
- *
- * Note that this function is bound to a `this` context, so the calling object should be of the correct type.
- *
- * @param feature - The feature object to generate a reference point style for.
- * @returns A new Style object for the reference point.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * feature.setProperties({ref: 'A'});
- * const style = buildRefStyle.bind(this)(feature);
- */
-export function buildRefStyle(feature: {getProperties: () => any}): Style {
-  const properties = feature.getProperties();
-  let text = new Text({
-    text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
-    font: 'bold 12px "Open Sans", "Arial Unicode MS", "sans-serif"',
-    placement: 'point',
-    rotateWithView: true,
-    overflow: true,
-    maxAngle: Math.PI / 16,
-    fill: new Fill({
-      color: this._defaultFeatureColor,
-    }),
-    stroke: new Stroke({
-      color: '#fff',
-      width: 4,
-    }),
-  });
-
-  return new Style({
-    zIndex: TRACK_ZINDEX + 1,
-    text,
-  });
-}
-
-/**
- * @description
- * Builds start and end point icons for a given geometry.
- * This function takes a geometry object and generates a new array of Style objects for the start and end point icons.
- * The start point icon is a green hexagon shape and the end point icon is a red hexagon shape with a larger radius.
- * Both icons are centered on the first and last points of the geometry, respectively.
- *
- * Note that this function does not handle any error checking or validation on the input geometry object. It is
- * assumed that the geometry object is a valid format and can be used to generate point icons.
- *
- * @param geometry - The geometry object to generate start and end point icons for.
- * @returns An array of new Style objects for the start and end point icons.
- *
- * @example
- * const geometry = new LineString([[0, 0], [1, 1], [2, 0]]);
- * const styles = buildStartEndIcons(geometry);
- * // styles will contain an array of 2 Style objects for the start and end point icons.
- */
-export function buildStartEndIcons(geometry: string | any[]): Style[] {
-  const start = [geometry[0], geometry[1]];
-  const end = [geometry[geometry.length - 2], geometry[geometry.length - 1]];
-
-  return [
-    new Style({
-      geometry: new Point(start),
-      image: new RegularShape({
-        fill: new Fill({
-          color: 'green',
-        }),
-        stroke: new Stroke({
-          color: 'white',
-        }),
-        points: 6,
-        radius: 6,
-      }),
-      zIndex: TRACK_ZINDEX + 2,
-    }),
-    new Style({
-      geometry: new Point(end),
-      image: new RegularShape({
-        fill: new Fill({
-          color: 'red',
-        }),
-        stroke: new Stroke({
-          color: 'white',
-        }),
-        points: 6,
-        radius: 10,
-        angle: 0,
-      }),
-      zIndex: TRACK_ZINDEX + 1,
-    }),
-  ];
-}
-/**
- * @description
- * Generates a low style for a given feature object.
- * This function generates a new Style object for a given feature object with a lower zIndex value and a slightly increased
- * stroke width value. This is useful for displaying low-priority features on a map with a different visual style than higher
- * priority features.
- *
- * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
- * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
- *
- * @param feature - The feature object to generate a style for.
- * @returns A new Style object for the given feature object with a lower zIndex and a slightly increased stroke width.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * const lowStyle = styleLowFn.bind(this)(feature);
- * // lowStyle will contain a new Style object with a lower zIndex and slightly increased stroke width.
- */
-export function styleLowFn(this: any, feature: FeatureLike) {
-  this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
-  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  return styleCoreFn.bind(this)(feature);
-}
-
-/**
- * @description
- * Generates a high style for a given feature object.
- * This function generates a new Style object for a given feature object with a higher zIndex value and a slightly increased
- * stroke width value. This is useful for displaying high-priority features on a map with a different visual style than lower
- * priority features.
- *
- * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
- * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
- *
- * @param feature - The feature object to generate a style for.
- * @returns A new Style object for the given feature object with a higher zIndex and a slightly increased stroke width.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * const highStyle = styleHighFn.bind(this)(feature);
- * // highStyle will contain a new Style object with a higher zIndex and slightly increased stroke width.
- */
-export function styleHighFn(this: any, feature: FeatureLike) {
-  this.TRACK_ZINDEX = TRACK_ZINDEX;
-  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  return styleCoreFn.bind(this)(feature, true);
 }
 
 /**
@@ -758,6 +820,179 @@ export function styleFn(this: any, feature: FeatureLike) {
   return styles;
 }
 
+/**
+ * @description
+ * Generates a high style for a given feature object.
+ * This function generates a new Style object for a given feature object with a higher zIndex value and a slightly increased
+ * stroke width value. This is useful for displaying high-priority features on a map with a different visual style than lower
+ * priority features.
+ *
+ * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
+ * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns A new Style object for the given feature object with a higher zIndex and a slightly increased stroke width.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * const highStyle = styleHighFn.bind(this)(feature);
+ * // highStyle will contain a new Style object with a higher zIndex and slightly increased stroke width.
+ */
+export function styleHighFn(this: any, feature: FeatureLike) {
+  this.TRACK_ZINDEX = TRACK_ZINDEX;
+  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
+  this.high = true;
+  return styleCoreFn.bind(this)(feature, true);
+}
+
+/**
+ * @description
+ * Generates a Mapbox Style JSON object to style vector layers in OpenLayers.
+ * This style JSON object includes layer styles for different CAI scales ('EEA', 'EE', 'E', 'T').
+ * It also includes a text label layer to display the 'ref' property of each feature.
+ *
+ * @param {string} vectorLayerUrl The URL of the vector layer source.
+ * @returns {object} A Mapbox Style JSON object.
+ *
+ * @example
+ * const styleJson = styleJsonFn("https://example.com/vector-layer-url");
+ */
+export function styleJsonFn(vectorLayerUrl: string) {
+  return {
+    version: 8,
+    name: 'tracks',
+    metadata: {'maputnik:renderer': 'ol'},
+    sources: {
+      tracks1: {
+        type: 'vector',
+        url: vectorLayerUrl,
+      },
+    },
+    sprite: '',
+    glyphs: 'https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf',
+    layers: [
+      {
+        id: 'EEA',
+        type: 'line',
+        source: 'tracks',
+        'source-layer': 'tracks',
+        filter: ['all', ['==', 'cai_scale', 'EEA']],
+        layout: {'line-join': 'round', 'line-cap': 'round', visibility: 'visible'},
+        paint: {
+          'line-color': 'rgba(255, 0, 218, 0.8)',
+          'line-width': {
+            stops: [
+              [10, 1],
+              [20, 10],
+            ],
+          },
+          'line-dasharray': [0.001, 2],
+        },
+      },
+      {
+        id: 'EE',
+        type: 'line',
+        source: 'tracks',
+        'source-layer': 'tracks',
+        filter: ['all', ['==', 'cai_scale', 'EE']],
+        layout: {'line-join': 'round', 'line-cap': 'round'},
+        paint: {
+          'line-color': 'rgba(255, 57, 0, 0.8)',
+          'line-width': {
+            stops: [
+              [10, 1],
+              [20, 10],
+            ],
+          },
+          'line-dasharray': [0.01, 2],
+        },
+      },
+      {
+        id: 'E',
+        type: 'line',
+        source: 'tracks',
+        'source-layer': 'tracks',
+        filter: ['all', ['==', 'cai_scale', 'E']],
+        layout: {'line-join': 'round', 'line-cap': 'round'},
+        paint: {
+          'line-color': 'rgba(255, 57, 0, 0.8)',
+          'line-width': {
+            stops: [
+              [10, 1],
+              [20, 10],
+            ],
+          },
+          'line-dasharray': [2, 2],
+        },
+      },
+      {
+        id: 'T',
+        type: 'line',
+        source: 'tracks',
+        'source-layer': 'tracks',
+        filter: ['all', ['==', 'cai_scale', 'T']],
+        layout: {'line-join': 'round', 'line-cap': 'round', visibility: 'visible'},
+        paint: {
+          'line-color': 'rgba(255, 57, 0, 0.8)',
+          'line-width': {
+            stops: [
+              [10, 1],
+              [20, 10],
+            ],
+          },
+        },
+      },
+      {
+        id: 'ref',
+        type: 'symbol',
+        source: 'tracks',
+        'source-layer': 'tracks',
+        minzoom: 10,
+        maxzoom: 16,
+        layout: {
+          'text-field': '{ref}',
+          visibility: 'visible',
+          'symbol-placement': 'line',
+          'text-size': 12,
+          'text-allow-overlap': true,
+        },
+        paint: {'text-color': 'rgba(255, 57, 0,0.8)'},
+      },
+    ],
+    id: '63fa0rhhq',
+  };
+}
+
+/**
+ * @description
+ * Generates a low style for a given feature object.
+ * This function generates a new Style object for a given feature object with a lower zIndex value and a slightly increased
+ * stroke width value. This is useful for displaying low-priority features on a map with a different visual style than higher
+ * priority features.
+ *
+ * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
+ * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
+ *
+ * @param feature - The feature object to generate a style for.
+ * @returns A new Style object for the given feature object with a lower zIndex and a slightly increased stroke width.
+ *
+ * @example
+ * const feature = new Feature(new Point([0, 0]));
+ * const lowStyle = styleLowFn.bind(this)(feature);
+ * // lowStyle will contain a new Style object with a lower zIndex and slightly increased stroke width.
+ */
+export function styleLowFn(this: any, feature: FeatureLike) {
+  this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
+  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
+  return styleCoreFn.bind(this)(feature);
+}
+
+export var currentTrackID = null;
+export const cacheStyle = {
+  'noColor': new StrokeStyle({color: 'rgba(0,0,0,0)'}),
+  'red': new StrokeStyle({color: 'red'}),
+};
+export let currentCluster = null;
 export const fromNameToHEX = {
   'aliceblue': '#f0f8ff',
   'antiquewhite': '#faebd7',
@@ -910,7 +1145,6 @@ export const fromNameToHEX = {
 };
 export const nextColors = ['#FFF500', '#FFA13D', '#2DFE54', '#3F8DFF'];
 export const prevColors = ['#B0B0B0', '#8DAFD3', '#88C5A7', '#E9B1C2'];
-
 export const fromHEXToColor = {
   '#f0f8ff': 'aliceblue',
   '#faebd7': 'antiquewhite',
@@ -1052,40 +1286,3 @@ export const fromHEXToColor = {
   '#ffff00': 'yellow',
   '#9acd32': 'yellowgreen',
 };
-
-export function animateFeatureFn(mythis: any, feature: Feature, color, next = true) {
-  function getAnimationStrokeStyle() {
-    return new Style({
-      stroke: new Stroke({
-        color: hexToRgba(color),
-        width: 2,
-        lineDash: [10, 20],
-        lineDashOffset: feature.get('dashOffset'),
-      }),
-    });
-  }
-  var outlineStroke = new Style({
-    stroke: new Stroke({
-      color: [25, 25, 255, 0.8],
-      width: 2,
-    }),
-  });
-  function getStyle() {
-    return [outlineStroke, getAnimationStrokeStyle()];
-  }
-  feature.setStyle(getStyle);
-  setInterval(() => {
-    let offset = feature.get('dashOffset') ?? 0;
-    offset = offset == 8 ? 0 : next ? offset - 1 : offset + 1;
-    feature.set('dashOffset', offset);
-  }, 100);
-  mythis.animatedLayer.getSource().addFeature(feature);
-}
-
-export function hexToRgba(hex: string): [number, number, number, number] {
-  const bigint = parseInt(hex.substring(1), 16);
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return [r, g, b, 1];
-}
