@@ -113,6 +113,17 @@ export function buildArrowStyle(
         zIndex: TRACK_DIRECTIVE_ZINDEX + 10,
       }),
     );
+    styles.push(
+      new Style({
+        geometry: new Point([point[0], point[1]]),
+        image: new Circle({
+          fill: new Fill({color: 'white'}), // Il colore della freccia
+          radius: 10, // La dimensione del triangolo
+          rotation: point[2] + Math.PI, // Orientamento della freccia
+        }),
+        zIndex: TRACK_DIRECTIVE_ZINDEX + 9,
+      }),
+    );
   });
 
   return styles;
@@ -496,8 +507,8 @@ export function getLineStyle(color = '255, 177, 0', linestring?: any): Style[] {
   if (this != null && this.mapCmp != null) {
     style.push(
       ...buildArrowStyle.bind(this)(linestring, {
-        featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
-        width: strokeWidth,
+        featureStrokeColor: color,
+        width: 2,
         map: this.mapCmp.map,
       }),
     );
@@ -808,14 +819,17 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       lineString.setProperties(feature.getProperties());
       styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
-  }
-  if (this.high && currentTrackID == null) {
-    const lineString = getLineStringFromRenderFeature(feature);
-    lineString.setProperties(feature.getProperties());
-    styles = [
-      ...styles,
-      ...buildArrowStyle.bind(this)(lineString, {map: this.map, width: strokeStyle.getWidth()}),
-    ];
+    if (this.map.getView().getZoom() > 11) {
+      const lineString = getLineStringFromRenderFeature(feature);
+      lineString.setProperties(feature.getProperties());
+      styles = [
+        ...styles,
+        ...buildArrowStyle.bind(this)(lineString, {
+          map: this.map,
+          width: strokeStyle.getWidth() - 1,
+        }),
+      ];
+    }
   }
   return styles;
 }

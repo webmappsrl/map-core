@@ -27,7 +27,6 @@ import {WmMapPopover} from '../components/popover/popover.map';
 import {WmMapBaseDirective} from '.';
 import {
   coordsFromLonLat,
-  buildArrowStyle,
   createIconFeatureFromHtml,
   getFlowStyle,
   getLineStyle,
