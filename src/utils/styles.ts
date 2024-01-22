@@ -58,6 +58,7 @@ export function buildArrowStyle(
     featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
     map: this.map,
     width: 3,
+    circle: false,
   },
 ): Style[] {
   let size = 85;
@@ -113,17 +114,19 @@ export function buildArrowStyle(
         zIndex: TRACK_DIRECTIVE_ZINDEX + 10,
       }),
     );
-    styles.push(
-      new Style({
-        geometry: new Point([point[0], point[1]]),
-        image: new Circle({
-          fill: new Fill({color: 'white'}), // Il colore della freccia
-          radius: 10, // La dimensione del triangolo
-          rotation: point[2] + Math.PI, // Orientamento della freccia
+    if (opt != null && opt.circle) {
+      styles.push(
+        new Style({
+          geometry: new Point([point[0], point[1]]),
+          image: new Circle({
+            fill: new Fill({color: 'white'}), // Il colore della freccia
+            radius: 10, // La dimensione del triangolo
+            rotation: point[2] + Math.PI, // Orientamento della freccia
+          }),
+          zIndex: TRACK_DIRECTIVE_ZINDEX + 9,
         }),
-        zIndex: TRACK_DIRECTIVE_ZINDEX + 9,
-      }),
-    );
+      );
+    }
   });
 
   return styles;
@@ -510,6 +513,7 @@ export function getLineStyle(color = '255, 177, 0', linestring?: any): Style[] {
         featureStrokeColor: color,
         width: 2,
         map: this.mapCmp.map,
+        circle: true,
       }),
     );
   }
