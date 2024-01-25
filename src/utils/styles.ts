@@ -677,12 +677,14 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   let strokeStyle = null;
   const featureStrokeColor =
     properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : null;
-  if (cacheStyle[featureStrokeColor] != null) {
-    strokeStyle = cacheStyle[featureStrokeColor];
-  } else if (featureStrokeColor != null) {
-    cacheStyle[featureStrokeColor] = new StrokeStyle();
-    cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
-    strokeStyle = cacheStyle[featureStrokeColor];
+  if (featureStrokeColor) {
+    if (cacheStyle[featureStrokeColor] != null) {
+      strokeStyle = cacheStyle[featureStrokeColor];
+    } else if (featureStrokeColor != null) {
+      cacheStyle[featureStrokeColor] = new StrokeStyle();
+      cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
+      strokeStyle = cacheStyle[featureStrokeColor];
+    }
   }
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
@@ -745,7 +747,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
         this.animatedLayer.getSource().clear();
       }
     }
-  } else {
+  } else if (featureStrokeColor == null) {
     const layerId = +layers[0];
     const color = getColorFromLayer(layerId, this.conf.layers);
     if (cacheStyle[color] != null) {
@@ -755,6 +757,9 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       strokeStyle = cacheStyle[color];
     }
   }
+  console.log(properties);
+  console.log(strokeStyle);
+
   if (this.filters != null && this.filters.filterTracks.length > 0) {
     this.filters.filterTracks.forEach(filter => {
       if (filter.type === 'slider') {
