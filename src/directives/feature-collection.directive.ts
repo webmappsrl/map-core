@@ -54,7 +54,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   @Input('wmMapFeatureCollectionOverlayUnselect') set unselect(unselect: any) {
     if (this._featureCollectionLayer != null && this._selectedFeature != null) {
-      this._featureCollectionLayer.getSource().removeFeature(this._selectedFeature);
+      this._setFeatureAphaFillColor(this._selectedFeature, 0);
       this._selectedFeature = null;
     }
   }
@@ -136,22 +136,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       if (this._overlay$.value != null) {
         this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
           const selectedFeature = features[0]; // Seleziona il primo elemento
-          const selectedFeatureStyle: Style = selectedFeature.getStyle() as Style;
-          const selectedFeatureFillColor: string = selectedFeatureStyle
-            .getFill()
-            .getColor() as string;
-          const newColor = this._setAlphaToOne(selectedFeatureFillColor);
-          selectedFeature.setStyle(
-            new Style({
-              stroke: new Stroke({
-                color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
-                width: FEATURE_COLLECTION_STROKE_WIDTH,
-              }),
-              fill: new Fill({
-                color: 'rgba(245, 159, 26, 0)',
-              }),
-            }),
-          );
+          this._setFeatureAphaFillColor(selectedFeature, 1);
           const prop = selectedFeature?.getProperties() ?? null;
           if (prop != null && prop['clickable'] === true) {
             if (this._selectedFeature != null) {
@@ -195,7 +180,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
   }
 
-  private _setAlphaToOne(rgba: string): string {
+  private _setAlphaTo(rgba: string, trasparency = 1): string {
     // Utilizza una regular expression per estrarre i valori di rosso, verde, blu e alpha dalla stringa RGBA
     const rgbaRegex = /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([01]?\.?\d*))?\)$/;
     const match = rgba.match(rgbaRegex);
@@ -206,10 +191,27 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       const green = match[2];
       const blue = match[3];
       // Restituisce la nuova stringa RGBA con alpha impostato a 1
-      return `rgba(${red}, ${green}, ${blue}, 1)`;
+      return `rgba(${red}, ${green}, ${blue}, ${trasparency})`;
     } else {
       // Restituisce la stringa originale se non corrisponde al formato atteso
       return rgba;
     }
+  }
+
+  private _setFeatureAphaFillColor(feature: Feature, trasparency = 1): void {
+    const featureStyle: Style = feature.getStyle() as Style;
+    const featureFillColor: string = featureStyle.getFill().getColor() as string;
+    const color = this._setAlphaTo(featureFillColor, trasparency / 2);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
+          width: FEATURE_COLLECTION_STROKE_WIDTH,
+        }),
+        fill: new Fill({
+          color,
+        }),
+      }),
+    );
   }
 }
