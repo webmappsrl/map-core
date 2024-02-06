@@ -52,6 +52,13 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this._overlay$.next(overlay);
   }
 
+  @Input('wmMapFeatureCollectionOverlayUnselect') set unselect(unselect: any) {
+    if (this._featureCollectionLayer != null && this._selectedFeature != null) {
+      this._featureCollectionLayer.getSource().removeFeature(this._selectedFeature);
+      this._selectedFeature = null;
+    }
+  }
+
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
     if (value == null) return '';
     if (typeof value === 'string') return value;
@@ -126,28 +133,56 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
 
     this.mapCmp.map.on('click', e => {
-      this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
-        const selectedFeature = features[0]; // Seleziona il primo elemento
-        const prop = selectedFeature?.getProperties() ?? null;
-        if (prop != null && prop['clickable'] === true) {
-          if (this._selectedFeature != null) {
-            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
-            this._selectedFeature = null;
+      if (this._overlay$.value != null) {
+        this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
+          const selectedFeature = features[0]; // Seleziona il primo elemento
+          const selectedFeatureStyle: Style = selectedFeature.getStyle() as Style;
+          const selectedFeatureFillColor: string = selectedFeatureStyle
+            .getFill()
+            .getColor() as string;
+          const newColor = this._setAlphaToOne(selectedFeatureFillColor);
+          selectedFeature.setStyle(
+            new Style({
+              stroke: new Stroke({
+                color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+                width: FEATURE_COLLECTION_STROKE_WIDTH,
+              }),
+              fill: new Fill({
+                color: 'rgba(245, 159, 26, 0)',
+              }),
+            }),
+          );
+          const prop = selectedFeature?.getProperties() ?? null;
+          if (prop != null && prop['clickable'] === true) {
+            if (this._selectedFeature != null) {
+              this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+              this._selectedFeature = null;
+            }
+            if (features.length > 0) {
+              this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+              this._selectedFeature = selectedFeature;
+            }
           }
-          if (features.length > 0) {
-            this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+          if (prop != null && prop['popup'] != null) {
+            this._featureCollectionLayer.getSource().removeFeature(this._selectedFeature);
             this._selectedFeature = selectedFeature;
+            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+            const extent = this._selectedFeature.getGeometry().getExtent();
+            this.mapCmp.map.getView().fit(extent, {
+              duration: 300, // Durata dell'animazione in millisecondi
+              padding: [50, 50, 50, 50], // Margine intorno alla feature
+            });
           }
-        }
-        if (prop != null && prop['layer_id'] != null) {
-          this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
-        }
-        if (prop != null && prop['popup'] != null) {
-          this.wmMapFeatureCollectionPopup.emit(prop['popup']);
-        } else {
-          this.wmMapFeatureCollectionPopup.emit(null);
-        }
-      });
+          if (prop != null && prop['layer_id'] != null) {
+            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+          }
+          if (prop != null && prop['popup'] != null) {
+            this.wmMapFeatureCollectionPopup.emit(prop['popup']);
+          } else {
+            this.wmMapFeatureCollectionPopup.emit(null);
+          }
+        });
+      }
     });
   }
 
@@ -157,6 +192,24 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     if (this._selectedFeature != null && featureCollectionSourceLayer != null) {
       featureCollectionSourceLayer.removeFeature(this._selectedFeature);
       this._selectedFeature = null;
+    }
+  }
+
+  private _setAlphaToOne(rgba: string): string {
+    // Utilizza una regular expression per estrarre i valori di rosso, verde, blu e alpha dalla stringa RGBA
+    const rgbaRegex = /^rgba?\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})(?:,\s*([01]?\.?\d*))?\)$/;
+    const match = rgba.match(rgbaRegex);
+
+    if (match) {
+      // Estrae i valori di rosso, verde, blu e ignora il valore originale di alpha, impostandolo a 1
+      const red = match[1];
+      const green = match[2];
+      const blue = match[3];
+      // Restituisce la nuova stringa RGBA con alpha impostato a 1
+      return `rgba(${red}, ${green}, ${blue}, 1)`;
+    } else {
+      // Restituisce la stringa originale se non corrisponde al formato atteso
+      return rgba;
     }
   }
 }
