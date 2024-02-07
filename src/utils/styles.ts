@@ -180,7 +180,6 @@ export function buildRefStyle(
     console.warn('WARNING: wrong geometry in feature ' + properties);
     return styles;
   }
-  if (n < 2) return styles;
   if (n > 1000000) {
     n = Math.sqrt(n / 100);
     extent = this._view.calculateExtent([mapSize[0] * n, mapSize[1] * n]);
