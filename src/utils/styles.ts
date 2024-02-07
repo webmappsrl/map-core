@@ -757,8 +757,6 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       strokeStyle = cacheStyle[color];
     }
   }
-  console.log(properties);
-  console.log(strokeStyle);
 
   if (this.filters != null && this.filters.filterTracks.length > 0) {
     this.filters.filterTracks.forEach(filter => {

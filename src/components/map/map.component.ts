@@ -18,7 +18,7 @@ import {filter, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
-import {defaults as defaultControls} from 'ol/control';
+import {defaults as defaultControls, FullScreen} from 'ol/control';
 import ScaleLineControl from 'ol/control/ScaleLine';
 import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
@@ -66,6 +66,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
       }
     }
   };
+  @Input() wmMapFullscreen: boolean = false;
   @Input() wmMapOnly: boolean = false;
   @Input() wmMapPadding: number[] | null;
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
@@ -273,6 +274,19 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
    */
   private _initMap(conf: IMAP): void {
     this._centerExtent = extentFromLonLat(conf.bbox ?? initExtent);
+    const extendControl = [];
+    if (!this.wmMapOnly) {
+      extendControl.push(
+        new ScaleLineControl({
+          units: scaleUnits,
+          minWidth: scaleMinWidth,
+          target: this.scaleLineContainer.nativeElement,
+        }),
+      );
+      if (this.wmMapFullscreen) {
+        extendControl.push(new FullScreen());
+      }
+    }
     this._view = new View({
       maxZoom: conf.maxZoom,
       zoom: conf.defZoom || 10,
@@ -292,17 +306,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
         rotate: false,
         attribution: false,
         zoom: !this.wmMapOnly,
-      }).extend(
-        this.wmMapOnly
-          ? []
-          : [
-              new ScaleLineControl({
-                units: scaleUnits,
-                minWidth: scaleMinWidth,
-                target: this.scaleLineContainer.nativeElement,
-              }),
-            ],
-      ),
+      }).extend(extendControl),
       interactions: this.wmMapOnly ? this._disableInteractions() : this._initDefaultInteractions(),
       layers: this.tileLayers,
       moveTolerance: 3,
