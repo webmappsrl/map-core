@@ -202,7 +202,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
    * @param data Object specifying the type of data to toggle and its new visibility state.
    */
   toggleData(data: {type: 'layers' | 'pois'; toggle: boolean}): void {
-    console.log(data);
     this.wmMapToggleDataEVT$.emit(data);
   }
 
