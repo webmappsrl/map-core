@@ -23,7 +23,7 @@ import {FitOptions} from 'ol/View';
 import {BehaviorSubject, from} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {clearLayer, createCluster, createHull, createLayer} from '../../src/utils';
+import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from '../../src/utils';
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
@@ -517,6 +517,12 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           <ion-card-content>
               ${name}
           </ion-card-content>`;
+          (window as any).goTo = () => {
+            let coords = coordsToLonLat((currentPoi.geometry as any).getCoordinates());
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`;
+            window.open(url, '_blank');
+            (window as any).details();
+          };
           (window as any).details = () => {
             this.currentPoiEvt.emit(currentPoi);
             this._fitView(geometry as any);
@@ -524,6 +530,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           };
           if (poiInteraction === 'tooltip_popup') {
             content += `<ion-button  expand="block" onclick="details()" style="text-align:right">info<ion-icon name="information-circle-outline"></ion-icon></ion-button>`;
+            content += `<ion-button  expand="block" onclick="goTo()" style="text-align:right">GMAP<ion-icon name="navigate-outline"></ion-icon></ion-button>`;
           }
           content += '</ion-card>';
           const coordinates = (currentPoi.geometry as any).getCoordinates
