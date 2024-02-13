@@ -18,6 +18,8 @@ import {
   FEATURE_COLLECTION_STROKE_WIDTH,
   FEATURE_COLLECTION_ZINDEX,
 } from '../readonly';
+import CircleStyle from 'ol/style/Circle';
+const radius = 15;
 @Directive({
   selector: '[wmMapFeatureCollection]',
 })
@@ -27,15 +29,29 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>(null);
   private _primaryColor: string | null = null;
   private _selectedFeature: Feature | null = null;
-  private _unselectedStyle = new Style({
-    stroke: new Stroke({
-      color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
-      width: FEATURE_COLLECTION_STROKE_WIDTH,
+  private _unselectedStyle = {
+    'Point': new Style({
+      image: new CircleStyle({
+        radius,
+        fill: new Fill({
+          color: 'rgba(245, 159, 26, 0)',
+        }),
+        stroke: new Stroke({
+          color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+          width: FEATURE_COLLECTION_STROKE_WIDTH,
+        }),
+      }),
     }),
-    fill: new Fill({
-      color: 'rgba(245, 159, 26, 0)',
+    'Polygon': new Style({
+      stroke: new Stroke({
+        color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+        width: FEATURE_COLLECTION_STROKE_WIDTH,
+      }),
+      fill: new Fill({
+        color: 'rgba(245, 159, 26, 0)',
+      }),
     }),
-  });
+  };
 
   @Input('wmMapFeatureCollectionPrimaryColor') set color(color: string) {
     this._primaryColor = color;
@@ -83,17 +99,36 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._overlay$),
         filter(overlay => overlay != null),
         switchMap(overlay => {
-          this._unselectedStyle = new Style({
-            stroke: new Stroke({
-              color: overlay.strokeColor
-                ? overlay.strokeColor
-                : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
-              width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+          this._unselectedStyle = {
+            'Point': new Style({
+              image: new CircleStyle({
+                radius,
+                fill: new Fill({
+                  color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+                }),
+                stroke: new Stroke({
+                  color: overlay.strokeColor
+                    ? overlay.strokeColor
+                    : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+                  width: overlay.strokeWidth
+                    ? overlay.strokeWidth
+                    : FEATURE_COLLECTION_STROKE_WIDTH,
+                }),
+              }),
             }),
-            fill: new Fill({
-              color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+            'Polygon': new Style({
+              stroke: new Stroke({
+                color: overlay.strokeColor
+                  ? overlay.strokeColor
+                  : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+                width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+              }),
+              fill: new Fill({
+                color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+              }),
             }),
-          });
+          };
+
           return this._http.get(overlay.url);
         }),
       )
@@ -122,7 +157,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       style: (f: Feature<Geometry>) => {
         f.setId(count);
         count++;
-        f.setStyle(this._unselectedStyle);
+        f.setStyle(this._unselectedStyle[f.getGeometry().getType()]);
       },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
@@ -136,35 +171,38 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       if (this._overlay$.value != null) {
         this._featureCollectionLayer.getFeatures(e.pixel).then(features => {
           const selectedFeature = features[0]; // Seleziona il primo elemento
-          this._setFeatureAphaFillColor(selectedFeature, 1);
-          const prop = selectedFeature?.getProperties() ?? null;
-          if (prop != null && prop['clickable'] === true) {
-            if (this._selectedFeature != null) {
-              this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
-              this._selectedFeature = null;
+          if (selectedFeature != null) {
+            this._setFeatureAphaFillColor(selectedFeature, 1);
+
+            const prop = selectedFeature?.getProperties() ?? null;
+            if (prop != null && prop['clickable'] === true) {
+              if (this._selectedFeature != null) {
+                this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+                this._selectedFeature = null;
+              }
+              if (features.length > 0) {
+                this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+                this._selectedFeature = selectedFeature;
+              }
             }
-            if (features.length > 0) {
-              this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+            if (prop != null && prop['popup'] != null) {
+              this._featureCollectionLayer.getSource().removeFeature(this._selectedFeature);
               this._selectedFeature = selectedFeature;
+              this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+              const extent = this._selectedFeature.getGeometry().getExtent();
+              this.mapCmp.map.getView().fit(extent, {
+                duration: 300, // Durata dell'animazione in millisecondi
+                padding: [50, 50, 50, 50], // Margine intorno alla feature
+              });
             }
-          }
-          if (prop != null && prop['popup'] != null) {
-            this._featureCollectionLayer.getSource().removeFeature(this._selectedFeature);
-            this._selectedFeature = selectedFeature;
-            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
-            const extent = this._selectedFeature.getGeometry().getExtent();
-            this.mapCmp.map.getView().fit(extent, {
-              duration: 300, // Durata dell'animazione in millisecondi
-              padding: [50, 50, 50, 50], // Margine intorno alla feature
-            });
-          }
-          if (prop != null && prop['layer_id'] != null) {
-            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
-          }
-          if (prop != null && prop['popup'] != null) {
-            this.wmMapFeatureCollectionPopup.emit(prop['popup']);
-          } else {
-            this.wmMapFeatureCollectionPopup.emit(null);
+            if (prop != null && prop['layer_id'] != null) {
+              this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+            }
+            if (prop != null && prop['popup'] != null) {
+              this.wmMapFeatureCollectionPopup.emit(prop['popup']);
+            } else {
+              this.wmMapFeatureCollectionPopup.emit(null);
+            }
           }
         });
       }
@@ -200,18 +238,36 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   private _setFeatureAphaFillColor(feature: Feature, trasparency = 1): void {
     const featureStyle: Style = feature.getStyle() as Style;
-    const featureFillColor: string = featureStyle.getFill().getColor() as string;
-    const color = this._setAlphaTo(featureFillColor, trasparency / 2);
-    feature.setStyle(
-      new Style({
-        stroke: new Stroke({
-          color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
-          width: FEATURE_COLLECTION_STROKE_WIDTH,
+    const geometryType = feature.getGeometry().getType();
+    if (geometryType === 'Polygon') {
+      const featureFillColor: string = featureStyle.getFill().getColor() as string;
+      const color = this._setAlphaTo(featureFillColor, trasparency / 2);
+      feature.setStyle(
+        new Style({
+          stroke: new Stroke({
+            color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
+            width: FEATURE_COLLECTION_STROKE_WIDTH,
+          }),
+          fill: new Fill({
+            color,
+          }),
         }),
-        fill: new Fill({
-          color,
+      );
+    } else if (geometryType === 'Point') {
+      feature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius,
+            fill: new Fill({
+              color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
+            }),
+            stroke: new Stroke({
+              color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
+              width: FEATURE_COLLECTION_STROKE_WIDTH,
+            }),
+          }),
         }),
-      }),
-    );
+      );
+    }
   }
 }
