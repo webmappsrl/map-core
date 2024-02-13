@@ -42,7 +42,25 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         }),
       }),
     }),
+    'MultiPolygon': new Style({
+      stroke: new Stroke({
+        color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+        width: FEATURE_COLLECTION_STROKE_WIDTH,
+      }),
+      fill: new Fill({
+        color: 'rgba(245, 159, 26, 0)',
+      }),
+    }),
     'Polygon': new Style({
+      stroke: new Stroke({
+        color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
+        width: FEATURE_COLLECTION_STROKE_WIDTH,
+      }),
+      fill: new Fill({
+        color: 'rgba(245, 159, 26, 0)',
+      }),
+    }),
+    'GeometryCollection': new Style({
       stroke: new Stroke({
         color: FEATURE_COLLECTION_STROKE_COLOR as unknown as Color,
         width: FEATURE_COLLECTION_STROKE_WIDTH,
@@ -116,7 +134,29 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                 }),
               }),
             }),
+            'MultiPolygon': new Style({
+              stroke: new Stroke({
+                color: overlay.strokeColor
+                  ? overlay.strokeColor
+                  : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+                width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+              }),
+              fill: new Fill({
+                color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+              }),
+            }),
             'Polygon': new Style({
+              stroke: new Stroke({
+                color: overlay.strokeColor
+                  ? overlay.strokeColor
+                  : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+                width: overlay.strokeWidth ? overlay.strokeWidth : FEATURE_COLLECTION_STROKE_WIDTH,
+              }),
+              fill: new Fill({
+                color: overlay.fillColor ? overlay.fillColor : FEATURE_COLLECTION_FILL_COLOR,
+              }),
+            }),
+            'GeometryCollection': new Style({
               stroke: new Stroke({
                 color: overlay.strokeColor
                   ? overlay.strokeColor
@@ -157,6 +197,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       style: (f: Feature<Geometry>) => {
         f.setId(count);
         count++;
+        console.log(f.getGeometry().getType());
         f.setStyle(this._unselectedStyle[f.getGeometry().getType()]);
       },
       updateWhileAnimating: true,
@@ -239,20 +280,29 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _setFeatureAphaFillColor(feature: Feature, trasparency = 1): void {
     const featureStyle: Style = feature.getStyle() as Style;
     const geometryType = feature.getGeometry().getType();
-    if (geometryType === 'Polygon') {
+    console.log(geometryType);
+    if (
+      geometryType === 'Polygon' ||
+      geometryType === 'MultiPolygon' ||
+      geometryType === 'GeometryCollection'
+    ) {
       const featureFillColor: string = featureStyle.getFill().getColor() as string;
       const color = this._setAlphaTo(featureFillColor, trasparency / 2);
-      feature.setStyle(
-        new Style({
-          stroke: new Stroke({
-            color: this._setAlphaTo(FEATURE_COLLECTION_STROKE_COLOR, trasparency),
-            width: FEATURE_COLLECTION_STROKE_WIDTH,
-          }),
-          fill: new Fill({
-            color,
-          }),
+      new Style({
+        stroke: new Stroke({
+          color: this._overlay$.value.strokeColor
+            ? this._overlay$.value.strokeColor
+            : (FEATURE_COLLECTION_STROKE_COLOR as unknown as Color),
+          width: this._overlay$.value.strokeWidth
+            ? this._overlay$.value.strokeWidth
+            : FEATURE_COLLECTION_STROKE_WIDTH,
         }),
-      );
+        fill: new Fill({
+          color: this._overlay$.value.fillColor
+            ? this._overlay$.value.fillColor
+            : FEATURE_COLLECTION_FILL_COLOR,
+        }),
+      });
     } else if (geometryType === 'Point') {
       feature.setStyle(
         new Style({
