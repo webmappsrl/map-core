@@ -51,7 +51,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   @Input('wmMapFeatureCollectionOverlayUnselect') set unselect(unselect: any) {
     if (this._featureCollectionLayer != null && this._selectedFeature != null) {
-      this._setFeatureAphaFillColor(this._selectedFeature, 0);
+      this._resetStyle(this._selectedFeature);
       this.mapCmp.map.render();
       this.mapCmp.map.changed();
       this._selectedFeature = null;
@@ -123,7 +123,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     this.mapCmp.map.on('click', e => {
       if (this._overlay$.value != null) {
         const feat = this.mapCmp.map.getFeaturesAtPixel(e.pixel, {hitTolerance: 30});
-        const selectedFeature = feat[0] as Feature<Geometry>; // Seleziona il primo elemento
+        const selectedFeature = feat[0] as Feature<Geometry>;
         if (selectedFeature != null) {
           const prop = selectedFeature?.getProperties() ?? null;
           if (prop != null && prop['clickable'] === true) {
@@ -137,8 +137,13 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
             }
           }
           if (prop != null && prop['popup'] != null) {
-            this._setFeatureAphaFillColor(this._selectedFeature, 0.1);
-            this._setFeatureAphaFillColor(selectedFeature, 0.3);
+            this._resetStyle(this._selectedFeature);
+            if (selectedFeature.getGeometry().getType() === 'MultiLineString') {
+              this._setStrokeWidth(selectedFeature, this._overlay$.value.strokeWidth + 10);
+              this._setStrokeColor(selectedFeature, this._overlay$.value.fillColor);
+            } else {
+              this._setFeatureAphaFillColor(selectedFeature, 0.3);
+            }
             this._selectedFeature = selectedFeature;
             const extent = selectedFeature.getGeometry().getExtent();
             this.mapCmp.map.getView().fit(extent, {
@@ -170,8 +175,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     });
   }
 
-  private _calculateRadiusForZoom(): number {
-    const baseRadius = 10; // Raggio base quando lo zoom è al minimo
+  private _calculateRadiusForZoom(baseRadius = 10): number {
     const zoomFactor = 2;
     const zoom = this.mapCmp.map?.getView().getZoom() || 13;
     return (baseRadius * Math.pow(zoomFactor, zoom - 1)) / 8000;
@@ -183,6 +187,12 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     if (this._selectedFeature != null && featureCollectionSourceLayer != null) {
       featureCollectionSourceLayer.removeFeature(this._selectedFeature);
       this._selectedFeature = null;
+    }
+  }
+
+  private _resetStyle(feature): void {
+    if (feature != null) {
+      this._selectedFeature.setStyle(this.getStyle(feature.getGeometry().getType()));
     }
   }
 
@@ -211,11 +221,10 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       if (
         geometryType === 'Polygon' ||
         geometryType === 'MultiPolygon' ||
-        geometryType === 'GeometryCollection' ||
-        geometryType === 'MultiLineString'
+        geometryType === 'GeometryCollection'
       ) {
-        const featureFillColor: string = featureStyle.getFill().getColor() as string;
-        const featureStrokeColor: string = featureStyle.getStroke().getColor() as string;
+        const featureFillColor: string = this._overlay$.value.fillColor as string;
+        const featureStrokeColor: string = this._overlay$.value.strokeColor as string;
         feature.setStyle(
           new Style({
             stroke: new Stroke({
@@ -231,6 +240,28 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         );
       } else if (geometryType === 'Point') {
         feature.setStyle(this.getStyle(geometryType));
+      }
+    }
+  }
+
+  private _setStrokeColor(feature: Feature, color): void {
+    if (feature != null) {
+      const featureStyle: Style = feature.getStyle() as Style;
+      const geometryType = feature.getGeometry().getType();
+      if (geometryType === 'MultiLineString') {
+        const featureStroke = featureStyle.getStroke();
+        featureStroke.setColor(color);
+      }
+    }
+  }
+
+  private _setStrokeWidth(feature: Feature, width = 10): void {
+    if (feature != null) {
+      const featureStyle: Style = feature.getStyle() as Style;
+      const geometryType = feature.getGeometry().getType();
+      if (geometryType === 'MultiLineString') {
+        const featureStroke = featureStyle.getStroke();
+        featureStroke.setWidth(width);
       }
     }
   }
@@ -266,7 +297,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         return new Style({
           stroke: new Stroke({
             color: overlay.strokeColor,
-            width: overlay.strokeWidth,
+            width: this._calculateRadiusForZoom(overlay.strokeWidth),
           }),
           fill: new Fill({
             color: overlay.fillColor,
