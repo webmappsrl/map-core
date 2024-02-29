@@ -27,6 +27,8 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
       });
   }
 
+  @Input('wmMapGeojsonFit') fit = false;
+
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
   }
@@ -72,7 +74,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
         this.mapCmp.map.getView().fit(extent, {
           duration: 0,
           maxZoom: 17,
-          size: this.mapCmp.map.getSize(),
+          size: this.fit ? [100, 100] : this.mapCmp.map.getSize(),
         });
         this._featureCollectionLayer.changed();
         this._init = true;
