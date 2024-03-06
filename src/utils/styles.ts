@@ -671,6 +671,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   const properties = feature.getProperties();
   let maxWidth = this.conf.maxStrokeWidth;
   let minStrokeWidth = this.minStrokeWidth;
+  let enableRouting = false;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = JSON.parse(properties['layers']);
   let strokeStyle = null;
@@ -684,8 +685,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
       strokeStyle = cacheStyle[featureStrokeColor];
     }
-  }
-  if (this.currentLayer != null) {
+  } else if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
@@ -695,12 +695,12 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
     } else {
       strokeStyle = cacheStyle['noColor'];
     }
-    if (
+    enableRouting =
       routing &&
       this.currentLayer != null &&
       this.currentLayer.edges != null &&
-      this.currentTrack != null
-    ) {
+      this.currentTrack != null;
+    if (enableRouting) {
       minStrokeWidth += 10;
       maxWidth = 40;
 
@@ -825,7 +825,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       lineString.setProperties(feature.getProperties());
       styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
-    if (this.map.getView().getZoom() > 11) {
+    if (this.map.getView().getZoom() > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
       styles = [
