@@ -6,6 +6,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChange,
   SimpleChanges,
@@ -44,7 +45,7 @@ import {IMAP} from '../../types/model';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WmMapComponent implements OnChanges, AfterViewInit {
+export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   private _centerExtent: Extent;
   private _view: View;
 
@@ -117,12 +118,19 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
   ngAfterViewInit(): void {
     this.wmMapConf$
       .pipe(
-        take(3),
         filter(f => f != null),
+        take(1),
       )
       .subscribe(conf => {
         this._initMap(conf);
       });
+  }
+
+  ngOnDestroy(): void {
+    this.map.dispose();
+    this.map = null;
+    this._view = null;
+    this.isInit$.next(false);
   }
 
   /**
@@ -164,6 +172,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit {
 
       this._view.fit(geometryOrExtent, optOptions);
     }
+  }
+
+  getZoom(): number {
+    if (this.map != null) {
+      const view = this.map.getView();
+      return view.getZoom();
+    }
+    return 10;
   }
 
   /**
