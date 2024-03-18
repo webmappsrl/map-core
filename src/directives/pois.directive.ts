@@ -161,6 +161,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @memberof WmMapPoisDirective
    */
   private _addPoisFeature(poiCollection: IGeojsonFeature[]): void {
+    const iconFeatures = [];
     clearLayer(this._poisClusterLayer);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     const featureSource = clusterSource.getSource();
@@ -215,10 +216,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
         iconFeature.setStyle(iconStyle);
         iconFeature.setId(poi.properties.id);
-        featureSource.addFeature(iconFeature);
-        featureSource.changed();
-        clusterSource.changed();
+        iconFeatures.push(iconFeature);
       }
+      featureSource.addFeatures(iconFeatures);
+      featureSource.changed();
+      clusterSource.changed();
     }
     this._olFeatures = featureSource.getFeatures();
     this.mapCmp.map.on('moveend', e => {

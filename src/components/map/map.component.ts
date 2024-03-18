@@ -357,7 +357,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
         maxZoom: conf.defZoom,
       });
     }
-    this.map.updateSize();
     this.map.render();
     this.map.changed();
     this.map.updateSize();
