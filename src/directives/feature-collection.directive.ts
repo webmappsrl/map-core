@@ -1,6 +1,6 @@
+import {extend} from 'ol/extent';
 import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
-
 import {BehaviorSubject} from 'rxjs';
 import {filter, switchMap} from 'rxjs/operators';
 import {Feature} from 'ol';
@@ -11,7 +11,6 @@ import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style} from 'ol/style';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
-import {Color} from 'ol/color';
 import {
   FEATURE_COLLECTION_STROKE_COLOR,
   FEATURE_COLLECTION_FILL_COLOR,
@@ -20,6 +19,18 @@ import {
 } from '../readonly';
 import CircleStyle from 'ol/style/Circle';
 import {Type} from 'ol/geom/Geometry';
+import {FeatureCollection, GeoJsonProperties} from 'geojson';
+import {Store} from '@ngrx/store';
+import {partitionToggleState} from '../store/map-core.selector';
+
+export interface WmFeatureCollection extends FeatureCollection {
+  properties: WmGeoJsonProperties;
+}
+
+export interface WmGeoJsonProperties extends GeoJsonProperties {
+  distinctProperty: string;
+}
+
 @Directive({
   selector: '[wmMapFeatureCollection]',
 })
@@ -31,6 +42,10 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     strokeColor: FEATURE_COLLECTION_STROKE_COLOR,
     strokeWidth: FEATURE_COLLECTION_STROKE_WIDTH,
   });
+  private _partitionToggleState = {};
+  private _partitionToggleState$ = this._store
+    .select(partitionToggleState)
+    .pipe(filter(p => p != null));
   private _primaryColor: string | null = null;
   private _selectedFeature: Feature | null = null;
 
@@ -47,6 +62,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   @Input('wmMapFeatureCollectionOverlay') set overlay(overlay: any) {
     this._overlay$.next(overlay);
+    this._partitionToggleState = {};
   }
 
   @Input('wmMapFeatureCollectionOverlayUnselect') set unselect(unselect: any) {
@@ -70,9 +86,13 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   @Output('wmMapFeatureCollectionLayerSelected')
   wmMapFeatureCollectionLayerSelected: EventEmitter<number> = new EventEmitter<number>();
   @Output()
+  wmMapFeatureCollectionPartitionsSelected: EventEmitter<any[] | null> = new EventEmitter<
+    any[] | null
+  >();
+  @Output()
   wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient) {
+  constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
     super(mapCmp);
     this._enabled$
       .pipe(
@@ -85,14 +105,21 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           return this._http.get(overlay.url);
         }),
       )
-      .subscribe(geojson => {
+      .subscribe((geojson: WmFeatureCollection) => {
         this.mapCmp.map.once('precompose', () => {
           this._buildGeojson(geojson);
         });
       });
+    this._partitionToggleState$.subscribe(partitionToggleState => {
+      this._partitionToggleState = partitionToggleState;
+      this._updateFeaturesStyle();
+    });
   }
 
-  private _buildGeojson(geojson: any): void {
+  private _buildGeojson(geojson: WmFeatureCollection): void {
+    geojson.features.map(f => {
+      f.properties;
+    });
     this._resetSelectedFeature();
     let count = 0;
     const features = new GeoJSON({
@@ -110,7 +137,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       style: (f: Feature<Geometry>) => {
         f.setId(count);
         count++;
-        f.setStyle(this.getStyle(f.getGeometry().getType()));
+        f.setStyle(this.getStyle(f));
       },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
@@ -168,9 +195,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         this._selectedFeature != null &&
         this._selectedFeature.getGeometry().getType() === 'Point'
       ) {
-        this._selectedFeature.setStyle(
-          this.getStyle(this._selectedFeature.getGeometry().getType()),
-        );
+        this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
       }
     });
   }
@@ -192,7 +217,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   private _resetStyle(feature): void {
     if (feature != null) {
-      this._selectedFeature.setStyle(this.getStyle(feature.getGeometry().getType()));
+      this._selectedFeature.setStyle(this.getStyle(feature));
     }
   }
 
@@ -239,7 +264,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           }),
         );
       } else if (geometryType === 'Point') {
-        feature.setStyle(this.getStyle(geometryType));
+        feature.setStyle(this.getStyle(feature));
       }
     }
   }
@@ -271,13 +296,16 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       const features = this._featureCollectionLayer.getSource().getFeatures();
       features
         .filter(f => f != this._selectedFeature)
-        .forEach(feature => feature.setStyle(this.getStyle(feature.getGeometry().getType())));
+        .forEach(feature => feature.setStyle(this.getStyle(feature)));
     }
   }
 
-  private getStyle(geometryType: Type): Style {
+  private getStyle(feature: Feature): Style {
+    const geometryType: Type = feature.getGeometry().getType();
+    const properties = feature.getProperties();
     const overlay = this._overlay$.value;
     let radius = 6;
+
     switch (geometryType) {
       case 'Point':
         radius = this._calculateRadiusForZoom();
@@ -304,6 +332,43 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           }),
         });
       default:
+        if (
+          overlay.distinctProperty != null &&
+          properties[overlay.distinctProperty] != null &&
+          overlay.partitionProperties != null
+        ) {
+          const hideStyle = new Style({
+            fill: new Fill({
+              color: 'rgba(0, 0, 0, 0)',
+            }),
+            stroke: new Stroke({
+              color: 'rgba(0, 0, 0, 0)',
+              width: 1,
+            }),
+          });
+
+          const myProperties = overlay.partitionProperties.filter(
+            d => d.value === properties[overlay.distinctProperty],
+          );
+          if (properties[overlay.distinctProperty] != null) {
+            if (this._partitionToggleState[properties[overlay.distinctProperty]] === false) {
+              return hideStyle;
+            }
+          }
+
+          if (myProperties.length > 0) {
+            const myProperty = myProperties[0];
+            return new Style({
+              fill: new Fill({
+                color: myProperty.fillColor.replace('0.1', '0'),
+              }),
+              stroke: new Stroke({
+                color: myProperty.strokeColor.replace('0.1', '0'),
+                width: myProperty.strokeWidth,
+              }),
+            });
+          }
+        }
         return new Style({
           stroke: new Stroke({
             color: overlay.strokeColor.replace('0.1', '0'),

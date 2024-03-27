@@ -2,11 +2,68 @@
 import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
 import {ILAYER} from './layer';
-export type IPoint = [number, number, number?];
+
 export type ILineString = Array<IPoint>;
 export type IMultiLineString = Array<Array<IPoint>>;
-export type IPolygon = Array<Array<IPoint>>;
 export type IMultiPolygon = Array<Array<Array<IPoint>>>;
+export type IPoint = [number, number, number?];
+export type IPolygon = Array<Array<IPoint>>;
+
+export interface ICONTROL {
+  label: iLocalString;
+  partitionProperties?: any[];
+  type: string;
+}
+
+export interface ICONTROLS {
+  data: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+  overlays: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
+}
+
+export interface ICONTROLSBUTTON extends ICONTROL {
+  default?: boolean;
+  icon?: string;
+  id?: number;
+  type: 'button';
+  url?: string;
+}
+
+export interface ICONTROLSTITLE extends ICONTROL {
+  type: 'title';
+}
+
+export interface IGeojsonCluster extends IGeojsonGeneric {
+  properties: {
+    ids: number[]; // Id di Ec Track che fanno parte del cluster
+    images: string[]; // Massimo 3 url di immagini ottimizzate
+    bbox: number[]; // Extent di tutte le ec track assieme
+  };
+  type: 'Feature';
+}
+
+export interface IGeojsonClusterApiResponse {
+  features: IGeojsonCluster[];
+}
+
+/**
+ * Define a feature
+ */
+export interface IGeojsonFeature {
+  geometry: IGeojsonGeometry;
+  properties: IGeojsonProperties;
+  type: 'Feature';
+}
+
+export interface IGeojsonFeatureDownloaded extends IGeojsonFeature {
+  size: number;
+}
+
+export interface IGeojsonGeneric {
+  geometry: IGeojsonGeometry;
+  properties: any;
+  type: string;
+}
 
 /**
  * Define the supported geometries
@@ -16,9 +73,27 @@ export interface IGeojsonGeometry {
   type: EGeojsonGeometryTypes;
 }
 
-export interface ILocaleString {
-  en?: string;
-  it?: string;
+export interface IGeojsonPoi extends IGeojsonGeneric {
+  isSmall?: boolean;
+  properties: {
+    id: number; // Id del poi
+    image: string; // url image
+  };
+  type: 'Point';
+}
+
+export interface IGeojsonPoiDetailed extends IGeojsonPoi {
+  properties: {
+    id: number; // Id del poi
+    image: string; // url image
+    images: string[]; // url images
+    name: ILocaleString;
+    description: ILocaleString;
+    email?: string;
+    phone?: string;
+    address?: string;
+    url?: string;
+  };
 }
 
 /**
@@ -72,156 +147,11 @@ export interface IGeojsonProperties {
   [_: string]: any;
 }
 
-/**
- * Define a feature
- */
-export interface IGeojsonFeature {
-  geometry: IGeojsonGeometry;
-  properties: IGeojsonProperties;
-  type: 'Feature';
-}
-
-export interface IGeojsonFeatureDownloaded extends IGeojsonFeature {
-  size: number;
-}
-
-export interface IWmImage {
-  api_url: string;
-  caption: string;
-  id: number;
-  sizes: {
-    '108x148': string;
-    '108x137': string;
-    '225x100': string;
-    '250x150': string;
-    '118x138': string;
-    '108x139': string;
-    '118x117': string;
-    '335x250': string;
-    '400x200': string;
-    '1440x500': string;
-  };
-  url: string;
-}
-
-export interface IGeojsonGeneric {
-  geometry: IGeojsonGeometry;
-  properties: any;
-  type: string;
-}
-export interface IGeojsonCluster extends IGeojsonGeneric {
-  properties: {
-    ids: number[]; // Id di Ec Track che fanno parte del cluster
-    images: string[]; // Massimo 3 url di immagini ottimizzate
-    bbox: number[]; // Extent di tutte le ec track assieme
-  };
-  type: 'Feature';
-}
-
-export interface IGeojsonPoi extends IGeojsonGeneric {
-  isSmall?: boolean;
-  properties: {
-    id: number; // Id del poi
-    image: string; // url image
-  };
-  type: 'Point';
-}
-
-export interface IGeojsonPoiDetailed extends IGeojsonPoi {
-  properties: {
-    id: number; // Id del poi
-    image: string; // url image
-    images: string[]; // url images
-    name: ILocaleString;
-    description: ILocaleString;
-    email?: string;
-    phone?: string;
-    address?: string;
-    url?: string;
-  };
-}
-export interface IGeojsonClusterApiResponse {
-  features: IGeojsonCluster[];
-}
-
-export interface WhereTaxonomy {
-  admin_level: number;
-  created_at: Date;
-  description: string;
-  id: 9;
-  import_method: string;
-  name: ILocaleString;
-  source_id: number;
-  updated_at: Date;
-}
-
-export interface PoiTypeTaxonomy {
-  description: ILocaleString;
-  id: number;
-  name: ILocaleString;
-}
-
-/**
- * @description
- * @export
- * @interface iMarker
- */
-export interface iMarker {
-  icon: Feature<Geometry>;
-  id: string;
-}
-
-/**
- * @description
- * @export
- * @interface PoiMarker
- * @extends {iMarker}
- */
-export interface PoiMarker extends iMarker {
-  poi: IGeojsonFeature;
-  style?: any;
-}
-
-/**
- * @description
- * @export
- * @enum {number}
- */
-export enum EGeojsonGeometryTypes {
-  POINT = 'Point',
-  LINE_STRING = 'LineString',
-  MULTI_LINE_STRING = 'MultiLineString',
-  POLYGON = 'Polygon',
-  MULTI_POLYGON = 'MultiPolygon',
-}
-
-/**
- * @export
- * @interface IMAP
- */
-export interface iLocalString {
+export interface ILocaleString {
   en?: string;
   it?: string;
 }
-export interface ICONTROL {
-  label: iLocalString;
-  type: string;
-}
-export interface ICONTROLSTITLE extends ICONTROL {
-  type: 'title';
-}
-export interface ICONTROLSBUTTON extends ICONTROL {
-  icon?: string;
-  id?: number;
-  type: 'button';
-  url?: string;
-  default?: boolean;
-}
-export interface ICONTROLS {
-  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
-  overlays: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
-  data: (ICONTROLSTITLE | ICONTROLSBUTTON)[];
-}
+
 export interface IMAP {
   /**
    * rappresent the bounding box of the map
@@ -245,6 +175,7 @@ export interface IMAP {
   start_end_icons_show: boolean;
   tiles: {[name: string]: string}[];
 }
+
 export interface IPOI {
   apppoisApiLayer: boolean;
   poiIconRadius: string;
@@ -256,4 +187,83 @@ export interface IPOI {
   poi_interaction: 'no_interaction' | 'tooltip' | 'popup' | 'tooltip_popup';
   skipRouteIndexDownload: boolean;
   taxonomies: any;
+}
+
+export interface IWmImage {
+  api_url: string;
+  caption: string;
+  id: number;
+  sizes: {
+    '108x148': string;
+    '108x137': string;
+    '225x100': string;
+    '250x150': string;
+    '118x138': string;
+    '108x139': string;
+    '118x117': string;
+    '335x250': string;
+    '400x200': string;
+    '1440x500': string;
+  };
+  url: string;
+}
+
+/**
+ * @description
+ * @export
+ * @interface PoiMarker
+ * @extends {iMarker}
+ */
+export interface PoiMarker extends iMarker {
+  poi: IGeojsonFeature;
+  style?: any;
+}
+
+export interface PoiTypeTaxonomy {
+  description: ILocaleString;
+  id: number;
+  name: ILocaleString;
+}
+
+export interface WhereTaxonomy {
+  admin_level: number;
+  created_at: Date;
+  description: string;
+  id: 9;
+  import_method: string;
+  name: ILocaleString;
+  source_id: number;
+  updated_at: Date;
+}
+
+/**
+ * @export
+ * @interface IMAP
+ */
+export interface iLocalString {
+  en?: string;
+  it?: string;
+}
+
+/**
+ * @description
+ * @export
+ * @interface iMarker
+ */
+export interface iMarker {
+  icon: Feature<Geometry>;
+  id: string;
+}
+
+/**
+ * @description
+ * @export
+ * @enum {number}
+ */
+export enum EGeojsonGeometryTypes {
+  POINT = 'Point',
+  LINE_STRING = 'LineString',
+  MULTI_LINE_STRING = 'MultiLineString',
+  POLYGON = 'Polygon',
+  MULTI_POLYGON = 'MultiPolygon',
 }

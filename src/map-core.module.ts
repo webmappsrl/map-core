@@ -21,6 +21,8 @@ import {
 } from './directives';
 import {WmMapControlsModule} from './components/controls/controls.module';
 import {WmMapGeojsonDirective} from './directives/geojson.directive';
+import {StoreModule} from '@ngrx/store';
+import {featureKey, MapCoreReducer} from './store/map-core.reducer';
 
 const directives = [
   WmMapTrackDirective,
@@ -40,7 +42,12 @@ const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
 @NgModule({
   declarations: [...components, ...directives],
-  imports: [CommonModule, IonicModule, WmMapControlsModule],
+  imports: [
+    CommonModule,
+    IonicModule,
+    WmMapControlsModule,
+    StoreModule.forFeature(featureKey, MapCoreReducer),
+  ],
   exports: [...components, ...directives],
 })
 export class WmMapModule {}
