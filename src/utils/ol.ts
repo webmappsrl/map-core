@@ -19,7 +19,6 @@ import VectorTileSource from 'ol/source/VectorTile';
 import {getDistance, offset} from 'ol/sphere';
 import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
 import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
-
 import * as localforage from 'localforage';
 import convexHull from 'ol-ext/geom/ConvexHull';
 import Polygon from 'ol/geom/Polygon';
@@ -63,6 +62,214 @@ export function addFeatureToLayer(
   if (layer != null && layer.getSource() != null) {
     (layer.getSource() as any).addFeature(feature);
   }
+}
+
+/**
+ * @param {Array<VALUE>} arr The array to modify.
+ * @param {!Array<VALUE>|VALUE} data The elements or arrays of elements to add to arr.
+ * @template VALUE
+ */
+export function arrayExtend(arr, data) {
+  const extension = Array.isArray(data) ? data : [data];
+  const length = extension.length;
+  for (let i = 0; i < length; i++) {
+    arr[arr.length] = extension[i];
+  }
+}
+
+/**
+ * @description
+ * Builds an array of TileLayers from an array of tile URLs.
+ * const tiles = [
+ * { osm: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' }
+ * { hot: 'https://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png' }
+ * ];
+ * const tileLayers = _buildTileLayers(tiles);
+ *
+ * @param tiles An array of objects containing the tile name and URL.
+ * @returns An array of TileLayers.
+ */
+export function buildTileLayers(
+  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[] | null,
+): TileLayer<XYZ>[] {
+  /**
+   * @description
+   * Initialize the base source of the map
+   *
+   * @returns the XYZ source to use
+   */
+  const initBaseSource = (tile: string): XYZ => {
+    if (tile === '') {
+      return null;
+    }
+    return new XYZ({
+      url: tile,
+      cacheSize: 50000,
+      projection: 'EPSG:3857',
+    });
+  };
+  if (tiles == null) {
+    return [
+      new TileLayer({
+        preload: Infinity,
+        source: initBaseSource(DEF_XYZ_URL),
+        visible: true,
+        zIndex: 0,
+        className: 'webmapp',
+      }),
+    ];
+  }
+  const tilesMap = tiles
+    .filter(tile => tile.type === 'button')
+    .map((tile: ICONTROLSBUTTON, index) => {
+      return new TileLayer({
+        preload: Infinity,
+        source: initBaseSource(tile.url),
+        visible: index === 0,
+        zIndex: index,
+        className: Object.keys(tile)[0],
+        properties: {...tile},
+      });
+    }) ?? [
+    new TileLayer({
+      preload: Infinity,
+      source: initBaseSource(DEF_XYZ_URL),
+      visible: true,
+      zIndex: 0,
+      className: 'webmapp',
+    }),
+  ];
+  return tilesMap;
+}
+
+/**
+ * @description
+ * Calculate the nearest point (feature) to the given location on a vector layer.
+ * If the distance from the user to the nearest point is greater than the alertPoiRadius,
+ * the function returns null.
+ *
+ * @param location The user's location as an object with latitude and longitude properties
+ * @param layer The vector layer containing features to search
+ * @param alertPoiRadius The radius (in meters) within which to search for the nearest point (default: ALERT_POI_RADIUS)
+ *
+ * @returns The nearest feature to the user's location within the alertPoiRadius or null if not found
+ *
+ * @example
+ * const nearestFeature = calculateNearestPoint(userLocation, vectorLayer, 500);
+ */
+export function calculateNearestPoint(
+  location: Location,
+  layer: VectorLayer<VectorSource>,
+  alertPoiRadius = ALERT_POI_RADIUS,
+): Feature<Geometry> | null {
+  const feature: VectorSource<Geometry> = layer?.getSource();
+  if (feature && location) {
+    const coord: Coordinate = [location.longitude, location.latitude];
+    const nFeature = feature.getClosestFeatureToCoordinate(coord);
+    if (nFeature != null) {
+      const nFeatureCoords = nFeature.getGeometry();
+      const distanceFromUser = getDistance(
+        coord,
+        toLonLat((nFeatureCoords as Point).getCoordinates()),
+      );
+      if (distanceFromUser > alertPoiRadius) {
+        return null;
+      }
+      const oldProperties = nFeature.getProperties();
+      nFeature.setProperties({...oldProperties, ...{distance_from_user: distanceFromUser}});
+      return nFeature;
+    }
+  }
+  return null;
+}
+
+/**
+ * @description
+ * Calculates the rotation angle (in radians) between two coordinates.
+ *
+ * @param first The first coordinate [x, y].
+ * @param second The second coordinate [x, y].
+ * @returns The rotation angle in radians.
+ *
+ * @example
+ * const firstCoordinate = [0, 0];
+ * const secondCoordinate = [1, 1];
+ * const rotation = calculateRotation(firstCoordinate, secondCoordinate);
+ */
+export function calculateRotation(first, second): number {
+  const firstX = first[0];
+  const firstY = first[1];
+  const secondX = second[0];
+  const secondY = second[1];
+  const temp = [firstX - secondX, firstY - secondY];
+  //const temp = [secondX - firstX, secondY - firstY];
+  return Math.atan2(temp[0], temp[1]);
+}
+
+export function changedLayer(layer: VectorLayer<any>): void {
+  if (layer != null && layer.getSource() != null) {
+    layer.getSource().changed();
+    layer.changed();
+  }
+}
+
+/**
+ * @description
+ * Create an approximation of a circle on the surface of a sphere.
+ *
+ * @param {import("../coordinate.js").Coordinate} center Center (`[lon, lat]` in degrees).
+ * @param {number} radius The great-circle distance from the center to
+ *     the polygon vertices in meters.
+ * @param {number} [n] Optional number of vertices for the resulting
+ *     polygon. Default is `32`.
+ * @param {number} [sphereRadius] Optional radius for the sphere (defaults to
+ *     the Earth's mean radius using the WGS84 ellipsoid).
+ * @return {Polygon} The "circular" polygon.
+ * @api
+ */
+export function circularPolygon(center, radius, n?, sphereRadius?) {
+  n = n ? n : 32;
+  /** @type {Array<number>} */
+  const flatCoordinates = [];
+  for (let i = 0; i < n; ++i) {
+    const of = offset(center, radius, (2 * Math.PI * i) / n, sphereRadius);
+    arrayExtend(flatCoordinates, fromLonLat(of));
+  }
+  flatCoordinates.push(flatCoordinates[0], flatCoordinates[1]);
+  return new Polygon(flatCoordinates, 'XY', [flatCoordinates.length]);
+}
+
+export function clearLayer(layer: VectorLayer<any>): void {
+  if (layer != null && layer.getSource != null) {
+    layer.getSource().clear();
+  }
+}
+
+/**
+ * @description
+ * Transforms a set of [lon, lat](EPSG:4326) coordinates to EPSG:3857.
+ *
+ * @param coordinates - The [lon, lat](EPSG:4326) coordinates.
+ * @returns The transformed [lon, lat](EPSG:3857) coordinates.
+ *
+ * @example
+ * const coords4326: Coordinate = [-123.121583, 49.247593];
+ * const coords3857 = coordsFromLonLat(coords4326);
+ */
+export function coordsFromLonLat(coordinates: Coordinate): Coordinate {
+  return transform(coordinates, 'EPSG:4326', 'EPSG:3857');
+}
+
+/**
+ * @description
+ * Transform a set of EPSG:3857 coordinates in [lon, lat](EPSG:4326)
+ *
+ * @param coordinates the EPSG:3857 coordinates
+ *
+ * @returns the coordinates [lon, lat](EPSG:4326)
+ */
+export function coordsToLonLat(coordinates: Coordinate): Coordinate {
+  return transform(coordinates, 'EPSG:3857', 'EPSG:4326');
 }
 
 /**
@@ -217,48 +424,6 @@ export function createHull(): any {
 
 /**
  * @description
- * Returns an icon identifier from the given taxonomy identifiers.
- *
- * @export
- * @param {string[]} taxonomyIdentifiers - An array of taxonomy identifiers to search for an icon identifier.
- * @returns {string} - The first non-excluded taxonomy identifier with "poi_type" in it, the first taxonomy identifier if no "poi_type" is found, or an empty string if taxonomyIdentifiers is an empty array.
- *
- * Excluded taxonomy identifiers:
- * - 'theme_ucvs'
- */
-export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
-  const excludedIcn = ['theme_ucvs'];
-  const res = taxonomyIdentifiers?.filter(
-    p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
-  );
-  return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
-}
-
-/**
- * @description
- * Creates a VectorLayer with the given zIndex if the layer is not provided or returns the provided layer if it is not null.
- *
- * @export
- * @param {VectorLayer<VectorSource> | null} layer - The vector layer to be returned if not null.
- * @param {number} zIndex - The zIndex for the new VectorLayer if the layer is not provided.
- * @returns {VectorLayer<VectorSource>} - The provided VectorLayer if not null, or a new VectorLayer with the given zIndex.
- */
-export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
-  if (!layer) {
-    layer = new VectorLayer({
-      source: new VectorSource({
-        features: [],
-      }),
-      updateWhileAnimating: true,
-      updateWhileInteracting: true,
-      zIndex,
-    });
-  }
-  return layer;
-}
-
-/**
- * @description
  * Creates an OpenLayers Feature with an icon style based on an HTML string (SVG).
  *
  * @param {string} html - The HTML string (SVG) to be used as the icon source.
@@ -321,6 +486,7 @@ export function createIconFeatureFromSrc(src: string, position: Coordinate): Fea
 
   return feature;
 }
+
 /**
  * @description
  * Creates an OpenLayers Style object with an Icon created from an SVG string and a geometry.
@@ -366,33 +532,42 @@ export function createIconFromHtmlAndGeometry(html: string, position: Coordinate
 
 /**
  * @description
- * Transform a set of EPSG:3857 coordinates in [lon, lat](EPSG:4326)
+ * Creates a VectorLayer with the given zIndex if the layer is not provided or returns the provided layer if it is not null.
  *
- * @param coordinates the EPSG:3857 coordinates
- *
- * @returns the coordinates [lon, lat](EPSG:4326)
+ * @export
+ * @param {VectorLayer<VectorSource> | null} layer - The vector layer to be returned if not null.
+ * @param {number} zIndex - The zIndex for the new VectorLayer if the layer is not provided.
+ * @returns {VectorLayer<VectorSource>} - The provided VectorLayer if not null, or a new VectorLayer with the given zIndex.
  */
-export function coordsToLonLat(coordinates: Coordinate): Coordinate {
-  return transform(coordinates, 'EPSG:3857', 'EPSG:4326');
-}
-
-/**
- * @description
- * Transforms a set of [lon, lat](EPSG:4326) coordinates to EPSG:3857.
- *
- * @param coordinates - The [lon, lat](EPSG:4326) coordinates.
- * @returns The transformed [lon, lat](EPSG:3857) coordinates.
- *
- * @example
- * const coords4326: Coordinate = [-123.121583, 49.247593];
- * const coords3857 = coordsFromLonLat(coords4326);
- */
-export function coordsFromLonLat(coordinates: Coordinate): Coordinate {
-  return transform(coordinates, 'EPSG:4326', 'EPSG:3857');
+export function createLayer(layer: VectorLayer<VectorSource>, zIndex: number) {
+  if (!layer) {
+    layer = new VectorLayer({
+      source: new VectorSource({
+        features: [],
+      }),
+      updateWhileAnimating: true,
+      updateWhileInteracting: true,
+      zIndex,
+    });
+  }
+  return layer;
 }
 
 export function deactivateInteractions(map: Map): void {
   map.getInteractions().forEach(i => i.setActive(false));
+}
+
+/**
+ * @description
+ * Calculates the Euclidean distance between two coordinates in 2D space.
+ *
+ * @param c1 The first coordinate, as a tuple of two numbers [x, y].
+ * @param c2 The second coordinate, as a tuple of two numbers [x, y].
+ *
+ * @returns The distance between the two coordinates.
+ */
+export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
+  return Math.sqrt(Math.pow(c1[0] - c2[0], 2) + Math.pow(c1[1] - c2[1], 2));
 }
 
 /**
@@ -428,15 +603,14 @@ export function distanceBetweenPoints(point1: Location, point2: Location): numbe
 
 /**
  * @description
- * Calculates the Euclidean distance between two coordinates in 2D space.
+ * Transform a set of [minLon, minLat, maxLon, maxLat](EPSG:4326) coordinates in EPSG:3857
  *
- * @param c1 The first coordinate, as a tuple of two numbers [x, y].
- * @param c2 The second coordinate, as a tuple of two numbers [x, y].
+ * @param extent the [minLon, minLat, maxLon, maxLat](EPSG:4326) extent
  *
- * @returns The distance between the two coordinates.
+ * @returns the extent [minLon, minLat, maxLon, maxLat](EPSG:4326)
  */
-export function distanceBetweenCoordinates(c1: Coordinate, c2: Coordinate) {
-  return Math.sqrt(Math.pow(c1[0] - c2[0], 2) + Math.pow(c1[1] - c2[1], 2));
+export function extentFromLonLat(extent: Extent): Extent {
+  return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
 }
 
 /**
@@ -455,57 +629,10 @@ export function extentToLonLat(extent: Extent): Extent {
   return transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
 }
 
-/**
- * @description
- * Transform a set of [minLon, minLat, maxLon, maxLat](EPSG:4326) coordinates in EPSG:3857
- *
- * @param extent the [minLon, minLat, maxLon, maxLat](EPSG:4326) extent
- *
- * @returns the extent [minLon, minLat, maxLon, maxLat](EPSG:4326)
- */
-export function extentFromLonLat(extent: Extent): Extent {
-  return transformExtent(extent, 'EPSG:4326', 'EPSG:3857');
-}
-
-/**
- * @description
- * Determines if a cluster is present at the given MapBrowserEvent location.
- *
- * @param layer - The VectorLayer<Cluster> to search for clusters.
- * @param evt - The MapBrowserEvent<UIEvent> representing the event location.
- * @param map - The Map instance to retrieve the view and resolution.
- *
- * @returns true if a cluster is present, false otherwise.
- *
- * @example
- * const isClusterPresent = isCluster(layer, evt, map);
- * if (isClusterPresent) {
- *   // Handle cluster-related actions
- * }
- */
-export function isCluster(
-  layer: VectorLayer<Cluster>,
-  evt: MapBrowserEvent<UIEvent>,
-  map: Map,
-): boolean {
-  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
-  const features: Feature<Geometry>[] = [];
-  const clusterSource = layer?.getSource() ?? (null as any);
-  const layerSource = clusterSource?.getSource();
-
-  if (layer && layerSource) {
-    layerSource.forEachFeatureInExtent(
-      buffer(
-        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
-        precision,
-      ),
-      feature => {
-        features.push(feature);
-      },
-    );
-  }
-
-  return features.length > 1;
+export function flatten(arr) {
+  return arr.reduce(function (flat, toFlatten) {
+    return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
+  }, []);
 }
 
 /**
@@ -551,6 +678,83 @@ export function getCluster(
 
 /**
  * @description
+ * Returns an icon identifier from the given taxonomy identifiers.
+ *
+ * @export
+ * @param {string[]} taxonomyIdentifiers - An array of taxonomy identifiers to search for an icon identifier.
+ * @returns {string} - The first non-excluded taxonomy identifier with "poi_type" in it, the first taxonomy identifier if no "poi_type" is found, or an empty string if taxonomyIdentifiers is an empty array.
+ *
+ * Excluded taxonomy identifiers:
+ * - 'theme_ucvs'
+ */
+export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
+  const excludedIcn = ['theme_ucvs'];
+  const res = taxonomyIdentifiers?.filter(
+    p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
+  );
+  return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
+}
+
+/**
+ * @description
+ * Initializes interactions for an OpenLayers map with the given options.
+ *
+ * @param opt an optional object of type DefaultsOptions, containing options for the interactions.
+ * If null, default options will be used.
+ *
+ * @returns a collection of interactions for the OpenLayers map
+ */
+export function initInteractions(opt?: DefaultsOptions): Collection<Interaction> {
+  if (opt == null) {
+    opt = {
+      doubleClickZoom: false,
+      dragPan: true,
+      mouseWheelZoom: true,
+      pinchRotate: false,
+      altShiftDragRotate: false,
+    };
+  }
+  return defaultInteractions(opt);
+}
+
+/**
+ * @description
+ * Initializes a vector tile layer with a given URL, style function, and tile load function.
+ *
+ * @param url the URL of the vector tile server
+ * @param styleFn the style function to apply to the features
+ * @param tileLoadFn the function to load the vector tile data
+ * @param preload if true, preloads all tiles in the viewport at the current resolution
+ *
+ * @returns the initialized vector tile layer
+ */
+export function initVectorTileLayer(
+  url: any,
+  styleFn: (feature: FeatureLike) => [Style] | Style,
+  tileLoadFn: LoadFunction,
+): VectorTileLayer {
+  if (!url) {
+    return;
+  }
+
+  const layer = new VectorTileLayer({
+    zIndex: TRACK_ZINDEX,
+    renderBuffer: 2048,
+    renderMode: 'vector',
+    declutter: true,
+    source: new VectorTileSource({
+      format: new MVT(),
+      url: url,
+      overlaps: false,
+      tileLoadFunction: tileLoadFn,
+    }),
+    style: styleFn,
+  });
+  return layer;
+}
+
+/**
+ * @description
  * Returns the intersection of two arrays.
  *
  * @param a The first array.
@@ -569,6 +773,124 @@ export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
   var setB = new Set(b);
   var intersection = new Set([...setA].filter(x => setB.has(x)));
   return Array.from(intersection);
+}
+
+/**
+ * @description
+ * Determines if a cluster is present at the given MapBrowserEvent location.
+ *
+ * @param layer - The VectorLayer<Cluster> to search for clusters.
+ * @param evt - The MapBrowserEvent<UIEvent> representing the event location.
+ * @param map - The Map instance to retrieve the view and resolution.
+ *
+ * @returns true if a cluster is present, false otherwise.
+ *
+ * @example
+ * const isClusterPresent = isCluster(layer, evt, map);
+ * if (isClusterPresent) {
+ *   // Handle cluster-related actions
+ * }
+ */
+export function isCluster(
+  layer: VectorLayer<Cluster>,
+  evt: MapBrowserEvent<UIEvent>,
+  map: Map,
+): boolean {
+  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
+  const features: Feature<Geometry>[] = [];
+  const clusterSource = layer?.getSource() ?? (null as any);
+  const layerSource = clusterSource?.getSource();
+
+  if (layer && layerSource) {
+    layerSource.forEachFeatureInExtent(
+      buffer(
+        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
+        precision,
+      ),
+      feature => {
+        features.push(feature);
+      },
+    );
+  }
+
+  return features.length > 1;
+}
+
+/**
+ * @description
+ * Function to load a low-resolution tile from local storage cache if available, or load from URL otherwise.
+ *
+ * @param tile - The tile object to load.
+ * @param url - The URL to load the tile from if not found in cache.
+ *
+ * @example
+ * lowTileLoadFn(tile, 'https://example.com/tile.png');
+ */
+export function lowTileLoadFn(tile: any, url: string) {
+  // startTime(url);
+  let cached = null;
+  try {
+    cached = localStorage.getItem(url);
+  } catch (e) {
+    console.warn(e);
+    cached = null;
+  }
+  if (cached != null) {
+    tile.setLoader(
+      loadFeaturesXhr(
+        url,
+        tile.getFormat(),
+        tile.extent,
+        tile.resolution,
+        tile.projection,
+        tile.onLoad.bind(tile),
+        tile.onError.bind(tile),
+        cached,
+      ),
+    );
+  } else {
+    tileLoadFn(tile, url);
+  }
+}
+
+/**
+ * @description
+ * Given a layer and a map event, returns the nearest feature from a cluster or a single feature source.
+ *
+ * @param layer The layer containing the source
+ * @param evt The map event that triggered the search
+ * @param map The map instance
+ *
+ * @returns The nearest feature to the event coordinate
+ */
+export function nearestFeatureOfCluster(
+  layer: VectorLayer<any>,
+  evt: MapBrowserEvent<UIEvent>,
+  map: Map,
+): Feature<Geometry> {
+  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
+  let nearestFeature = null;
+  const features: Feature<Geometry>[] = [];
+  const clusterSource = layer?.getSource() ?? (null as any);
+  const layerSource = clusterSource?.getSource();
+
+  if (layer && layerSource) {
+    layerSource.forEachFeatureInExtent(
+      buffer(
+        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
+        precision,
+      ),
+      feature => {
+        features.push(feature);
+      },
+    );
+  }
+
+  if (features.length) {
+    nearestFeature = nearestFeatureOfCooridinate(features, evt.coordinate);
+  }
+
+  return nearestFeature;
 }
 
 /**
@@ -642,46 +964,6 @@ export function nearestFeatureOfLayer(
 
 /**
  * @description
- * Given a layer and a map event, returns the nearest feature from a cluster or a single feature source.
- *
- * @param layer The layer containing the source
- * @param evt The map event that triggered the search
- * @param map The map instance
- *
- * @returns The nearest feature to the event coordinate
- */
-export function nearestFeatureOfCluster(
-  layer: VectorLayer<any>,
-  evt: MapBrowserEvent<UIEvent>,
-  map: Map,
-): Feature<Geometry> {
-  const precision = map.getView().getResolution() * DEF_MAP_CLUSTER_CLICK_TOLERANCE;
-  let nearestFeature = null;
-  const features: Feature<Geometry>[] = [];
-  const clusterSource = layer?.getSource() ?? (null as any);
-  const layerSource = clusterSource?.getSource();
-
-  if (layer && layerSource) {
-    layerSource.forEachFeatureInExtent(
-      buffer(
-        [evt.coordinate[0], evt.coordinate[1], evt.coordinate[0], evt.coordinate[1]],
-        precision,
-      ),
-      feature => {
-        features.push(feature);
-      },
-    );
-  }
-
-  if (features.length) {
-    nearestFeature = nearestFeatureOfCooridinate(features, evt.coordinate);
-  }
-
-  return nearestFeature;
-}
-
-/**
- * @description
  * Remove a feature from a vector layer
  *
  * @param layer the vector layer to remove the feature from
@@ -694,126 +976,6 @@ export function removeFeatureFromLayer(layer: VectorLayer<any>, feature: Feature
   }
 }
 
-/**
- * @description
- * Initializes interactions for an OpenLayers map with the given options.
- *
- * @param opt an optional object of type DefaultsOptions, containing options for the interactions.
- * If null, default options will be used.
- *
- * @returns a collection of interactions for the OpenLayers map
- */
-export function initInteractions(opt?: DefaultsOptions): Collection<Interaction> {
-  if (opt == null) {
-    opt = {
-      doubleClickZoom: false,
-      dragPan: true,
-      mouseWheelZoom: true,
-      pinchRotate: false,
-      altShiftDragRotate: false,
-    };
-  }
-  return defaultInteractions(opt);
-}
-
-/**
- * @description
- * Initializes a vector tile layer with a given URL, style function, and tile load function.
- *
- * @param url the URL of the vector tile server
- * @param styleFn the style function to apply to the features
- * @param tileLoadFn the function to load the vector tile data
- * @param preload if true, preloads all tiles in the viewport at the current resolution
- *
- * @returns the initialized vector tile layer
- */
-export function initVectorTileLayer(
-  url: any,
-  styleFn: (feature: FeatureLike) => [Style] | Style,
-  tileLoadFn: LoadFunction,
-): VectorTileLayer {
-  if (!url) {
-    return;
-  }
-
-  const layer = new VectorTileLayer({
-    zIndex: TRACK_ZINDEX,
-    renderBuffer: 2048,
-    source: new VectorTileSource({
-      format: new MVT(),
-      url: url,
-      overlaps: false,
-      tileLoadFunction: tileLoadFn,
-    }),
-    style: styleFn,
-  });
-  return layer;
-}
-
-/**
- * @description
- * Builds an array of TileLayers from an array of tile URLs.
- * const tiles = [
- * { osm: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' }
- * { hot: 'https://tile-{a-c}.openstreetmap.fr/hot/{z}/{x}/{y}.png' }
- * ];
- * const tileLayers = _buildTileLayers(tiles);
- *
- * @param tiles An array of objects containing the tile name and URL.
- * @returns An array of TileLayers.
- */
-export function buildTileLayers(
-  tiles: (ICONTROLSTITLE | ICONTROLSBUTTON)[] | null,
-): TileLayer<XYZ>[] {
-  /**
-   * @description
-   * Initialize the base source of the map
-   *
-   * @returns the XYZ source to use
-   */
-  const initBaseSource = (tile: string): XYZ => {
-    if (tile === '') {
-      return null;
-    }
-    return new XYZ({
-      url: tile,
-      cacheSize: 50000,
-      projection: 'EPSG:3857',
-    });
-  };
-  if (tiles == null) {
-    return [
-      new TileLayer({
-        preload: Infinity,
-        source: initBaseSource(DEF_XYZ_URL),
-        visible: true,
-        zIndex: 0,
-        className: 'webmapp',
-      }),
-    ];
-  }
-  const tilesMap = tiles
-    .filter(tile => tile.type === 'button')
-    .map((tile: ICONTROLSBUTTON, index) => {
-      return new TileLayer({
-        preload: Infinity,
-        source: initBaseSource(tile.url),
-        visible: index === 0,
-        zIndex: index,
-        className: Object.keys(tile)[0],
-        properties: {...tile},
-      });
-    }) ?? [
-    new TileLayer({
-      preload: Infinity,
-      source: initBaseSource(DEF_XYZ_URL),
-      visible: true,
-      zIndex: 0,
-      className: 'webmapp',
-    }),
-  ];
-  return tilesMap;
-}
 /**
  * @description
  * Custom tile loading function to handle caching of tiles using LocalForage.
@@ -848,151 +1010,6 @@ export function tileLoadFn(tile: any, url: string) {
 
 /**
  * @description
- * Function to load a low-resolution tile from local storage cache if available, or load from URL otherwise.
- *
- * @param tile - The tile object to load.
- * @param url - The URL to load the tile from if not found in cache.
- *
- * @example
- * lowTileLoadFn(tile, 'https://example.com/tile.png');
- */
-export function lowTileLoadFn(tile: any, url: string) {
-  // startTime(url);
-  let cached = null;
-  try {
-    cached = localStorage.getItem(url);
-  } catch (e) {
-    console.warn(e);
-    cached = null;
-  }
-  if (cached != null) {
-    tile.setLoader(
-      loadFeaturesXhr(
-        url,
-        tile.getFormat(),
-        tile.extent,
-        tile.resolution,
-        tile.projection,
-        tile.onLoad.bind(tile),
-        tile.onError.bind(tile),
-        cached,
-      ),
-    );
-  } else {
-    tileLoadFn(tile, url);
-  }
-}
-
-export function clearLayer(layer: VectorLayer<any>): void {
-  if (layer != null && layer.getSource != null) {
-    layer.getSource().clear();
-  }
-}
-
-export function changedLayer(layer: VectorLayer<any>): void {
-  if (layer != null && layer.getSource() != null) {
-    layer.getSource().changed();
-    layer.changed();
-  }
-}
-
-/**
- * @description
- * Calculate the nearest point (feature) to the given location on a vector layer.
- * If the distance from the user to the nearest point is greater than the alertPoiRadius,
- * the function returns null.
- *
- * @param location The user's location as an object with latitude and longitude properties
- * @param layer The vector layer containing features to search
- * @param alertPoiRadius The radius (in meters) within which to search for the nearest point (default: ALERT_POI_RADIUS)
- *
- * @returns The nearest feature to the user's location within the alertPoiRadius or null if not found
- *
- * @example
- * const nearestFeature = calculateNearestPoint(userLocation, vectorLayer, 500);
- */
-export function calculateNearestPoint(
-  location: Location,
-  layer: VectorLayer<VectorSource>,
-  alertPoiRadius = ALERT_POI_RADIUS,
-): Feature<Geometry> | null {
-  const feature: VectorSource<Geometry> = layer?.getSource();
-  if (feature && location) {
-    const coord: Coordinate = [location.longitude, location.latitude];
-    const nFeature = feature.getClosestFeatureToCoordinate(coord);
-    if (nFeature != null) {
-      const nFeatureCoords = nFeature.getGeometry();
-      const distanceFromUser = getDistance(
-        coord,
-        toLonLat((nFeatureCoords as Point).getCoordinates()),
-      );
-      if (distanceFromUser > alertPoiRadius) {
-        return null;
-      }
-      const oldProperties = nFeature.getProperties();
-      nFeature.setProperties({...oldProperties, ...{distance_from_user: distanceFromUser}});
-      return nFeature;
-    }
-  }
-  return null;
-}
-
-/**
- * @description
- * Calculates the rotation angle (in radians) between two coordinates.
- *
- * @param first The first coordinate [x, y].
- * @param second The second coordinate [x, y].
- * @returns The rotation angle in radians.
- *
- * @example
- * const firstCoordinate = [0, 0];
- * const secondCoordinate = [1, 1];
- * const rotation = calculateRotation(firstCoordinate, secondCoordinate);
- */
-export function calculateRotation(first, second): number {
-  const firstX = first[0];
-  const firstY = first[1];
-  const secondX = second[0];
-  const secondY = second[1];
-  const temp = [firstX - secondX, firstY - secondY];
-  //const temp = [secondX - firstX, secondY - firstY];
-  return Math.atan2(temp[0], temp[1]);
-}
-export function flatten(arr) {
-  return arr.reduce(function (flat, toFlatten) {
-    return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
-  }, []);
-}
-
-/**
- * @description
- * Create an approximation of a circle on the surface of a sphere.
- *
- * @param {import("../coordinate.js").Coordinate} center Center (`[lon, lat]` in degrees).
- * @param {number} radius The great-circle distance from the center to
- *     the polygon vertices in meters.
- * @param {number} [n] Optional number of vertices for the resulting
- *     polygon. Default is `32`.
- * @param {number} [sphereRadius] Optional radius for the sphere (defaults to
- *     the Earth's mean radius using the WGS84 ellipsoid).
- * @return {Polygon} The "circular" polygon.
- * @api
- */
-export function circularPolygon(center, radius, n?, sphereRadius?) {
-  n = n ? n : 32;
-  /** @type {Array<number>} */
-  const flatCoordinates = [];
-  for (let i = 0; i < n; ++i) {
-    const of = offset(center, radius, (2 * Math.PI * i) / n, sphereRadius);
-    arrayExtend(flatCoordinates, fromLonLat(of));
-  }
-  flatCoordinates.push(flatCoordinates[0], flatCoordinates[1]);
-  return new Polygon(flatCoordinates, 'XY', [flatCoordinates.length]);
-}
-
-/**
- * @description
  * Converts radians to to degrees.
  *
  * @param {number} angleInRadians Angle in radians.
@@ -1013,17 +1030,4 @@ export function toDegrees(angleInRadians) {
  */
 export function toRadians(angleInDegrees) {
   return (angleInDegrees * Math.PI) / 180;
-}
-
-/**
- * @param {Array<VALUE>} arr The array to modify.
- * @param {!Array<VALUE>|VALUE} data The elements or arrays of elements to add to arr.
- * @template VALUE
- */
-export function arrayExtend(arr, data) {
-  const extension = Array.isArray(data) ? data : [data];
-  const length = extension.length;
-  for (let i = 0; i < length; i++) {
-    arr[arr.length] = extension[i];
-  }
 }

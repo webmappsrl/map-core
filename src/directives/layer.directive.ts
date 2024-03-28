@@ -45,9 +45,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _currentLayer: ILAYER;
   private _dataLayerUrls: IDATALAYER;
   private _disabled = false;
-  private _highVectorTileLayer: VectorTileLayer;
-  private _lowVectorTileLayer: VectorTileLayer;
   private _opacity = 1;
+  private _vectorTileLayer: VectorTileLayer;
 
   /**
    * @description
@@ -78,14 +77,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   @Input() set wmMapLayerDisableLayers(disable: boolean) {
     this._disabled = disable;
-    if (this._highVectorTileLayer != null) {
-      this._highVectorTileLayer.setVisible(!disable);
-    }
-    if (this._lowVectorTileLayer != null) {
-      this._lowVectorTileLayer.setVisible(!disable);
-    }
-    if (this._disabled === false) {
-      this._resolutionLayerSwitcher();
+    if (this._vectorTileLayer != null) {
+      this._vectorTileLayer.setVisible(!disable);
     }
   }
 
@@ -114,7 +107,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   @Input() set wmMapLayerOpacity(opacity: boolean) {
     this._opacity = opacity ? 0.3 : 1;
-    this._resolutionLayerSwitcher();
   }
 
   /**
@@ -156,49 +148,34 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
         });
-        this.mapCmp.map.on('moveend', () => {
-          if (this._disabled === false) {
-            this._resolutionLayerSwitcher();
-          }
-        });
-        this.mapCmp.map.on('movestart', () => {
-          if (this._disabled === false) {
-            this._resolutionLayerSwitcher();
-          }
-        });
-        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          if (this._disabled === false) {
-            try {
-              this.mapCmp.map.forEachFeatureAtPixel(
-                evt.pixel,
-                function (clickedFeature) {
-                  const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-                  const clickedLayerId =
-                    JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-                  if (
-                    clickedFeatureId > -1 &&
-                    this._highVectorTileLayer.getOpacity() === 1 &&
-                    clickedFeature.getType() != null
-                  ) {
-                    this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                    const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
 
-                    this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-                  }
-                  return true;
-                }.bind(this),
-                {
-                  hitTolerance: 100,
-                },
-              );
-            } catch (_) {}
-          }
+        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+          try {
+            this.mapCmp.map.forEachFeatureAtPixel(
+              evt.pixel,
+              function (clickedFeature) {
+                const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+                const clickedLayerId =
+                  JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+                if (clickedFeatureId > -1 && clickedFeature.getType() != null) {
+                  this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                  const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+
+                  this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+                }
+                return true;
+              }.bind(this),
+              {
+                hitTolerance: 100,
+              },
+            );
+          } catch (_) {}
         });
       });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this._lowVectorTileLayer != null || this._highVectorTileLayer != null) {
+    if (this._vectorTileLayer != null) {
       this._updateMap();
     }
     if (
@@ -229,7 +206,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     initInteractions().forEach(interaction => {
       this.mapCmp.map.addInteraction(interaction);
     });
-    this._resolutionLayerSwitcher();
     this.mapCmp.map.updateSize();
     this.wmMapStateEvt.emit('rendering:layer_done');
   }
@@ -245,23 +221,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initializeDataLayers(map: IMAP): void {
-    this._lowVectorTileLayer = initVectorTileLayer(
+    this._vectorTileLayer = initVectorTileLayer(
       this._dataLayerUrls.low,
-      f =>
-        styleLowFn.bind({
-          currentLayer: this._currentLayer,
-          conf: this.wmMapConf,
-          map: this.mapCmp.map,
-          opacity: this.wmMapLayerOpacity,
-          filters: this.mapCmp.filters,
-          tileLayer: this._lowVectorTileLayer,
-          inputTyped: this.wmMapInputTyped,
-          currentTrack: this.track,
-        })(f),
-      lowTileLoadFn,
-    );
-    this._highVectorTileLayer = initVectorTileLayer(
-      this._dataLayerUrls.high,
       f =>
         styleHighFn.bind({
           currentLayer: this._currentLayer,
@@ -269,64 +230,15 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           map: this.mapCmp.map,
           opacity: this.wmMapLayerOpacity,
           filters: this.mapCmp.filters,
-          tileLayer: this._lowVectorTileLayer,
+          tileLayer: this._vectorTileLayer,
           inputTyped: this.wmMapInputTyped,
           currentTrack: this.track,
-          animatedLayer: this._animatedVectorLayer,
         })(f),
-      tileLoadFn,
+      lowTileLoadFn,
     );
-    this._lowVectorTileLayer.setProperties({
-      'high': false,
-    });
-    this._highVectorTileLayer.setProperties({
-      'high': true,
-    });
-    this.mapCmp.map.addLayer(this._lowVectorTileLayer);
-    this.mapCmp.map.addLayer(this._highVectorTileLayer);
-    this.mapCmp.map.addLayer(this._animatedVectorLayer);
-    this._resolutionLayerSwitcher();
-  }
 
-  /**
-   * @description
-   * This function is used to switch between two vector tile layers based on the current zoom level.
-   * It checks if the two vector tile layers are not null and if they are not disabled.
-   * If the current zoom level is less than the preload zoom level,
-   * it sets the high vector tile layer to be invisible and sets the low vector tile layer to be visible with an opacity set by this._opacity.
-   * If the current zoom level is between the preload and switch resolution zoom levels,
-   * it sets both layers to be visible with the high vector tile layer having an opacity of 0
-   * and the low vector tile layer having an opacity set by this._opacity.
-   * If the current zoom level is greater than or equal to the switch resolution zoom level,
-   * it sets both layers to be visible with only the high vector tile layer having an opacity set by this._opacity.
-   * If they are disabled, both layers are set to be invisible.
-   * @private
-   * @memberof WmMapLayerDirective
-   */
-  private _resolutionLayerSwitcher(): void {
-    if (this._highVectorTileLayer != null && this._lowVectorTileLayer != null) {
-      const currentZoom = this.mapCmp.getZoom();
-      const preload = SWITCH_RESOLUTION_ZOOM_LEVEL - 2;
-      if (this._disabled === false) {
-        if (currentZoom < preload) {
-          this._highVectorTileLayer.setVisible(false);
-          this._lowVectorTileLayer.setVisible(true);
-          this._lowVectorTileLayer.setOpacity(this._opacity);
-        } else if (preload < currentZoom && currentZoom < SWITCH_RESOLUTION_ZOOM_LEVEL) {
-          this._highVectorTileLayer.setOpacity(0);
-          this._highVectorTileLayer.setVisible(true);
-          this._lowVectorTileLayer.setVisible(true);
-          this._lowVectorTileLayer.setOpacity(this._opacity);
-        } else {
-          this._highVectorTileLayer.setOpacity(this._opacity);
-          this._highVectorTileLayer.setVisible(true);
-          this._lowVectorTileLayer.setVisible(false);
-        }
-      } else {
-        this._highVectorTileLayer.setVisible(false);
-        this._lowVectorTileLayer.setVisible(false);
-      }
-    }
+    this.mapCmp.map.addLayer(this._vectorTileLayer);
+    this.mapCmp.map.addLayer(this._animatedVectorLayer);
   }
 
   /**
@@ -338,11 +250,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _updateMap(): void {
-    if (this._lowVectorTileLayer != null) {
-      this._lowVectorTileLayer.changed();
-    }
-    if (this._highVectorTileLayer != null) {
-      this._highVectorTileLayer.changed();
+    if (this._vectorTileLayer != null) {
+      this._vectorTileLayer.changed();
     }
   }
 }
