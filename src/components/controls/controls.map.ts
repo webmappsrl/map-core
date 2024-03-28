@@ -92,7 +92,7 @@ export class WmMapControls implements OnChanges, OnInit {
     setTimeout(() => {
       this._initializeData();
       this._setDefaultOverlay();
-    }, 400);
+    }, 200);
   }
 
   /**
