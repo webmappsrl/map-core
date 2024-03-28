@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.3.0](https://github.com/webmappsrl/map-core/compare/v1.2.0...v1.3.0) (2024-03-28)
+
+
+### Features
+
+* add Google Maps navigation to POIs ([c9d2831](https://github.com/webmappsrl/map-core/commit/c9d2831d2d4f0c11226d073fbdba33ec89883470))
+* Add support for MultiPolygon and GeometryCollection styles ([c350978](https://github.com/webmappsrl/map-core/commit/c3509783bda1a8895504358ae4606d038a26b4ee))
+* Add wmMapFeatureCollectionPopup event ([707fb22](https://github.com/webmappsrl/map-core/commit/707fb22aec7103943b7c3040f355b13850a86029))
+* Add wmMapGeojsonFit input to WmMapGeojsonDirective ([f186066](https://github.com/webmappsrl/map-core/commit/f1860663437cc9ac06930f56e5f912bee64fd528))
+* **controls:** select default overlay on initialization oc:2880 ([28380b6](https://github.com/webmappsrl/map-core/commit/28380b6afb8947857133f30d35e1c4a865433955))
+* **directive:** add createArrowStyle function ([1426d57](https://github.com/webmappsrl/map-core/commit/1426d57cff59c2efe9298577ad04de8735c1efab))
+* enhance feature selection in map directive deadline:82 ([4fd82f4](https://github.com/webmappsrl/map-core/commit/4fd82f493aab5234b53ddd1b93b66712e361a904))
+* **map.component:** add fullscreen control option to map ([bb860b2](https://github.com/webmappsrl/map-core/commit/bb860b2230e926bdf59d22556f531dc4640dad93))
+* **style:** change buildRefStyle logic ([b7aa27c](https://github.com/webmappsrl/map-core/commit/b7aa27cd699aef567923df4cead8d6ba236de208))
+
+
+### Bug Fixes
+
+* **controls:** add scrollable list ([1f6935b](https://github.com/webmappsrl/map-core/commit/1f6935b78d6da2e39d88ec3d537bfe4c1034a752))
+* **feature-collection.directive:** add selected layer ([15b1951](https://github.com/webmappsrl/map-core/commit/15b1951ddefd5b4313b80893925db8d02b9f8860))
+* **feature-collection.directive:** when fc changes reset selected layer ([a599d9a](https://github.com/webmappsrl/map-core/commit/a599d9aef0fd4becbfc657f51045f3eb87e2b6c9))
+* remove line-icon-arrow in all tracks id:2412 ([75d6cd5](https://github.com/webmappsrl/map-core/commit/75d6cd5040dbabd087e431848c548ab90aa094ae))
+* **styles:** removed unnecessary condition check in buildRefStyle function ([72b75ca](https://github.com/webmappsrl/map-core/commit/72b75ca9935a8427b2ba70ba1fd8263b06a6b53d))
+* update popover ([3141ad4](https://github.com/webmappsrl/map-core/commit/3141ad433df614f98add5557ecd4680203a0c3bd))
+
+
+### Miscellaneous
+
+* Delay initialization of map controls ([2972b80](https://github.com/webmappsrl/map-core/commit/2972b808013f635f4b98f86791721fc687ccd03c))
+* increase timeout for initializing data in WmMapControls ([808bb6b](https://github.com/webmappsrl/map-core/commit/808bb6bfa6ce7d4e21ba379a093cb46e318d60ea))
+* Refactor feature collection directive ([74cb612](https://github.com/webmappsrl/map-core/commit/74cb6122b6344d6771950f6ef6b3313acdacff6c))
+* Refactor feature collection directive ([f048d77](https://github.com/webmappsrl/map-core/commit/f048d776f5c316783d5bbf78996d2de1fc010dc6))
+* Refactor layer.directive.ts ([d22b5f9](https://github.com/webmappsrl/map-core/commit/d22b5f9d93a9cd83af60dd6b20f5d3c55978a5be))
+* Refactor styleCoreFn in styles.ts ([dd62dbc](https://github.com/webmappsrl/map-core/commit/dd62dbcea8ac9e9c96dee74247dd41a32f71a8ee))
+* Refactor styleCoreFn in styles.ts deadline:82 ([948c728](https://github.com/webmappsrl/map-core/commit/948c7282d33829b157add1a6d07d98a04aa0ac5e))
+* Remove unnecessary code in pois.directive.ts ([a7d384a](https://github.com/webmappsrl/map-core/commit/a7d384a6f313ecffc8026c5124cfb5c48477089b))
+* Remove unused code and improve arrow style in track.directive.ts ([73b7750](https://github.com/webmappsrl/map-core/commit/73b775094962c1ce6e7c454a90a409ecf63d244a))
+* Update buildArrowStyle function to include an optional circle parameter ([75d6cd5](https://github.com/webmappsrl/map-core/commit/75d6cd5040dbabd087e431848c548ab90aa094ae))
+* Update buildRefStyle function in styles.ts ([cc72f99](https://github.com/webmappsrl/map-core/commit/cc72f9992cda9b1b397ae9e260e454a2683c7229))
+* Update controls.map.html and controls.map.ts ([524cc03](https://github.com/webmappsrl/map-core/commit/524cc03cfa4a21c73ee93279390aa3c01596c351))
+* Update controls.map.scss ([7eca459](https://github.com/webmappsrl/map-core/commit/7eca459079f21e3ebd5408703b600ac7bfaa8bcd))
+* Update controls.map.scss ([a0ae6d8](https://github.com/webmappsrl/map-core/commit/a0ae6d836de8d0777cb4aa9ba9d22cb4c7e7beed))
+* Update feature-collection.directive.ts ([fd4b6c0](https://github.com/webmappsrl/map-core/commit/fd4b6c0d794fb910c31d563b39586ecb3b18151b))
+* Update feature-collection.directive.ts ([51d670d](https://github.com/webmappsrl/map-core/commit/51d670d2b263f59b0b277bbe7392717132b41458))
+* Update map and pois directive ([cb08f29](https://github.com/webmappsrl/map-core/commit/cb08f297f6d496d1204d1d1be0633b469ffb4408))
+* Update map.component.ts ([b1cae5c](https://github.com/webmappsrl/map-core/commit/b1cae5c95844c21d976732cfd4ab3b35e4b2a110))
+* Update subproject button.controls.map.scss, button.controls.map.ts, controls.map.html, controls.map.ts, map.component.html, map.component.ts, feature-collection.directive.ts and model.ts ([4727e52](https://github.com/webmappsrl/map-core/commit/4727e521e2a087f469946a07b2b6e1ccc3a50da1))
+
 ## [1.2.0](https://github.com/webmappsrl/map-core/compare/v1.1.1...v1.2.0) (2023-10-31)
 
 
