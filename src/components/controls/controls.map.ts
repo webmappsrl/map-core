@@ -89,13 +89,10 @@ export class WmMapControls implements OnChanges, OnInit {
   }
 
   ngOnInit(): void {
-    this._initializeData();
-    this._setDefaultOverlay();
-    this.conf.overlays.forEach((o: ICONTROLSBUTTON, idx) => {
-      if (o.default) {
-        this.selectOverlay(idx, o);
-      }
-    });
+    setTimeout(() => {
+      this._initializeData();
+      this._setDefaultOverlay();
+    }, 400);
   }
 
   /**
