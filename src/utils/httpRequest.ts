@@ -1,5 +1,51 @@
 import * as localforage from 'localforage';
 
+export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
+  try {
+    let stringedBinary = '';
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.byteLength; i++) {
+      stringedBinary += String.fromCharCode(bytes[i]);
+    }
+    return stringedBinary;
+  } catch (e) {
+    console.warn(e);
+    return null;
+  }
+}
+
+/**
+ * @description
+ * Caches the value of a given URL in local storage or localforage, depending on the URL.
+ * If the URL contains the string 'low', it attempts to store the value in local storage first.
+ * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
+ *
+ * @param url {string} - The URL for which the value will be cached.
+ * @param value {string} - The value to be cached for the given URL.
+ *
+ * @example
+ *
+ * const url = 'https://example.com/data';
+ * const value = 'Sample data content';
+ *
+ * cacheSetUrl(url, value);
+ */
+export function cacheSetUrl(url: string, value: string): void {
+  localforage.setItem(url, value);
+}
+
+/**
+ * Clears the storage by removing all items with a key containing 'geohub'
+ * in the localStorage and clearing the entire localforage storage.
+ *
+ * Usage example:
+ *
+ * clearStorage();
+ */
+export function clearStorage(): void {
+  localforage.clear();
+}
+
 /**
  * @description
  * Loads features from a given URL and processes the data using a specified format.
@@ -63,7 +109,7 @@ export function loadFeaturesXhr(
   }
   if (cached == null) {
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', url as string, true);
+    xhr.open('GET', url as string, true);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function () {
       if (!xhr.status || (xhr.status >= 200 && xhr.status < 300)) {
@@ -109,48 +155,6 @@ export function loadFeaturesXhr(
 
 /**
  * @description
- * Caches the value of a given URL in local storage or localforage, depending on the URL.
- * If the URL contains the string 'low', it attempts to store the value in local storage first.
- * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
- *
- * @param url {string} - The URL for which the value will be cached.
- * @param value {string} - The value to be cached for the given URL.
- *
- * @example
- *
- * const url = 'https://example.com/data';
- * const value = 'Sample data content';
- *
- * cacheSetUrl(url, value);
- */
-export function cacheSetUrl(url: string, value: string): void {
-  if (url.search('low') > -1) {
-    try {
-      localStorage.setItem(url, value);
-    } catch (e) {
-      localforage.setItem(url, value);
-      // console.warn('local storage failed: ', url);
-    }
-  } else {
-    localforage.setItem(url, value);
-  }
-}
-export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
-  try {
-    let stringedBinary = '';
-    const bytes = new Uint8Array(buf);
-    for (let i = 0; i < bytes.byteLength; i++) {
-      stringedBinary += String.fromCharCode(bytes[i]);
-    }
-    return stringedBinary;
-  } catch (e) {
-    console.warn(e);
-    return null;
-  }
-}
-
-/**
- * @description
  * Converts a string to a Uint8Array.
  *
  * @param str {string} - The string to be converted to a Uint8Array.
@@ -170,20 +174,4 @@ export function stringToUint8Array(str: string): Uint8Array {
     bufView[i] = str.charCodeAt(i);
   }
   return bufView;
-}
-
-/**
- * Clears the storage by removing all items with a key containing 'geohub'
- * in the localStorage and clearing the entire localforage storage.
- *
- * Usage example:
- *
- * clearStorage();
- */
-export function clearStorage(): void {
-  const allGeohubStorageKeys = Object.keys(localStorage).filter(f => f.indexOf('geohub') >= 0);
-  allGeohubStorageKeys.forEach(key => {
-    localStorage.removeItem(key);
-  });
-  localforage.clear();
 }

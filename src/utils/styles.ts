@@ -673,7 +673,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   let minStrokeWidth = this.minStrokeWidth;
   let enableRouting = false;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
-  const layers: number[] = JSON.parse(properties['layers']);
+  const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
   let strokeStyle = null;
   const featureStrokeColor =
     properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : null;
@@ -810,14 +810,12 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   ];
   if (strokeStyle.getColor() != 'rgba(0,0,0,0)') {
     if (
-      this.high &&
       this.conf.start_end_icons_show &&
       this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
     ) {
       styles = [...styles, ...buildStartEndIcons(geometry)];
     }
     if (
-      this.high &&
       this.conf.ref_on_track_show &&
       this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
     ) {
@@ -915,7 +913,6 @@ export function styleFn(this: any, feature: FeatureLike) {
 export function styleHighFn(this: any, feature: FeatureLike) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
   this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  this.high = true;
   return styleCoreFn.bind(this)(feature, true);
 }
 
