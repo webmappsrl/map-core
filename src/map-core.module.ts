@@ -10,6 +10,7 @@ import {
   wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
   WmMapFeatureCollectionDirective,
+  WmMapHitMapDirective,
   WmMapLayerDirective,
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
@@ -36,6 +37,7 @@ const directives = [
   WmMapOverlayDirective,
   WmMapPositionDirective,
   WmMapFeatureCollectionDirective,
+  WmMapHitMapDirective,
   WmMapGeojsonDirective,
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
