@@ -186,6 +186,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           } else {
             this.wmMapFeatureCollectionPopup.emit(null);
           }
+        } else if (this._selectedFeature != null) {
+          this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
+          this.wmMapFeatureCollectionPopup.emit('');
         }
       }
     });
