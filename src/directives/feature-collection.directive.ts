@@ -100,7 +100,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(() => this.mapCmp.isInit$),
         filter(f => f === true),
         switchMap(_ => this._overlay$),
-        filter(overlay => overlay != null),
+        filter(overlay => overlay != null && overlay.url != null),
         switchMap(overlay => {
           return this._http.get(overlay.url);
         }),
