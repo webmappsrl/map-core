@@ -701,7 +701,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       this.currentLayer.edges != null &&
       this.currentTrack != null;
     if (enableRouting) {
-      minStrokeWidth += 10;
+      minStrokeWidth += 2;
       maxWidth = 40;
 
       if (this.animatedLayer == null) {
@@ -726,7 +726,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       if (edges[currentTrackID] != null) {
         const edgesOfCurrentTrack = edges[currentTrackID];
         const nextIndex = edgesOfCurrentTrack.next.indexOf(currentTrackOfLayer);
-        minStrokeWidth += 20;
+        minStrokeWidth += 2;
         if (nextIndex > -1) {
           strokeStyle.setColor(nextColors[nextIndex]);
           animateFeatureFn(this, toFeature(feature), nextColors[nextIndex]);
