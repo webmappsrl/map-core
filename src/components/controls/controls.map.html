@@ -2,7 +2,7 @@
   <div class="layer-button" (click)="toggle$.next(!toggle$.value)">
     <ion-icon name="layers-outline"></ion-icon>
   </div>
-  <ion-content class="layer-content" [hidden]="toggle$|async">
+  <ion-content class="layer-content" [hidden]="!(toggle$|async)">
     <ng-container *ngIf="conf !=null">
       <ion-list lines="none">
         <ng-container *ngIf="conf.tiles|controlIsBtn as tiles">
