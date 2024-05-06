@@ -71,12 +71,20 @@ export function buildArrowStyle(
   let n = 0;
   const resolution = opt.map.getView().getResolution();
   let properties = lineString.getProperties();
+  if (properties.stroke_color && properties.stroke_color != '') {
+    opt.featureStrokeColor = properties.stroke_color;
+  }
+  // TODO: momentaneo da eliminare quando tutte le app sono rigenerate
+  if (properties.strokecolor && properties.strokecolor != '') {
+    opt.featureStrokeColor = properties.strokecolor;
+  }
   if (properties['layers'] != null) {
     const layers: number[] = JSON.parse(properties['layers']);
     const layerId = +layers[0];
     const color = getColorFromLayer(layerId, this.conf.layers);
-    opt.featureStrokeColor =
-      properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : color;
+    if (properties.stroke_color == null && properties.strokecolor == null) {
+      opt.featureStrokeColor = color;
+    }
   }
   try {
     n = lineString.getLength() / (size * resolution);
@@ -675,8 +683,12 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
   let strokeStyle = null;
-  const featureStrokeColor =
-    properties.strokeColor && properties.strokeColor != '' ? properties.strokeColor : null;
+  let featureStrokeColor =
+    properties.stroke_color && properties.stroke_color != '' ? properties.stroke_color : null;
+  // TODO: da eliminare quando tutte le app sono rigenerate
+  if (properties.strokecolor != null) {
+    featureStrokeColor = properties.strokecolor;
+  }
   if (featureStrokeColor) {
     if (cacheStyle[featureStrokeColor] != null) {
       strokeStyle = cacheStyle[featureStrokeColor];
