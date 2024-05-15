@@ -463,10 +463,15 @@ export class WmMapTrackRelatedPoisDirective
         }),
       });
       if (properties != null && properties.svgIcon != null) {
-        const src = `data:image/svg+xml;utf8,${properties.svgIcon.replaceAll(
+        let src = `data:image/svg+xml;utf8,${properties.svgIcon.replaceAll(
           'darkorange',
           namedPoiColor,
         )}`;
+        if (selected) {
+          src = `data:image/svg+xml;utf8,${properties.svgIcon
+            .replaceAll(`<circle fill="darkorange"`, '<circle fill="white" ')
+            .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`;
+        }
         iconStyle = new Style({
           image: new Icon({
             anchor: [0.5, 0.5],
@@ -483,7 +488,13 @@ export class WmMapTrackRelatedPoisDirective
       };
       return marker;
     } else if (svgIcon != null) {
-      const src = `data:image/svg+xml;utf8,${svgIcon}`;
+      let src = `data:image/svg+xml;utf8,${svgIcon}`;
+      if (selected) {
+        src = `data:image/svg+xml;utf8,${svgIcon.replaceAll(
+          `<circle fill="darkorange"`,
+          '<circle fill="white" ',
+        )}`;
+      }
       let coordinates = [
         poi.geometry.coordinates[0] as number,
         poi.geometry.coordinates[1] as number,
@@ -651,7 +662,7 @@ export class WmMapTrackRelatedPoisDirective
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this._selectedPoiMarker = poiMarker;
-    const {marker} = await this._createPoiMarker(poiMarker.poi, true);
+    const marker = await this._createPoiMarker(poiMarker.poi, true);
     if (marker != null && marker.icon != null) {
       addFeatureToLayer(this._selectedPoiLayer, marker.icon);
     }
