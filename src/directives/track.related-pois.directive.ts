@@ -29,12 +29,16 @@ import {
   createCanvasForHtml,
   createLayer,
   downloadBase64Img,
+  fromHEXToColor,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
 } from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {CLUSTER_ZINDEX, DEF_LINE_COLOR, logoBase64} from '../readonly';
+import {CLUSTER_ZINDEX, DEF_LINE_COLOR, ICN_PATH, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
+import {FeatureCollection} from 'geojson';
+import GeoJSON from 'ol/format/GeoJSON';
+import Collection from 'ol/Collection';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -52,6 +56,8 @@ export class WmMapTrackRelatedPoisDirective
   private _relatedPois: IGeojsonFeature[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
+  private _wmMapPoisPois: BehaviorSubject<VectorSource<Geometry>> =
+    new BehaviorSubject<VectorSource<Geometry> | null>(null);
 
   /**
    * @description
@@ -86,6 +92,26 @@ export class WmMapTrackRelatedPoisDirective
         this.currentRelatedPoi$.next(this._getPoi(+id));
         this.relatedPoiEvt.next(this.currentRelatedPoi$.value);
       }
+    }
+  }
+
+  @Input() set wmMapPoisPois(pois: FeatureCollection | null) {
+    if (pois != null) {
+      const features = new GeoJSON({
+        featureProjection: 'EPSG:3857',
+      }).readFeatures(pois);
+      const featureCollection = new Collection(
+        features.map(feature => {
+          const id = feature.getProperties().id;
+          feature.setId(id);
+          return feature;
+        }),
+      );
+      const vectorSource = new VectorSource({
+        features: featureCollection,
+      });
+
+      this._wmMapPoisPois.next(vectorSource);
     }
   }
 
@@ -279,15 +305,9 @@ export class WmMapTrackRelatedPoisDirective
     }
     if (poiCollection) {
       for (const poi of poiCollection) {
-        if (
-          !this._poiMarkers?.find(
-            x => x.id === poi.properties.id + '' && poi.properties?.feature_image?.sizes,
-          )
-        ) {
-          const {marker} = await this._createPoiCanvasIcon(poi);
-          addFeatureToLayer(this._poisLayer, marker.icon);
-          this._poiMarkers.push(marker);
-        }
+        const marker = await this._createPoiMarker(poi);
+        this._poiMarkers.push(marker);
+        addFeatureToLayer(this._poisLayer, marker.icon);
       }
     }
   }
@@ -417,6 +437,83 @@ export class WmMapTrackRelatedPoisDirective
     return createCanvasForHtml(htmlTextCanvas, 46);
   }
 
+  private async _createPoiMarker(poi, selected = false) {
+    const svgIcon = poi.properties.taxonomy.poi_type.icon ?? null;
+    const poiFromPois = this._wmMapPoisPois.value.getFeatureById(poi.properties.id);
+    if (poi.properties?.feature_image?.sizes['108x137'] != null) {
+      const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
+      return marker;
+    } else if (poiFromPois != null) {
+      const properties = poiFromPois.getProperties() || null;
+      const taxonomy = properties.taxonomy || null;
+      const poyType = taxonomy?.poi_type || null;
+      const icn = this._getIcnFromTaxonomies(properties.taxonomyIdentifiers);
+
+      const poiColor = poyType?.color
+        ? poyType.color
+        : properties.color
+        ? properties.color
+        : '#ff8c00';
+      const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
+      let iconStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 0.5],
+          scale: 0.5,
+          src: `${ICN_PATH}/${icn}.png`,
+        }),
+      });
+      if (properties != null && properties.svgIcon != null) {
+        const src = `data:image/svg+xml;utf8,${properties.svgIcon.replaceAll(
+          'darkorange',
+          namedPoiColor,
+        )}`;
+        iconStyle = new Style({
+          image: new Icon({
+            anchor: [0.5, 0.5],
+            scale: 1,
+            src,
+          }),
+        });
+      }
+      poiFromPois.setStyle(iconStyle);
+      const marker: any = {
+        poi: poi,
+        icon: poiFromPois,
+        id: properties.id,
+      };
+      return marker;
+    } else if (svgIcon != null) {
+      const src = `data:image/svg+xml;utf8,${svgIcon}`;
+      let coordinates = [
+        poi.geometry.coordinates[0] as number,
+        poi.geometry.coordinates[1] as number,
+      ];
+      const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
+      const geometry = new Point([position[0], position[1]]);
+      const iconFeature = new Feature({
+        type: 'icon',
+        geometry,
+      });
+      let iconStyle = new Style({
+        image: new Icon({
+          anchor: [0.5, 0.5],
+          scale: 1,
+          src,
+        }),
+      });
+      iconFeature.setStyle(iconStyle);
+      iconFeature.setId(poi.properties.id);
+      const marker: any = {
+        poi: poi,
+        icon: iconFeature,
+        id: poi.properties.id,
+      };
+      return marker;
+    } else {
+      console.log('puppa');
+    }
+  }
+
   /**
    * @description
    * Creates the HTML text for a POI marker to be used in a canvas.
@@ -490,6 +587,18 @@ export class WmMapTrackRelatedPoisDirective
     this.mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
+  private _getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
+    const excludedIcn = ['theme_ucvs'];
+    const res = taxonomyIdentifiers?.filter(
+      p => excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
+    );
+    return res?.length > 0
+      ? res[0]
+      : taxonomyIdentifiers != null && taxonomyIdentifiers.length > 0
+      ? taxonomyIdentifiers[0]
+      : null;
+  }
+
   /**
    * @description
    * Retrieves the Point of Interest (POI) with the specified ID.
@@ -542,7 +651,9 @@ export class WmMapTrackRelatedPoisDirective
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, 999999999999999);
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this._selectedPoiMarker = poiMarker;
-    const {marker} = await this._createPoiCanvasIcon(poiMarker.poi, null, true);
-    addFeatureToLayer(this._selectedPoiLayer, marker.icon);
+    const {marker} = await this._createPoiMarker(poiMarker.poi, true);
+    if (marker != null && marker.icon != null) {
+      addFeatureToLayer(this._selectedPoiLayer, marker.icon);
+    }
   }
 }
