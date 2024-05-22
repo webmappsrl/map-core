@@ -438,7 +438,7 @@ export class WmMapTrackRelatedPoisDirective
   }
 
   private async _createPoiMarker(poi, selected = false) {
-    const svgIcon = poi.properties.taxonomy.poi_type.icon ?? null;
+    const svgIcon = poi?.properties?.taxonomy?.poi_type?.icon ?? null;
     const poiFromPois = this._wmMapPoisPois.value.getFeatureById(poi.properties.id);
     if (poi.properties?.feature_image?.sizes['108x137'] != null) {
       const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
