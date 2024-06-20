@@ -168,7 +168,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                 this._selectedFeature = selectedFeature;
               }
             }
-            if (prop['popup'] === true) {
+            if (prop['popup'] != null) {
               this._resetStyle(this._selectedFeature);
               this._selectedFeature = selectedFeature;
               const geometryType = this._selectedFeature.getGeometry().getType();
