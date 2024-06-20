@@ -188,15 +188,19 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
               });
               this.wmMapFeatureCollectionPopup.emit(prop['popup']);
             }
+            if (prop['layer_id'] != null) {
+              this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+            }
           } else {
             this.wmMapFeatureCollectionPopup.emit(null);
           }
-
-          if (prop['layer_id'] != null) {
-            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
-          }
         } else {
+          this.wmMapFeatureCollectionLayerSelected.emit(null);
           this.wmMapFeatureCollectionPopup.emit(null);
+          if (this._selectedFeature != null) {
+            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+            this._selectedFeature = null;
+          }
         }
       } else if (this._selectedFeature != null) {
         this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
