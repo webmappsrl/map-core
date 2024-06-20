@@ -157,5 +157,8 @@
       "caption": "Private Abstract Methods",
       "memberTypes": ["privateAbstractMethods"]
     }
-  ]
+  ],
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

@@ -20,7 +20,7 @@ import {
 import CircleStyle from 'ol/style/Circle';
 import {Type} from 'ol/geom/Geometry';
 import {FeatureCollection, GeoJsonProperties} from 'geojson';
-import {Store} from '@ngrx/store';
+import {Store, createAction} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
 
 export interface WmFeatureCollection extends FeatureCollection {
@@ -149,57 +149,56 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
     this.mapCmp.map.on('click', e => {
       if (this._overlay$.value != null) {
-        const feat = this.mapCmp.map.getFeaturesAtPixel(e.pixel, {hitTolerance: 30});
-        const selectedFeature = feat[0] as Feature<Geometry>;
+        if (this._selectedFeature != null) {
+          this._resetStyle(this._selectedFeature);
+          this._selectedFeature = null;
+        }
+
+        const feat = this.mapCmp.map.getFeaturesAtPixel(e.pixel, {
+          layerFilter: l => l === this._featureCollectionLayer,
+          hitTolerance: 10,
+        });
+        const selectedFeature = feat[feat.length - 1] as Feature<Geometry>;
+
         if (selectedFeature != null) {
-          const prop = selectedFeature?.getProperties() ?? null;
-          if (prop != null && prop['clickable'] === true) {
-            if (this._selectedFeature != null) {
-              this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
-              this._selectedFeature = null;
+          this._selectedFeature = selectedFeature;
+
+          const prop = selectedFeature.getProperties() ?? null;
+          const extent = this._selectedFeature.getGeometry().getExtent();
+          this.mapCmp.map.getView().fit(extent, {
+            duration: 300, // Durata dell'animazione in millisecondi
+            padding: [50, 50, 50, 50], // Margine intorno alla feature
+          });
+          if (prop['popup'] != null) {
+            const geometryType = this._selectedFeature.getGeometry().getType();
+            if (geometryType === 'MultiLineString' || geometryType === 'LineString') {
+              this._setStrokeColor(this._selectedFeature, this._overlay$.value.fillColor);
+              this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
+              this._setStrokeWidth(this._selectedFeature, this._overlay$.value.strokeWidth + 20);
+            } else if (geometryType === 'Point') {
+              this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
+            } else if (geometryType === 'MultiPolygon' || geometryType === 'Polygon') {
+              this._setFeatureAphaFillColor(this._selectedFeature, 0.8);
             }
-            if (features.length > 0) {
-              this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
-              this._selectedFeature = selectedFeature;
-            }
-          }
-          if (prop != null && prop['popup'] != null) {
-            this._resetStyle(this._selectedFeature);
-            if (selectedFeature.getGeometry().getType() === 'MultiLineString') {
-              this._setStrokeWidth(selectedFeature, this._overlay$.value.strokeWidth + 10);
-              this._setStrokeColor(selectedFeature, this._overlay$.value.fillColor);
-            } else {
-              this._setFeatureAphaFillColor(selectedFeature, 0.3);
-            }
-            this._selectedFeature = selectedFeature;
-            const extent = selectedFeature.getGeometry().getExtent();
-            this.mapCmp.map.getView().fit(extent, {
-              duration: 300, // Durata dell'animazione in millisecondi
-              padding: [50, 50, 50, 50], // Margine intorno alla feature
-            });
-          }
-          if (prop != null && prop['layer_id'] != null) {
-            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
-          }
-          if (prop != null && prop['popup'] != null) {
+
             this.wmMapFeatureCollectionPopup.emit(prop['popup']);
           } else {
             this.wmMapFeatureCollectionPopup.emit(null);
           }
-        } else if (this._selectedFeature != null) {
-          this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
-          this.wmMapFeatureCollectionPopup.emit('');
+
+          if (prop['layer_id'] != null) {
+            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+          }
+        } else {
+          this.wmMapFeatureCollectionPopup.emit(null);
         }
+      } else if (this._selectedFeature != null) {
+        this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
+        this.wmMapFeatureCollectionPopup.emit('');
       }
     });
     this.mapCmp.map.getView().on('change:resolution', () => {
       this._updateFeaturesStyle();
-      if (
-        this._selectedFeature != null &&
-        this._selectedFeature.getGeometry().getType() === 'Point'
-      ) {
-        this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
-      }
     });
   }
 
@@ -272,13 +271,37 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
   }
 
+  private _setFillColor(feature: Feature, color): void {
+    if (feature != null) {
+      const featureStyle: Style = feature.getStyle() as Style;
+      const geometryType = feature.getGeometry().getType();
+
+      const featureFill = featureStyle.getFill();
+      switch (geometryType) {
+        case 'Point':
+          const circleStyle = featureStyle.getImage() as CircleStyle;
+          circleStyle.setFill(
+            new Fill({
+              color,
+            }),
+          );
+          break;
+        case 'MultiLineString':
+          featureFill.setColor(color);
+          break;
+      }
+    }
+  }
+
   private _setStrokeColor(feature: Feature, color): void {
     if (feature != null) {
       const featureStyle: Style = feature.getStyle() as Style;
       const geometryType = feature.getGeometry().getType();
-      if (geometryType === 'MultiLineString') {
-        const featureStroke = featureStyle.getStroke();
-        featureStroke.setColor(color);
+      switch (geometryType) {
+        case 'Point':
+          const featureStroke = featureStyle.getStroke();
+          featureStroke.setColor(color);
+          break;
       }
     }
   }
@@ -287,100 +310,135 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     if (feature != null) {
       const featureStyle: Style = feature.getStyle() as Style;
       const geometryType = feature.getGeometry().getType();
-      if (geometryType === 'MultiLineString') {
-        const featureStroke = featureStyle.getStroke();
-        featureStroke.setWidth(width);
+      const featureStroke = featureStyle.getStroke();
+      featureStroke.setWidth(width);
+    }
+  }
+
+  private _updateFeatureSizes(feature): void {
+    const style = feature.getStyle() as Style;
+    const geometryType = feature?.getGeometry()?.getType();
+    const newStrokeWidth = this._calculateRadiusForZoom();
+
+    if (geometryType === 'Point') {
+      const image = style?.getImage() as CircleStyle;
+      if (image) {
+        image.setRadius(newStrokeWidth);
+      }
+    } else if (geometryType === 'MultiLineString' || geometryType === 'LineString') {
+      const stroke = style?.getStroke() as Stroke;
+      if (stroke) {
+        stroke.setWidth(this._calculateRadiusForZoom());
+      }
+    } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
+      const stroke = style?.getStroke() as Stroke;
+      if (stroke) {
+        stroke.setWidth(this._calculateRadiusForZoom(2));
       }
     }
+
+    feature.setStyle(style);
   }
 
   private _updateFeaturesStyle(): void {
     if (this._featureCollectionLayer && this._featureCollectionLayer.getSource()) {
       const features = this._featureCollectionLayer.getSource().getFeatures();
-      features
-        .filter(f => f != this._selectedFeature)
-        .forEach(feature => feature.setStyle(this.getStyle(feature)));
+      features.forEach(feature => {
+        // Salta l'aggiornamento dello stile se la feature è quella selezionata
+        if (feature !== this._selectedFeature) {
+          feature.setStyle(this.getStyle(feature));
+        } else {
+          this._updateFeatureSizes(feature);
+        }
+      });
     }
   }
 
   private getStyle(feature: Feature): Style {
-    const geometryType: Type = feature.getGeometry().getType();
-    const properties = feature.getProperties();
-    const overlay = this._overlay$.value;
-    let radius = 6;
+    try {
+      const geometryType: Type = feature.getGeometry().getType();
+      const properties = feature.getProperties();
+      const overlay = this._overlay$.value;
+      let radius = 6;
 
-    switch (geometryType) {
-      case 'Point':
-        radius = this._calculateRadiusForZoom();
-        return new Style({
-          image: new CircleStyle({
-            radius,
-            fill: new Fill({
-              color: overlay.fillColor.replace('0.1', '0'),
-            }),
-            stroke: new Stroke({
-              color: overlay.strokeColor.replace('0.1', '0'),
-              width: overlay.strokeWidth,
-            }),
-          }),
-        });
-      case 'MultiLineString':
-        return new Style({
-          stroke: new Stroke({
-            color: overlay.strokeColor,
-            width: this._calculateRadiusForZoom(overlay.strokeWidth),
-          }),
-          fill: new Fill({
-            color: overlay.fillColor,
-          }),
-        });
-      default:
-        if (
-          overlay.distinctProperty != null &&
-          properties[overlay.distinctProperty] != null &&
-          overlay.partitionProperties != null
-        ) {
-          const hideStyle = new Style({
-            fill: new Fill({
-              color: 'rgba(0, 0, 0, 0)',
-            }),
-            stroke: new Stroke({
-              color: 'rgba(0, 0, 0, 0)',
-              width: 1,
-            }),
-          });
+      let strokeColor = overlay.strokeColor;
+      let fillColor = overlay.fillColor;
 
-          const myProperties = overlay.partitionProperties.filter(
-            d => d.value === properties[overlay.distinctProperty],
-          );
-          if (properties[overlay.distinctProperty] != null) {
-            if (this._partitionToggleState[properties[overlay.distinctProperty]] === false) {
-              return hideStyle;
-            }
-          }
-
-          if (myProperties.length > 0) {
-            const myProperty = myProperties[0];
-            return new Style({
+      switch (geometryType) {
+        case 'Point':
+          radius = this._calculateRadiusForZoom();
+          return new Style({
+            image: new CircleStyle({
+              radius,
               fill: new Fill({
-                color: myProperty.fillColor.replace('0.1', '0'),
+                color: fillColor.replace('0.3', '0'),
               }),
               stroke: new Stroke({
-                color: myProperty.strokeColor.replace('0.1', '0'),
-                width: myProperty.strokeWidth,
+                color: strokeColor.replace('0.3', '0'),
+                width: overlay.strokeWidth,
+              }),
+            }),
+          });
+        case 'MultiLineString':
+          return new Style({
+            stroke: new Stroke({
+              color: strokeColor,
+              width: this._calculateRadiusForZoom(overlay.strokeWidth),
+            }),
+            fill: new Fill({
+              color: fillColor,
+            }),
+          });
+        default:
+          if (
+            overlay.distinctProperty != null &&
+            properties[overlay.distinctProperty] != null &&
+            overlay.partitionProperties != null
+          ) {
+            const hideStyle = new Style({
+              fill: new Fill({
+                color: 'rgba(0, 0, 0, 0)',
+              }),
+              stroke: new Stroke({
+                color: 'rgba(0, 0, 0, 0)',
+                width: 1,
               }),
             });
+
+            const myProperties = overlay.partitionProperties.filter(
+              d => d.value === properties[overlay.distinctProperty],
+            );
+            if (properties[overlay.distinctProperty] != null) {
+              if (this._partitionToggleState[properties[overlay.distinctProperty]] === false) {
+                return hideStyle;
+              }
+            }
+
+            if (myProperties.length > 0) {
+              const myProperty = myProperties[0];
+              return new Style({
+                fill: new Fill({
+                  color: myProperty.fillColor.replace('0.3', '0'),
+                }),
+                stroke: new Stroke({
+                  color: myProperty.strokeColor.replace('0.3', '0'),
+                  width: myProperty.strokeWidth,
+                }),
+              });
+            }
           }
-        }
-        return new Style({
-          stroke: new Stroke({
-            color: overlay.strokeColor.replace('0.1', '0'),
-            width: overlay.strokeWidth,
-          }),
-          fill: new Fill({
-            color: overlay.fillColor.replace('0.1', '0'),
-          }),
-        });
+          return new Style({
+            stroke: new Stroke({
+              color: strokeColor.replace('0.3', '0'),
+              width: overlay.strokeWidth,
+            }),
+            fill: new Fill({
+              color: fillColor.replace('0.3', '0'),
+            }),
+          });
+      }
+    } catch (error) {
+      console.log(feature);
     }
   }
 }
