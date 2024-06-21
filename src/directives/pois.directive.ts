@@ -31,7 +31,7 @@ import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {ILAYER} from '../types/layer';
 
 const PADDING = [80, 80, 80, 80];
-const TRESHOLD_ENABLE_FIT = 4;
+const TRESHOLD_ENABLE_FIT = 2;
 @Directive({
   selector: '[wmMapPois]',
 })
