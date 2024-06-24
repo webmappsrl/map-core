@@ -198,7 +198,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           this.wmMapFeatureCollectionLayerSelected.emit(null);
           this.wmMapFeatureCollectionPopup.emit(null);
           if (this._selectedFeature != null) {
-            this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+            this._resetStyle(this._selectedFeature);
             this._selectedFeature = null;
           }
         }
@@ -300,6 +300,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
           featureFill.setColor(color);
           break;
       }
+      feature.setStyle(featureStyle);
     }
   }
 
