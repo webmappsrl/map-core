@@ -215,7 +215,8 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _calculateRadiusForZoom(baseRadius = 10): number {
     const zoomFactor = 2;
     const zoom = this.mapCmp.map?.getView().getZoom() || 13;
-    return (baseRadius * Math.pow(zoomFactor, zoom - 1)) / 8000;
+    const currentRadius = (baseRadius * Math.pow(zoomFactor, zoom - 1)) / 8000;
+    return MIN_RADIUS > currentRadius ? MIN_RADIUS : currentRadius;
   }
 
   private _resetSelectedFeature(): void {
@@ -320,7 +321,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _setStrokeWidth(feature: Feature, width = 10): void {
     if (feature != null) {
       const featureStyle: Style = feature.getStyle() as Style;
-      const geometryType = feature.getGeometry().getType();
       const featureStroke = featureStyle.getStroke();
       featureStroke.setWidth(width);
     }
@@ -370,7 +370,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       const geometryType: Type = feature.getGeometry().getType();
       const properties = feature.getProperties();
       const overlay = this._overlay$.value;
-      let radius = 6;
+      let radius = MIN_RADIUS;
 
       let strokeColor = overlay.strokeColor;
       let fillColor = overlay.fillColor;
@@ -453,3 +453,5 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     }
   }
 }
+
+export const MIN_RADIUS = 6;
