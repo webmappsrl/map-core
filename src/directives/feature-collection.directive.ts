@@ -215,7 +215,10 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _calculateRadiusForZoom(baseRadius = 10): number {
     const zoomFactor = 2;
     const zoom = this.mapCmp.map?.getView().getZoom() || 13;
-    const currentRadius = (baseRadius * Math.pow(zoomFactor, zoom - 1)) / 8000;
+    const maxZoom = this.mapCmp.map?.getView().getMaxZoom() || 20;
+    const zoomReductionFactor = 1 + (zoom - 1) / (maxZoom / 3);
+    const currentRadius =
+      (baseRadius * Math.pow(zoomFactor, zoom - 1)) / 8000 / zoomReductionFactor;
     return MIN_RADIUS > currentRadius ? MIN_RADIUS : currentRadius;
   }
 
