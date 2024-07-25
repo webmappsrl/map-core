@@ -15,35 +15,15 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
 }
 
 /**
- * @description
- * Caches the value of a given URL in local storage or localforage, depending on the URL.
- * If the URL contains the string 'low', it attempts to store the value in local storage first.
- * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
- *
- * @param url {string} - The URL for which the value will be cached.
- * @param value {string} - The value to be cached for the given URL.
- *
- * @example
- *
- * const url = 'https://example.com/data';
- * const value = 'Sample data content';
- *
- * cacheSetUrl(url, value);
- */
-export function cacheSetUrl(url: string, value: string): void {
-  localforage.setItem(url, value);
-}
-
-/**
  * Clears the storage by removing all items with a key containing 'geohub'
  * in the localStorage and clearing the entire localforage storage.
  *
  * Usage example:
  *
- * clearStorage();
+ * clearPbfDB();
  */
-export function clearStorage(): void {
-  localforage.clear();
+export function clearPbfDB(): void {
+  pbfLocalForage.clear();
 }
 
 export async function downloadFile(url: string): Promise<ArrayBuffer> {
@@ -109,6 +89,15 @@ export async function downloadTiles(
   }
 
   return totalSize;
+}
+
+export async function getPbf(url: string): Promise<string | null> {
+  try {
+    return await pbfLocalForage.getItem<string>(url);
+  } catch (error) {
+    console.error('Failed to get pbf:', error);
+    return null;
+  }
 }
 
 export async function getTile(tileId: string): Promise<ArrayBuffer | null> {
@@ -196,7 +185,7 @@ export function loadFeaturesXhr(
         }
         if (resp != null) {
           try {
-            cacheSetUrl(url as string, resp);
+            savePbf(url as string, resp);
           } catch (e) {
             console.warn(e);
             resp = null;
@@ -227,9 +216,11 @@ export function loadFeaturesXhr(
   }
 }
 
-export async function removeTiles(tilesIDS: string[], prefix?: number | string): Promise<void> {
-  for (let i = 0; i < tilesIDS.length; i++) {
-    await removeTile(tilesIDS[i], prefix);
+export async function removePbf(url: string): Promise<void> {
+  try {
+    await pbfLocalForage.removeItem(url);
+  } catch (error) {
+    console.error('Failed to remove pbf:', error);
   }
 }
 
@@ -253,6 +244,32 @@ export async function removeTile(tileId: string, prefix?: number | string): Prom
   } catch (error) {
     console.error('Failed to remove tile:', error);
   }
+}
+
+export async function removeTiles(tilesIDS: string[], prefix?: number | string): Promise<void> {
+  for (let i = 0; i < tilesIDS.length; i++) {
+    await removeTile(tilesIDS[i], prefix);
+  }
+}
+
+/**
+ * @description
+ * Caches the value of a given URL in local storage or localforage, depending on the URL.
+ * If the URL contains the string 'low', it attempts to store the value in local storage first.
+ * If it fails or the URL doesn't contain 'low', it stores the value in localforage.
+ *
+ * @param url {string} - The URL for which the value will be cached.
+ * @param value {string} - The value to be cached for the given URL.
+ *
+ * @example
+ *
+ * const url = 'https://example.com/data';
+ * const value = 'Sample data content';
+ *
+ * savePbf(url, value);
+ */
+export function savePbf(url: string, value: string): void {
+  pbfLocalForage.setItem(url, value);
 }
 
 // Funzioni per la gestione delle tile
@@ -315,4 +332,8 @@ export const tileLocalForage = localforage.createInstance({
 export const tileHandlerLocalForage = localforage.createInstance({
   name: 'wm-tiles',
   storeName: 'handler',
+});
+export const pbfLocalForage = localforage.createInstance({
+  name: 'wm-tiles',
+  storeName: 'pbf',
 });

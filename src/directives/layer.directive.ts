@@ -7,29 +7,26 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import * as localforage from 'localforage';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import VectorTileLayer from 'ol/layer/VectorTile';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
 import {
-  clearStorage,
+  clearPbfDB,
   fromNameToHEX,
   getColorFromLayer,
   initInteractions,
   initVectorTileLayer,
   lowTileLoadFn,
   styleHighFn,
-  styleLowFn,
-  tileLoadFn,
 } from '../../src/utils';
 import {WmMapComponent} from '../components';
-import {ITINERARY_ZINDEX, SWITCH_RESOLUTION_ZOOM_LEVEL} from '../readonly';
 import {IDATALAYER, ILAYER} from '../types/layer';
 import {IMAP} from '../types/model';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+
 @Directive({
   selector: '[wmMapLayer]',
 })
@@ -56,7 +53,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set jidoUpdateTime(time: number) {
     const storedJidoVersion = localStorage.getItem(`JIDO_UPDATE_TIME`);
     if (time != undefined && time != +storedJidoVersion) {
-      clearStorage();
+      clearPbfDB();
       localStorage.setItem(`JIDO_UPDATE_TIME`, `${time}`);
     }
   }
@@ -132,13 +129,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
-    localforage.config({
-      name: 'JIDO',
-      version: 1.0,
-      size: 49807360, // Size of database, in bytes. WebSQL-only for now.
-      storeName: 'xyz', // Should be alphanumeric, with underscores.
-      description: 'tile vector tiles',
-    });
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
