@@ -46,6 +46,80 @@ export function clearStorage(): void {
   localforage.clear();
 }
 
+export async function downloadFile(url: string): Promise<ArrayBuffer> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}`);
+  }
+  return response.arrayBuffer();
+}
+
+/**
+ * @description
+ * Downloads and stores MBTiles for the given tile IDs.
+ *
+ * @param {string[]} tilesIDs - An array of tile IDs to be downloaded.
+ * @returns {Promise<number>} - The total size of downloaded tiles in bytes.
+ */
+export async function downloadTiles(
+  tilesIDs: string[],
+  prefix: number | string | undefined = undefined,
+  callBackStatusFn = updateStatus,
+): Promise<number> {
+  if (!tilesIDs || tilesIDs.length === 0) {
+    callBackStatusFn({
+      finish: false,
+      map: 1,
+    });
+    return 0;
+  }
+
+  let totalSize = 0;
+
+  for (let i = 0; i < tilesIDs.length; i++) {
+    const tilesId = `${tilesIDs[i]}`;
+
+    const existingTile = await getTile(tilesId);
+    if (!existingTile) {
+      try {
+        let tileData: ArrayBuffer;
+        const wmTilesAPI = `https://api.webmapp.it/tiles/${tilesId}.png`;
+
+        try {
+          tileData = await downloadFile(wmTilesAPI);
+          if (tileData.byteLength === 0) {
+            console.error(wmTilesAPI);
+            throw new Error('Tile data is empty');
+          }
+        } catch (err) {
+          console.log('Failed to download from Webmapp API', tilesId);
+          throw err;
+        }
+
+        totalSize += tileData.byteLength;
+        await saveTile(tilesId, tileData, prefix);
+      } catch (err) {}
+    } else {
+      updateTileHandlerLocalForage(tilesId, prefix);
+    }
+    callBackStatusFn({
+      finish: false,
+      map: 1 / tilesIDs.length,
+    });
+  }
+
+  return totalSize;
+}
+
+export async function getTile(tileId: string): Promise<ArrayBuffer | null> {
+  try {
+    return await tileLocalForage.getItem<ArrayBuffer>(tileId);
+  } catch (error) {
+    console.error('Failed to get tile:', error);
+    return null;
+  }
+}
+
 /**
  * @description
  * Loads features from a given URL and processes the data using a specified format.
@@ -153,6 +227,50 @@ export function loadFeaturesXhr(
   }
 }
 
+export async function removeTiles(tilesIDS: string[], prefix?: number | string): Promise<void> {
+  for (let i = 0; i < tilesIDS.length; i++) {
+    await removeTile(tilesIDS[i], prefix);
+  }
+}
+
+export async function removeTile(tileId: string, prefix?: number | string): Promise<void> {
+  try {
+    if (prefix) {
+      const currentPrefix = ((await tileHandlerLocalForage.getItem(tileId)) as any[]) || [];
+      const index = currentPrefix.indexOf(prefix);
+      if (index > -1) {
+        currentPrefix.splice(index, 1);
+        if (currentPrefix.length <= 0) {
+          await tileLocalForage.removeItem(tileId);
+          await tileHandlerLocalForage.removeItem(tileId);
+        } else {
+          await tileHandlerLocalForage.setItem(tileId, currentPrefix);
+        }
+      }
+    } else {
+      await tileLocalForage.removeItem(tileId);
+    }
+  } catch (error) {
+    console.error('Failed to remove tile:', error);
+  }
+}
+
+// Funzioni per la gestione delle tile
+export async function saveTile(
+  tileId: string,
+  tileData: ArrayBuffer,
+  prefix?: string | number,
+): Promise<void> {
+  try {
+    await tileLocalForage.setItem(tileId, tileData);
+    if (prefix) {
+      updateTileHandlerLocalForage(tileId, prefix);
+    }
+  } catch (error) {
+    console.error('Failed to save tile:', error);
+  }
+}
+
 /**
  * @description
  * Converts a string to a Uint8Array.
@@ -175,3 +293,26 @@ export function stringToUint8Array(str: string): Uint8Array {
   }
   return bufView;
 }
+
+export function updateStatus(status: {finish: boolean; map: number}) {
+  console.log('Status update:', status);
+}
+
+export async function updateTileHandlerLocalForage(tileId, prefix) {
+  try {
+    const currentPrefix = ((await tileHandlerLocalForage.getItem(tileId)) as any[]) || [];
+    currentPrefix.push(prefix);
+    await tileHandlerLocalForage.setItem(tileId, currentPrefix);
+  } catch (error) {
+    console.error('Failed to update tile handler:', error);
+  }
+}
+
+export const tileLocalForage = localforage.createInstance({
+  name: 'wm-tiles',
+  storeName: 'tiles',
+});
+export const tileHandlerLocalForage = localforage.createInstance({
+  name: 'wm-tiles',
+  storeName: 'handler',
+});

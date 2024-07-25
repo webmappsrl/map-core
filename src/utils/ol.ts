@@ -3,7 +3,7 @@ import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
 import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
-import {buffer, extend, Extent} from 'ol/extent';
+import {buffer, Extent} from 'ol/extent';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
 import {Geometry, Point} from 'ol/geom';
@@ -17,7 +17,7 @@ import {Cluster, XYZ} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import VectorTileSource from 'ol/source/VectorTile';
 import {getDistance, offset} from 'ol/sphere';
-import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
+import {Fill, Icon, Stroke, Style} from 'ol/style';
 import CircleStyle, {Options as CircleOptions} from 'ol/style/Circle';
 import * as localforage from 'localforage';
 import convexHull from 'ol-ext/geom/ConvexHull';
@@ -30,10 +30,35 @@ import {
   DEF_XYZ_URL,
 } from '../readonly/constants';
 import {Location} from '../types/location';
-import {loadFeaturesXhr} from './httpRequest';
+import {getTile, loadFeaturesXhr} from './httpRequest';
 import {fromHEXToColor, getClusterStyle} from './styles';
 import TileLayer from 'ol/layer/Tile';
 import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../types/model';
+import GeoJSON from 'ol/format/GeoJSON';
+
+// Sorgente tile personalizzata per gestire il caricamento delle tile offline
+class CustomTileSource extends XYZ {
+  constructor(options) {
+    super(options);
+    this.setTileLoadFunction(this._customTileLoadFunction.bind(this));
+    // Configurazione di base di localforage
+  }
+
+  private async _customTileLoadFunction(tile: any, src: string) {
+    const tileCoord = tile.getTileCoord();
+    const tileId = `${tileCoord[0]}/${tileCoord[1]}/${tileCoord[2]}`;
+    const localUrl = await getTile(tileId);
+    const image = tile.getImage();
+    if (!navigator.onLine && localUrl) {
+      // Se offline e la tile è disponibile localmente
+      const blob = new Blob([localUrl], {type: 'image/png'});
+      image.src = URL.createObjectURL(blob);
+    } else {
+      // Se online o la tile non è disponibile localmente
+      image.src = src;
+    }
+  }
+}
 
 /**
  * @description
@@ -102,12 +127,13 @@ export function buildTileLayers(
     if (tile === '') {
       return null;
     }
-    return new XYZ({
+    return new CustomTileSource({
       url: tile,
       cacheSize: 50000,
       projection: 'EPSG:3857',
     });
   };
+
   if (tiles == null) {
     return [
       new TileLayer({
@@ -119,6 +145,7 @@ export function buildTileLayers(
       }),
     ];
   }
+
   const tilesMap = tiles
     .filter(tile => tile.type === 'button')
     .map((tile: ICONTROLSBUTTON, index) => {
@@ -139,6 +166,7 @@ export function buildTileLayers(
       className: 'webmapp',
     }),
   ];
+
   return tilesMap;
 }
 
@@ -695,6 +723,40 @@ export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
 
+export function getTilesByGeometry(geometry): string[] {
+  const res = [];
+  const feature = new GeoJSON({
+    featureProjection: 'EPSG:4326',
+  }).readFeatures(geometry);
+
+  const extent = feature[0].getGeometry().getExtent();
+
+  return getTilesForExtent(extent, 5, 16);
+}
+
+export function getTilesForExtent(extent: Extent, minZoom: number, maxZoom: number) {
+  const tiles = new Set<string>();
+
+  for (let zoom = minZoom; zoom <= maxZoom; zoom++) {
+    const [minX, minY] = lonLatToTileCoords(extent[0], extent[3], zoom); // min lon, max lat
+    const [maxX, maxY] = lonLatToTileCoords(extent[2], extent[1], zoom); // max lon, min lat
+
+    const tileCount = (maxX - minX + 1) * (maxY - minY + 1);
+    if (tileCount > 1000 && zoom < maxZoom) {
+      // If the number of tiles at this zoom level is too high, skip to the next level
+      continue;
+    }
+
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        tiles.add(`${zoom}/${x}/${y}`);
+      }
+    }
+  }
+
+  return Array.from(tiles);
+}
+
 /**
  * @description
  * Initializes interactions for an OpenLayers map with the given options.
@@ -814,6 +876,17 @@ export function isCluster(
   }
 
   return features.length > 1;
+}
+
+export function lonLatToTileCoords(lon: number, lat: number, zoom: number): [number, number] {
+  const x = Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
+  const y = Math.floor(
+    ((1 -
+      Math.log(Math.tan((lat * Math.PI) / 180) + 1 / Math.cos((lat * Math.PI) / 180)) / Math.PI) /
+      2) *
+      Math.pow(2, zoom),
+  );
+  return [x, y];
 }
 
 /**
