@@ -30,7 +30,8 @@ import {
   DEF_XYZ_URL,
 } from '../readonly/constants';
 import {Location} from '../types/location';
-import {getTile, loadFeaturesXhr} from './httpRequest';
+import {loadFeaturesXhr} from './httpRequest';
+import {getTile} from './localForage';
 import {fromHEXToColor, getClusterStyle} from './styles';
 import TileLayer from 'ol/layer/Tile';
 import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../types/model';

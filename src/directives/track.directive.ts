@@ -9,7 +9,7 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 import Feature from 'ol/Feature';
-import GeoJSON from 'ol/format/GeoJSON';
+import GeoJSON, {GeoJSONFeature} from 'ol/format/GeoJSON';
 import Geometry from 'ol/geom/Geometry';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
@@ -155,7 +155,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * @returns void
    *
    */
-  drawTrack(trackgeojson: any, drawTrack = true): void {
+  drawTrack(trackgeojson: GeoJSONFeature, drawTrack = true): void {
     const isFlowLine = this.wmMapConf.flow_line_quote_show || false;
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
     const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
