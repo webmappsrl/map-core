@@ -1,10 +1,8 @@
 import {GeoJsonProperties} from 'geojson';
 import * as localforage from 'localforage';
-import {WmFeatureCollection, WmGeoJsonProperties} from '../directives/feature-collection.directive';
 import {downloadFile, isValidUrl} from './httpRequest';
 import {getTilesByGeometry} from '.';
 import {GeoJSONFeature} from 'ol/format/GeoJSON';
-import {map} from 'rxjs/operators';
 
 /**
  * Clears the storage by removing all items with a key containing 'geohub'
