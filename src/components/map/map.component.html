@@ -2,22 +2,28 @@
   <canvas id="canvas"></canvas>
   <ng-container *ngIf="wmMapOnly=== false">
     <div #scaleLineContainer id="webmapp-map-scale-line-container"></div>
-    <div id="webmapp-map-attribution-container">
-      <div class="webmapp-map-attribution">
-        <a
-          class="wm-clickable webmapp-map-attribution-link"
-          href="http://webmapp.it"
-          target="blank"
-        >
-          © Webmapp
-        </a>
-        <a
-          class="wm-clickable webmapp-map-attribution-link"
-          href="https://www.openstreetmap.org/about/"
-          target="blank"
-          >© OpenStreetMap
-        </a>
-      </div>
+
+    <div id="webmapp-map-attribution-container" *ngIf="(wmMapConf$|async)?.attribution != false">
+      <ng-container *ngIf="(wmMapConf$|async)?.attribution as attribution; else defaultAttribution">
+        <div class="webmapp-map-attribution" [innerHtml]="attribution"></div>
+      </ng-container>
+      <ng-template #defaultAttribution>
+        <div class="webmapp-map-attribution">
+          <a
+            class="wm-clickable webmapp-map-attribution-link"
+            href="http://webmapp.it"
+            target="blank"
+          >
+            © Webmapp
+          </a>
+          <a
+            class="wm-clickable webmapp-map-attribution-link"
+            href="https://www.openstreetmap.org/about/"
+            target="blank"
+            >© OpenStreetMap
+          </a>
+        </div>
+      </ng-template>
     </div>
     <div class="top-left">
       <ng-content select="[top-left]"></ng-content>
