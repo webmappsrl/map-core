@@ -24,6 +24,7 @@ export interface ICONTROLS {
 export interface ICONTROLSBUTTON extends ICONTROL {
   default?: boolean;
   icon?: string;
+  icon_url?: string;
   id?: number;
   type: 'button';
   url?: string;
