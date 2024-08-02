@@ -20,7 +20,7 @@ import {setTogglePartition} from '../../../store/map-core.actions';
         <ion-label class="wm-map-button-control-title">{{translationCallback(control.label)}}</ion-label>    
     </ng-container>
     <div  class="wm-map-button-control-button" *ngIf="control.type === 'button'" (click)="click(control.id)">
-      <img  class="wm-map-button-control-icon"  [src]="iconUrl" *ngIf="control.icon_url as iconUrl;else sanitazeIcon">
+      <img  class="wm-map-button-control-icon"  [src]="iconUrl" *ngIf="control.icon_url as iconUrl;else sanitazeIcon" [ngClass]="[wmMapButtonControlSelected$.value?'selected':'']">
       <ng-template #sanitazeIcon>
         <div  class="wm-map-button-control-icon" [innerHtml]="sanitaze(control.icon)" [ngClass]="[wmMapButtonControlSelected$.value?'selected':'']"></div>
       </ng-template>
