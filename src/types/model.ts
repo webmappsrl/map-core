@@ -154,6 +154,7 @@ export interface ILocaleString {
 }
 
 export interface IMAP {
+  attribution?: string | false;
   /**
    * rappresent the bounding box of the map
    */
