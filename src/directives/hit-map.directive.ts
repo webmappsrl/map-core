@@ -30,6 +30,22 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   private _hitMapLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _selectedFeature: Feature | null = null;
 
+  @Input() set wmMapHitMapUrl(url: undefined | string) {
+    this.mapCmp.isInit$
+      .pipe(
+        filter(e => e === true),
+        switchMap(_ => {
+          return this._http.get(url);
+        }),
+        take(1),
+      )
+      .subscribe((geojson: WmFeatureCollection) => {
+        this.mapCmp.map.once('precompose', () => {
+          this._buildGeojson(geojson);
+        });
+      });
+  }
+
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
     if (value == null) return '';
     if (typeof value === 'string') return value;
@@ -39,7 +55,6 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       }
     }
   };
-  @Input() wmMapHitMapUrl: string;
   @Output()
   wmMapFeatureCollectionPartitionsSelected: EventEmitter<any[] | null> = new EventEmitter<
     any[] | null
@@ -49,19 +64,6 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
 
   constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
     super(mapCmp);
-    this.mapCmp.isInit$
-      .pipe(
-        filter(e => e === true),
-        switchMap(_ => {
-          return this._http.get(this.wmMapHitMapUrl);
-        }),
-        take(1),
-      )
-      .subscribe((geojson: WmFeatureCollection) => {
-        this.mapCmp.map.once('precompose', () => {
-          this._buildGeojson(geojson);
-        });
-      });
   }
 
   private _buildGeojson(geojson: WmFeatureCollection): void {
