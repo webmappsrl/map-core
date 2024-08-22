@@ -134,6 +134,10 @@ export class WmMapTrackRelatedPoisDirective
    * The input property for the radius of the alert POI in the track.
    */
   @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
+
+  @Input() set wmMapReletedPoisDisableClusterLayer(disabled: boolean) {
+    this._poisLayer?.setVisible(!disabled);
+  }
   /**
    * @description
    * The output event for POI click.
