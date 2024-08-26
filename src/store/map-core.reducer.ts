@@ -1,5 +1,5 @@
 import {createReducer, on} from '@ngrx/store';
-import {setHitMapFeatureCollections, setTogglePartition} from './map-core.actions';
+import {resetTogglePartition, setHitMapFeatureCollections, setTogglePartition} from './map-core.actions';
 
 export const featureKey = 'map-core';
 export interface IUIRootState {
@@ -25,6 +25,10 @@ export const MapCoreReducer = createReducer(
       ...{partitionToggleState},
     };
   }),
+  on(resetTogglePartition, state => ({
+    ...state,
+    partitionToggleState: {}
+  })),
   on(setHitMapFeatureCollections, (state, {hitMapfeatureCollections}) => {
     return {
       ...state,
