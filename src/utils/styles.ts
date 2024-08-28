@@ -27,7 +27,7 @@ export function animateFeatureFn(mythis: any, feature: Feature, color, next = tr
   function getAnimationStrokeStyle() {
     return new Style({
       stroke: new Stroke({
-        color: hexToRgba(color),
+        color: hexToRgba(color ?? 'rgba(255, 255, 255, 0.9)'),
         width: 2,
         lineDash: [10, 20],
         lineDashOffset: feature.get('dashOffset'),
@@ -740,8 +740,9 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
         const nextIndex = edgesOfCurrentTrack.next.indexOf(currentTrackOfLayer);
         minStrokeWidth += 2;
         if (nextIndex > -1) {
-          strokeStyle.setColor(nextColors[nextIndex]);
-          animateFeatureFn(this, toFeature(feature), nextColors[nextIndex]);
+          const nextColor = nextColors[nextColors.length % nextIndex];
+          strokeStyle.setColor(nextColor);
+          animateFeatureFn(this, toFeature(feature), nextColor);
         }
         const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
         if (prevIndex > -1) {
@@ -1226,8 +1227,26 @@ export const fromNameToHEX = {
   'yellow': '#ffff00',
   'yellowgreen': '#9acd32',
 };
-export const nextColors = ['#FFF500', '#FFA13D', '#2DFE54', '#3F8DFF'];
-export const prevColors = ['#B0B0B0', '#8DAFD3', '#88C5A7', '#E9B1C2'];
+export const nextColors = [
+  '#FFF500',
+  '#FFA13D',
+  '#2DFE54',
+  '#3F8DFF',
+  '#FFD700',
+  '#FF8A00',
+  '#1DE43F',
+  '#0066FF',
+];
+export const prevColors = [
+  '#B0B0B0',
+  '#8DAFD3',
+  '#88C5A7',
+  '#E9B1C2',
+  '#A0A0A0',
+  '#7D9DC3',
+  '#78B597',
+  '#D9A1B2',
+];
 export const fromHEXToColor = {
   '#f0f8ff': 'aliceblue',
   '#faebd7': 'antiquewhite',
