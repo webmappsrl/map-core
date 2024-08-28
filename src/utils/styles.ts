@@ -697,7 +697,8 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
       strokeStyle = cacheStyle[featureStrokeColor];
     }
-  } else if (this.currentLayer != null) {
+  }
+  if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
