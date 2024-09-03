@@ -701,10 +701,12 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
-      const color = this.currentLayer?.style?.color ?? DEF_LINE_COLOR;
-      cacheStyle[currentIDLayer] = new StrokeStyle();
-      cacheStyle[currentIDLayer].setColor(color);
-      strokeStyle = cacheStyle[currentIDLayer];
+      const color = this.currentLayer?.style?.color;
+      if (color != null) {
+        cacheStyle[currentIDLayer] = new StrokeStyle();
+        cacheStyle[currentIDLayer].setColor(color);
+        strokeStyle = cacheStyle[featureStrokeColor] ?? cacheStyle[currentIDLayer];
+      }
     } else {
       strokeStyle = cacheStyle['noColor'];
     }
