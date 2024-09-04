@@ -33,7 +33,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   @Input() set wmMapHitMapUrl(url: undefined | string) {
     this.mapCmp.isInit$
       .pipe(
-        filter(e => e === true),
+        filter(e => e === true && url != null),
         switchMap(_ => {
           return this._http.get(url);
         }),
