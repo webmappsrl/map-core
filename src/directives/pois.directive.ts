@@ -26,7 +26,7 @@ import {WmMapBaseDirective} from '.';
 import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from '../../src/utils';
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
-import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
+import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {ILAYER} from '../types/layer';
 
@@ -100,32 +100,35 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.wmMapPoisPoi) {
-      if (this.mapCmp.map != null) {
-        this.setPoi(this.wmMapPoisPoi);
-      } else {
-        setTimeout(() => {
-          this.setPoi(this.wmMapPoisPoi);
-        }, 500);
-      }
-    }
-    if (
-      (changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.firstChange === false) ||
-      changes.WmMapPoisUnselectPoi != null
-    ) {
-      clearLayer(this._selectedPoiLayer);
-    }
-    const filtersCondition =
-      changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
-    if (
-      this.mapCmp.map != null &&
-      (filtersCondition || changes.wmMapPoisPois != null || changes.wmMapInputTyped != null)
-    ) {
-      this._updatePois();
-    }
-    if (changes.wmMapLayerLayer && changes.wmMapLayerLayer.currentValue == undefined) {
-      this._popupOverlay && this._popupOverlay.hide();
-    }
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        if (changes.wmMapPoisPoi) {
+          this.mapCmp.map.once('rendercomplete', () => {
+            this.setPoi(this.wmMapPoisPoi);
+          });
+        }
+        if (
+          (changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.firstChange === false) ||
+          changes.WmMapPoisUnselectPoi != null
+        ) {
+          clearLayer(this._selectedPoiLayer);
+        }
+        const filtersCondition =
+          changes.wmMapPoisFilters != null && changes.wmMapPoisFilters.currentValue != null;
+        if (
+          this.mapCmp.map != null &&
+          (filtersCondition || changes.wmMapPoisPois != null || changes.wmMapInputTyped != null)
+        ) {
+          this._updatePois();
+        }
+        if (changes.wmMapLayerLayer && changes.wmMapLayerLayer.currentValue == undefined) {
+          this._popupOverlay && this._popupOverlay.hide();
+        }
+      });
   }
 
   /**
@@ -138,14 +141,16 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @memberof WmMapPoisDirective
    */
   setPoi(id: number | 'reset'): void {
-    if(id != 'reset' && id > -1){
-      this._wmMapPoisPois.pipe(
-        filter(p => !!p),
-        take(1),
-      ).subscribe(pois => {
-        const currentPoi = pois.features.find(p => +p.properties.id === +id);
-        this._selectIcon(currentPoi);
-      })
+    if (id != 'reset' && id > -1) {
+      this._wmMapPoisPois
+        .pipe(
+          filter(p => !!p),
+          take(1),
+        )
+        .subscribe(pois => {
+          const currentPoi = pois.features.find(p => +p.properties.id === +id);
+          this._selectIcon(currentPoi);
+        });
     }
   }
 
@@ -303,20 +308,31 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (optOptions == null) {
       const maxZoom = this.wmMapConf.maxZoom;
       const currentZoom = this.mapCmp.map.getView().getZoom();
+      let usedZoom = this.mapCmp.map.getView().getMaxZoom() - TRESHOLD_ENABLE_FIT;
+
+      if (maxZoom - currentZoom < TRESHOLD_ENABLE_FIT) {
+        usedZoom = currentZoom;
+      }
+
       optOptions = {
-        maxZoom: this.mapCmp.map.getView().getMaxZoom() - TRESHOLD_ENABLE_FIT,
+        maxZoom: usedZoom,
         duration: 500,
         padding: PADDING,
       };
-      if (maxZoom - currentZoom < TRESHOLD_ENABLE_FIT) {
-        optOptions = {
-          maxZoom: currentZoom,
-          duration: 500,
+      if (usedZoom >= DEF_MAP_MAX_PBF_ZOOM - 1) {
+        let firstOptOptions = {
+          maxZoom: DEF_MAP_MAX_PBF_ZOOM,
+          duration: 0,
           padding: PADDING,
         };
+        this.mapCmp.fitView(geometryOrExtent, firstOptOptions);
+        setTimeout(() => {
+          this.mapCmp.fitView(geometryOrExtent, optOptions);
+        }, 500);
+      } else {
+        this.mapCmp.fitView(geometryOrExtent, optOptions);
       }
     }
-    this.mapCmp.map.getView().fit(geometryOrExtent, optOptions);
   }
 
   /**
