@@ -325,7 +325,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     if (feature != null) {
       const featureStyle: Style = feature.getStyle() as Style;
       const featureStroke = featureStyle.getStroke();
-      featureStroke.setWidth(width);
+      featureStroke?.setWidth(width);
     }
   }
 

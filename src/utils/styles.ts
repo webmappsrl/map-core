@@ -534,7 +534,7 @@ export function handlingStrokeStyleWidth(options: handlingStrokeStyleWidthOption
   const newWidth =
     options.minStrokeWidth + (options.maxStrokeWidth - options.minStrokeWidth) * delta;
 
-  options.strokeStyle.setWidth(newWidth);
+  options.strokeStyle?.setWidth(newWidth);
 }
 
 export function hexToRgba(hex: string): [number, number, number, number] {
@@ -682,7 +682,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   let enableRouting = false;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
-  let strokeStyle = null;
+  let strokeStyle = cacheStyle['noColor'];
   let featureStrokeColor =
     properties.stroke_color && properties.stroke_color != '' ? properties.stroke_color : null;
   // TODO: da eliminare quando tutte le app sono rigenerate
@@ -824,7 +824,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
       zIndex: TRACK_ZINDEX + 1,
     }),
   ];
-  if (strokeStyle.getColor() != 'rgba(0,0,0,0)') {
+  if (strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
     if (
       this.conf.start_end_icons_show &&
       this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
