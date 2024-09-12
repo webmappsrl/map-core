@@ -682,6 +682,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   let enableRouting = false;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
+  const currentZoom = this.map.getView().getZoom();
   let strokeStyle = cacheStyle['noColor'];
   let featureStrokeColor =
     properties.stroke_color && properties.stroke_color != '' ? properties.stroke_color : null;
@@ -816,7 +817,7 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
     maxZoom: this.conf.maxZoom,
     minStrokeWidth,
     maxStrokeWidth: this.conf.maxStrokeWidth,
-    currentZoom: this.map.getView().getZoom(),
+    currentZoom,
   };
   handlingStrokeStyleWidth(opt);
 
@@ -827,21 +828,15 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
     }),
   ];
   if (strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
-    if (
-      this.conf.start_end_icons_show &&
-      this.map.getView().getZoom() > this.conf.start_end_icons_min_zoom
-    ) {
+    if (this.conf.start_end_icons_show && currentZoom > this.conf.start_end_icons_min_zoom) {
       styles = [...styles, ...buildStartEndIcons(geometry)];
     }
-    if (
-      this.conf.ref_on_track_show &&
-      this.map.getView().getZoom() > this.conf.ref_on_track_min_zoom
-    ) {
+    if (this.conf.ref_on_track_show && currentZoom > this.conf.ref_on_track_min_zoom) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
       styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
-    if (this.map.getView().getZoom() > 11 && enableRouting === false) {
+    if (currentZoom > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
       styles = [
