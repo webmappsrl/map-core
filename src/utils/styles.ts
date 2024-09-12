@@ -706,6 +706,8 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
         cacheStyle[currentIDLayer] = new StrokeStyle();
         cacheStyle[currentIDLayer].setColor(color);
         strokeStyle = cacheStyle[featureStrokeColor] ?? cacheStyle[currentIDLayer];
+      } else if (strokeStyle == cacheStyle['noColor']) {
+        strokeStyle = cacheStyle['red'];
       }
     } else {
       strokeStyle = cacheStyle['noColor'];
