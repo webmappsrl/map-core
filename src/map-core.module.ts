@@ -24,6 +24,7 @@ import {WmMapControlsModule} from './components/controls/controls.module';
 import {WmMapGeojsonDirective} from './directives/geojson.directive';
 import {StoreModule} from '@ngrx/store';
 import {featureKey, MapCoreReducer} from './store/map-core.reducer';
+import { WmMapUcgTracksDirective } from './directives/ugc-tracks.directive';
 
 const directives = [
   WmMapTrackDirective,
@@ -32,6 +33,7 @@ const directives = [
   WmMapPoisDirective,
   wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
+  WmMapUcgTracksDirective,
   WmMapTrackHighLightDirective,
   WmMapLayerProgressBarDirective,
   WmMapOverlayDirective,
