@@ -82,20 +82,15 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             filter(f => f != null),
             take(1),
           )
-          .subscribe(_ => {
-            this.wmMapStateEvt.emit('rendering:pois_start');
+          .subscribe(conf => {
+            if (conf != null && conf.features != null && conf.features.length > 0) {
+              this.wmMapStateEvt.emit('rendering:pois_start');
+              this.mapCmp.map.once('rendercomplete', () => {
+                this._renderPois(conf);
+                this._updatePois();
+              });
+            }
           });
-        this.mapCmp.map.once('rendercomplete', () => {
-          this._wmMapPoisPois
-            .pipe(
-              filter(f => f != null),
-              take(1),
-            )
-            .subscribe(conf => {
-              this._renderPois(conf);
-              this._updatePois();
-            });
-        });
       });
   }
 

@@ -191,13 +191,15 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initLayer(map: IMAP) {
-    this.wmMapStateEvt.emit('rendering:layer_start');
-    this._initializeDataLayers(map);
-    initInteractions().forEach(interaction => {
-      this.mapCmp.map.addInteraction(interaction);
-    });
-    this.mapCmp.map.updateSize();
-    this.wmMapStateEvt.emit('rendering:layer_done');
+    if(this._dataLayerUrls != null) {
+      this.wmMapStateEvt.emit('rendering:layer_start');
+      this._initializeDataLayers(map);
+      initInteractions().forEach(interaction => {
+        this.mapCmp.map.addInteraction(interaction);
+      });
+      this.mapCmp.map.updateSize();
+      this.wmMapStateEvt.emit('rendering:layer_done');
+    }
   }
 
   /**
@@ -211,24 +213,26 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initializeDataLayers(map: IMAP): void {
-    this._vectorTileLayer = initVectorTileLayer(
-      this._dataLayerUrls.low,
-      f =>
-        styleHighFn.bind({
-          currentLayer: this._currentLayer,
-          conf: this.wmMapConf,
-          map: this.mapCmp.map,
-          opacity: this.wmMapLayerOpacity,
-          filters: this.mapCmp.filters,
-          tileLayer: this._vectorTileLayer,
-          inputTyped: this.wmMapInputTyped,
-          currentTrack: this.track,
-        })(f),
-      lowTileLoadFn,
-    );
+    if (this._dataLayerUrls != null) {
+      this._vectorTileLayer = initVectorTileLayer(
+        this._dataLayerUrls.low,
+        f =>
+          styleHighFn.bind({
+            currentLayer: this._currentLayer,
+            conf: this.wmMapConf,
+            map: this.mapCmp.map,
+            opacity: this.wmMapLayerOpacity,
+            filters: this.mapCmp.filters,
+            tileLayer: this._vectorTileLayer,
+            inputTyped: this.wmMapInputTyped,
+            currentTrack: this.track,
+          })(f),
+        lowTileLoadFn,
+      );
 
-    this.mapCmp.map.addLayer(this._vectorTileLayer);
-    this.mapCmp.map.addLayer(this._animatedVectorLayer);
+      this.mapCmp.map.addLayer(this._vectorTileLayer);
+      this.mapCmp.map.addLayer(this._animatedVectorLayer);
+    }
   }
 
   /**
