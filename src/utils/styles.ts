@@ -746,14 +746,15 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
         const nextIndex = edgesOfCurrentTrack.next.indexOf(currentTrackOfLayer);
         minStrokeWidth += 2;
         if (nextIndex > -1) {
-          const nextColor = nextColors[nextColors.length % nextIndex];
+          const nextColor = nextColors[nextIndex % nextColors.length];
           strokeStyle.setColor(nextColor);
           animateFeatureFn(this, toFeature(feature), nextColor);
         }
         const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
         if (prevIndex > -1) {
-          strokeStyle.setColor(prevColors[prevIndex]);
-          animateFeatureFn(this, toFeature(feature), prevColors[prevIndex], false);
+          const prevColor = prevColors[prevIndex % prevColors.length];
+          strokeStyle.setColor(prevColor);
+          animateFeatureFn(this, toFeature(feature), prevColor, false);
         }
         if (currentTrackOfLayer === currentTrackID) {
           strokeStyle = cacheStyle['red'];
