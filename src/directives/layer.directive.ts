@@ -142,8 +142,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
         this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
           const zoom = this.mapCmp.map.getView().getZoom();
-          console.log(zoom);
-
           if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
             this._zoomOnClick(evt);
           } else {
@@ -158,7 +156,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
                   const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
                   const clickedLayerId =
                     JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-                  console.log(clickedFeatureId, clickedLayerId, isPbfLayer);
                   if (clickedFeatureId > -1 && clickedFeature.getType() != null && !isPbfLayer) {
                     this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
                     const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
