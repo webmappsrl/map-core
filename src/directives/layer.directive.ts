@@ -26,6 +26,7 @@ import {IMAP} from '../types/model';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import {DEF_ZOOM_ON_CLICK, MAP_ZOOM_ON_CLICK_TRESHOLD} from '../readonly/constants';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -140,26 +141,40 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         });
 
         this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          try {
-            this.mapCmp.map.forEachFeatureAtPixel(
-              evt.pixel,
-              function (clickedFeature) {
-                const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-                const clickedLayerId =
-                  JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-                if (clickedFeatureId > -1 && clickedFeature.getType() != null) {
-                  this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                  const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+          const zoom = this.mapCmp.map.getView().getZoom();
+          console.log(zoom);
 
-                  this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-                }
-                return true;
-              }.bind(this),
-              {
-                hitTolerance: 100,
-              },
-            );
-          } catch (_) {}
+          if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
+            this._zoomOnClick(evt);
+          } else {
+            try {
+              this.mapCmp.map.forEachFeatureAtPixel(
+                evt.pixel,
+                function (clickedFeature) {
+                  const isPbfLayer = clickedFeature?.getProperties()?.name == null;
+                  if (isPbfLayer) {
+                    this._zoomOnClick(evt);
+                  }
+                  const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+                  const clickedLayerId =
+                    JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+                  console.log(clickedFeatureId, clickedLayerId, isPbfLayer);
+                  if (clickedFeatureId > -1 && clickedFeature.getType() != null && !isPbfLayer) {
+                    this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                    const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+
+                    this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+                  }
+
+                  return true;
+                }.bind(this),
+                {
+                  hitTolerance: 100,
+                },
+              );
+            } catch (_) {}
+          }
+          this._updateMap();
         });
       });
   }
@@ -191,7 +206,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initLayer(map: IMAP) {
-    if(this._dataLayerUrls != null) {
+    if (this._dataLayerUrls != null) {
       this.wmMapStateEvt.emit('rendering:layer_start');
       this._initializeDataLayers(map);
       initInteractions().forEach(interaction => {
@@ -247,5 +262,16 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     if (this._vectorTileLayer != null) {
       this._vectorTileLayer.changed();
     }
+  }
+
+  private _zoomOnClick(evt): void {
+    const view = this.mapCmp.map.getView();
+    const clickedCoordinate = evt.coordinate;
+    view.animate({
+      center: clickedCoordinate,
+      zoom: DEF_ZOOM_ON_CLICK,
+      duration: 500,
+    });
+    this._vectorTileLayer.getSource().refresh();
   }
 }
