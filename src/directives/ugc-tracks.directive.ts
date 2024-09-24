@@ -22,6 +22,10 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
     this._wmMapUgcTracks.next(tracks);
   }
 
+  @Input() set wmMapUgcTrackDisableClusterLayer(disabled: boolean) {
+    this._ugcTrackLayer?.setVisible(!disabled);
+  }
+
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
     this.mapCmp.isInit$
