@@ -139,9 +139,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
         });
-        this.mapCmp.map.on('moveend', e => {
-          this._updateMap();
-        });
+
         this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
           const zoom = this.mapCmp.map.getView().getZoom();
           if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
@@ -270,6 +268,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       center: clickedCoordinate,
       zoom: DEF_ZOOM_ON_CLICK,
       duration: 500,
+    });
+    this.mapCmp.map.once('moveend', e => {
+      this._updateMap();
     });
   }
 }
