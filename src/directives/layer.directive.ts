@@ -252,8 +252,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _updateMap(): void {
-    alert('Zoom in to see more details');
-
     if (this._vectorTileLayer != null) {
       this._vectorTileLayer.getSource().refresh();
       this._vectorTileLayer.changed();
