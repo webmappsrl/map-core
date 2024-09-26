@@ -95,6 +95,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     ) {
       this.fitViewFromLonLat(l.bbox);
     }
+    this._updateMap();
   }
 
   /**
