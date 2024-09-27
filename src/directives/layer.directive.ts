@@ -36,7 +36,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     source: new VectorSource({
       format: new GeoJSON(),
     }),
-    zIndex: 500,
+    zIndex: 410,
     updateWhileAnimating: true,
     updateWhileInteracting: true,
   });
@@ -147,29 +147,30 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
             this._zoomOnClick(evt);
           } else {
             try {
-              this.mapCmp.map.forEachFeatureAtPixel(
-                evt.pixel,
-                function (clickedFeature) {
-                  const isPbfLayer = clickedFeature?.getProperties()?.name == null;
-                  if (isPbfLayer) {
-                    this._zoomOnClick(evt);
-                  }
-                  const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-                  const clickedLayerId =
-                    JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-                  if (clickedFeatureId > -1 && clickedFeature.getType() != null && !isPbfLayer) {
-                    this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                    const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+              const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
+              const clickedFeature = features[0];
+              const properties = clickedFeature?.getProperties();
+              const geometryType = clickedFeature.getGeometry()?.getType();
+              // Controlla se la geometria è un Point e, in tal caso, non prosegue
+              if (geometryType === 'Point') {
+                return;
+              }
 
-                    this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-                  }
+              const isPbfLayer = properties?.name == null;
+              if (isPbfLayer) {
+                this._zoomOnClick(evt);
+              }
+              const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+              const clickedLayerId =
+                JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+              if (clickedFeatureId > -1 && !isPbfLayer) {
+                this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+                const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
 
-                  return true;
-                }.bind(this),
-                {
-                  hitTolerance: 100,
-                },
-              );
+                this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+              }
+
+              return true;
             } catch (_) {}
           }
         });

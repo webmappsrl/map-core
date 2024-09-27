@@ -1,5 +1,5 @@
 export const POSITION_ZINDEX = 510;
-export const CLUSTER_ZINDEX = 500;
+export const CLUSTER_ZINDEX = 505;
 export const SELECTED_TRACK_ZINDEX = 495;
 export const FEATURE_COLLECTION_ZINDEX = 480;
 export const TRACK_ZINDEX = 490;

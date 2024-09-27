@@ -289,49 +289,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   /**
    * @description
-   * This function is used to fit the view of a map to a given geometry or extent.
-   * It takes in two parameters, the first being a geometry or extent,
-   * and the second being an optional FitOptions object.
-   * If no FitOptions object is provided, it will default to setting the maximum zoom level 4 lower than the current view's max zoom level,
-   * setting the duration to 500 milliseconds, and using a padding of PADDING. Finally, it calls the map's getView() method with the given geometry or extent and FitOptions object.
-   * @private
-   * @param {*} geometryOrExtent
-   * @param {FitOptions} [optOptions]
-   * @memberof WmMapPoisDirective
-   */
-  private _fitView(geometryOrExtent: any, optOptions?: FitOptions): void {
-    if (optOptions == null) {
-      const maxZoom = this.wmMapConf.maxZoom;
-      const currentZoom = this.mapCmp.map.getView().getZoom();
-      let usedZoom = this.mapCmp.map.getView().getMaxZoom() - TRESHOLD_ENABLE_FIT;
-
-      if (maxZoom - currentZoom < TRESHOLD_ENABLE_FIT) {
-        usedZoom = currentZoom;
-      }
-
-      optOptions = {
-        maxZoom: usedZoom,
-        duration: 500,
-        padding: PADDING,
-      };
-      if (usedZoom >= DEF_MAP_MAX_PBF_ZOOM - 1) {
-        let firstOptOptions = {
-          maxZoom: DEF_MAP_MAX_PBF_ZOOM,
-          duration: 0,
-          padding: PADDING,
-        };
-        this.mapCmp.fitView(geometryOrExtent, firstOptOptions);
-        setTimeout(() => {
-          this.mapCmp.fitView(geometryOrExtent, optOptions);
-        }, 500);
-      } else {
-        this.mapCmp.fitView(geometryOrExtent, optOptions);
-      }
-    }
-  }
-
-  /**
-   * @description
    * This function takes an array of strings (taxonomyIdentifiers) as a parameter and returns a string.
    * It filters out any strings in the array that are equal to 'theme_ucvs' or contain the substring 'poi_type'.
    * If any of the filtered strings exist, it returns the first one, otherwise it returns the first string from the original array.
@@ -541,7 +498,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           };
           (window as any).details = () => {
             this.currentPoiEvt.emit(currentPoi);
-            this._fitView(geometry as any);
+            this.fitView(geometry);
             this._popupOverlay.hide();
           };
           if (poiInteraction === 'tooltip_popup') {
@@ -564,7 +521,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           break;
       }
       this.mapCmp.map.once('rendercomplete', () => {
-        this._fitView(geometry as any);
+        this.fitView(geometry as any);
         this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
