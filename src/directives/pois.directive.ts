@@ -521,7 +521,23 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           break;
       }
       this.mapCmp.map.once('rendercomplete', () => {
-        this.fitView(geometry as any);
+        const geometryExtent = geometry.getExtent();
+        const view = this.mapCmp.map.getView();
+        const targetZoom = view.getZoomForResolution(view.getResolutionForExtent(geometryExtent));
+        const currentZoom = Math.floor(view.getZoom());
+        if (targetZoom > DEF_MAP_MAX_PBF_ZOOM && currentZoom < DEF_MAP_MAX_PBF_ZOOM) {
+          this.fitView(geometry as any, {
+            maxZoom: DEF_MAP_MAX_PBF_ZOOM,
+            duration: 0,
+          });
+          // Dopo un breve intervallo, zoom fino al livello massimo desiderato
+          setTimeout(() => {
+            this.fitView(geometry as any);
+          }, 600); // Intervallo tra i due zoom (puoi regolarlo)
+        } else {
+          // Se lo zoom target è <= 13, esegui un singolo zoom
+          this.fitView(geometry as any);
+        }
         this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
