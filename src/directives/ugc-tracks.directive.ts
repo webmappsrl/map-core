@@ -1,6 +1,6 @@
 import { Directive, Host, Input } from "@angular/core";
 import { WmMapBaseDirective } from "./base.directive";
-import { filter, take, tap } from "rxjs/operators";
+import { filter, take } from "rxjs/operators";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from 'ol/format/GeoJSON';
@@ -10,10 +10,9 @@ import {WmMapComponent} from '../components';
 import { UGC_TRACK_ZINDEX } from "../readonly";
 
 @Directive({
-  selector: '[wmUgcTracks]',
+  selector: '[wmMapUgcTracks]',
 })
 export class WmMapUcgTracksDirective extends WmMapBaseDirective {
-
 
   private _ugcTrackLayer: VectorLayer<VectorSource>;
   private _wmMapUgcTracks: BehaviorSubject<any> = new BehaviorSubject<any>(null);
@@ -22,7 +21,7 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
     this._wmMapUgcTracks.next(tracks);
   }
 
-  @Input() set wmMapUgcTrackDisableClusterLayer(disabled: boolean) {
+  @Input() set wmMapUgcPoisDisableLayer(disabled: boolean) {
     this._ugcTrackLayer?.setVisible(!disabled);
   }
 
@@ -39,11 +38,9 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
           this._wmMapUgcTracks
           .pipe(
             filter(t => t),
-            tap(t => console.log('Un ugc track! perdincibacco!!!!', t)),
             take(1),
           )
           .subscribe(t => {
-            console.log("Proviamo ad aggiungere la tracklist! Porcoddue");
             this._addTracksLayer(t);
           });
         });
