@@ -1,4 +1,4 @@
-import { Directive, Host, Input } from "@angular/core";
+import { Directive, EventEmitter, Host, Input, Output } from "@angular/core";
 import { WmMapBaseDirective } from "./base.directive";
 import { filter, take } from "rxjs/operators";
 import VectorLayer from "ol/layer/Vector";
@@ -8,6 +8,7 @@ import { getLineStyle } from "../../src/utils";
 import { BehaviorSubject } from "rxjs";
 import {WmMapComponent} from '../components';
 import { UGC_TRACK_ZINDEX } from "../readonly";
+import { MapBrowserEvent } from "ol";
 
 @Directive({
   selector: '[wmMapUgcTracks]',
@@ -24,6 +25,9 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
   @Input() set wmMapUgcPoisDisableLayer(disabled: boolean) {
     this._ugcTrackLayer?.setVisible(!disabled);
   }
+
+  @Output()
+  ugcTrackSelectedFromMapEVT: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -44,6 +48,22 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
             this._addTracksLayer(t);
           });
         });
+        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+          try {
+            this.mapCmp.map.forEachFeatureAtPixel(
+              evt.pixel,
+              function (clickedFeature) {
+                const clickedUgcTrackKey: string = clickedFeature?.getProperties()?.key ?? undefined;
+                if(clickedUgcTrackKey){
+                  this.ugcTrackSelectedFromMapEVT.emit(clickedUgcTrackKey);
+                }
+              }.bind(this),
+              {
+                hitTolerance: 50,
+              },
+            );
+          } catch (_) {}
+        })
       });
   }
 
@@ -64,8 +84,14 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
   private _addTracksLayer(tracks: any): void{
     const collection = {
       type: 'FeatureCollection',
-      features: tracks.map( t => t.geojson)
-    }
+      features: tracks.map(t => ({
+        type: 'Feature',
+        geometry: t.geojson,
+        properties: {
+          key: t.key
+        }
+      }))
+    };
     const features = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(collection);
