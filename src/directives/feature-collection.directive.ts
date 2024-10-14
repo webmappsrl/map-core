@@ -172,6 +172,11 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
               this._resetStyle(this._selectedFeature);
               this._selectedFeature = selectedFeature;
               const geometryType = this._selectedFeature.getGeometry().getType();
+              const extent = this._selectedFeature.getGeometry().getExtent();
+              this.mapCmp.map.getView().fit(extent, {
+                duration: 300, // Durata dell'animazione in millisecondi
+                padding: [50, 50, 50, 50], // Margine intorno alla feature
+              });
               if (geometryType === 'MultiLineString' || geometryType === 'LineString') {
                 this._setStrokeColor(this._selectedFeature, this._overlay$.value.fillColor);
                 this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
@@ -180,12 +185,10 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
                 this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
               } else if (geometryType === 'MultiPolygon' || geometryType === 'Polygon') {
                 this._setFeatureAphaFillColor(this._selectedFeature, 0.8);
+                // Reimposta lo zoom corrente solo per MultiPolygon o Polygon
+                const currentZoom = this.mapCmp.map.getView().getZoom();
+                this.mapCmp.map.getView().setZoom(currentZoom);
               }
-              const extent = this._selectedFeature.getGeometry().getExtent();
-              this.mapCmp.map.getView().fit(extent, {
-                duration: 300, // Durata dell'animazione in millisecondi
-                padding: [50, 50, 50, 50], // Margine intorno alla feature
-              });
               this.wmMapFeatureCollectionPopup.emit(prop['popup']);
             }
             if (prop['layer_id'] != null) {
