@@ -2,7 +2,7 @@ wm-map-popover {
   ion-card {
     position: absolute;
     top: 0;
-    right: 0;
+    left: 0;
     min-width: 400px;
     z-index: 1;
   }
@@ -16,7 +16,8 @@ wm-map-popover {
     color: green;
   }
   .draw-path-alert {
-    right: 250px;
+    left: calc(50% + 200px);
+    transform: translateX(-50%);
     height: 40px;
     min-width: unset;
     --background: antiquewhite;
