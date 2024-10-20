@@ -32,10 +32,6 @@ export class WmMapOverlayDirective extends WmMapBaseDirective {
     this._enabled$.next(val);
   }
 
-  @Input('wmMapOverlayUrl') set url(url: string) {
-    this._url$.next(url);
-  }
-
   /**
    * @description
    * This class extends the WmLayerComponent to provide a vector layer with a base geojson. It initializes
