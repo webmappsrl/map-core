@@ -1,8 +1,7 @@
-import {GeoJsonProperties} from 'geojson';
+import {Feature, GeoJsonProperties, LineString} from 'geojson';
 import * as localforage from 'localforage';
 import {downloadFile, isValidUrl} from './httpRequest';
 import {getTilesByGeometry} from '.';
-import {GeoJSONFeature} from 'ol/format/GeoJSON';
 
 /**
  * Clears the storage by removing all items with a key containing 'geohub'
@@ -75,7 +74,7 @@ export async function downloadTiles(
 
 export async function downloadTrack(
   trackid: string,
-  track: GeoJSONFeature,
+  track: Feature<LineString>,
   callBackStatusFn = updateStatus,
 ): Promise<number> {
   let totalSize = 0;
@@ -154,16 +153,16 @@ export async function getTile(tileId: string): Promise<ArrayBuffer | null> {
   }
 }
 
-export async function getTrack(trackId: string): Promise<GeoJSONFeature> {
+export async function getTrack(trackId: string): Promise<Feature<LineString>> {
   try {
-    return await trackLocalForage.getItem<GeoJSONFeature>(trackId);
+    return await trackLocalForage.getItem<Feature<LineString>>(trackId);
   } catch (error) {
     console.error('Failed to get track:', error);
     return null;
   }
 }
 
-export async function getTracks(): Promise<GeoJSONFeature[]> {
+export async function getTracks(): Promise<Feature<LineString>[]> {
   try {
     const keys = await trackLocalForage.keys();
     return Promise.all(keys.map(key => getTrack(key)));
@@ -173,7 +172,7 @@ export async function getTracks(): Promise<GeoJSONFeature[]> {
   }
 }
 
-export async function removeImgInsideTrack(track: GeoJSONFeature): Promise<void> {
+export async function removeImgInsideTrack(track: Feature<LineString>): Promise<void> {
   const properties = track.properties;
   if (properties == null) return;
   const urls = findImgInsideProperties(properties) || [];
@@ -243,7 +242,7 @@ export async function removeTrack(trackId: string): Promise<void> {
 }
 
 export async function saveImgInsideTrack(
-  track: GeoJSONFeature,
+  track: Feature<LineString>,
   callBackStatusFn = updateStatus,
 ): Promise<number> {
   const properties = track.properties;
@@ -313,7 +312,7 @@ export async function saveTile(
 
 export async function saveTrack(
   trackId: string,
-  track: GeoJSONFeature,
+  track: Feature<LineString>,
   callBackStatusFn = updateStatus,
 ): Promise<number> {
   let totalSize = 0;
