@@ -18,7 +18,6 @@ export class LeftBarComponent {
     {route: 'custom-tracks', label: 'Custom tracks'},
     {route: 'pois', label: 'Pois'},
     {route: 'track-related-pois', label: 'Track related pois'},
-    {route: 'overlay', label: 'Overlay'},
     {route: 'layer', label: 'Layer'},
     {route: 'position', label: 'Position'},
   ];
