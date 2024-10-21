@@ -1,4 +1,3 @@
-import {extend} from 'ol/extent';
 import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
@@ -20,7 +19,7 @@ import {
 import CircleStyle from 'ol/style/Circle';
 import {Type} from 'ol/geom/Geometry';
 import {FeatureCollection, GeoJsonProperties} from 'geojson';
-import {Store, createAction} from '@ngrx/store';
+import {Store} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
 
 export interface WmFeatureCollection extends FeatureCollection {
