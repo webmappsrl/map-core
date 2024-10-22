@@ -32,11 +32,6 @@ const routes: Routes = [
       ),
   },
   {
-    path: 'overlay',
-    loadChildren: () =>
-      import('./pages/demo-overlay-page/demo-overlay-page.module').then(m => m.OverlayPageModule),
-  },
-  {
     path: 'layer',
     loadChildren: () =>
       import('./pages/demo-layer-page/demo-layer-page.module').then(m => m.LayerPageModule),
