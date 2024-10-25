@@ -90,8 +90,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     const hostname: string = window.location.href;
     if (
       l != null &&
-      l.bbox != null &&
-      (hostname.indexOf('track=-1') >= 0 || hostname.indexOf('track=') >= 0)
+      l.bbox != null
     ) {
       this.fitViewFromLonLat(l.bbox);
     }
