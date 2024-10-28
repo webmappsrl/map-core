@@ -1,3 +1,4 @@
+import {WmFeatureCollection, WmFeature} from '@wm-types/feature';
 import {Directive, Host, Input} from '@angular/core';
 import {filter, take} from 'rxjs/operators';
 import {WmMapComponent} from '../components';
@@ -6,7 +7,6 @@ import GeoJSON from 'ol/format/GeoJSON';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
-import View from 'ol/View';
 import {getLineStyle} from '../utils';
 import {Icon, Style} from 'ol/style';
 @Directive({
@@ -16,14 +16,14 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _init = false;
 
-  @Input('wmMapGeojson') set geojson(geojson: any) {
+  @Input('wmMapGeojson') set geojson(feature: WmFeatureCollection | WmFeature<any>) {
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
         take(1),
       )
       .subscribe(() => {
-        this._buildGeojson(this._getFeatureCollection(geojson));
+        this._buildGeojson(this._getFeatureCollection(feature));
       });
   }
 
@@ -33,11 +33,11 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
     super(mapCmp);
   }
 
-  private _buildGeojson(geojson: any): void {
-    if (geojson != null) {
+  private _buildGeojson(featureCollection: WmFeatureCollection): void {
+    if (featureCollection != null) {
       const features = new GeoJSON({
         featureProjection: 'EPSG:3857',
-      }).readFeatures(geojson);
+      }).readFeatures(featureCollection);
 
       if (this._featureCollectionLayer == null) {
         this._featureCollectionLayer = new VectorLayer({

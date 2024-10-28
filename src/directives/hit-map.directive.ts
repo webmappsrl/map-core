@@ -1,6 +1,6 @@
+import {WmFeatureCollection} from '@wm-types/feature';
 import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
-import {BehaviorSubject} from 'rxjs';
 import {filter, switchMap, take} from 'rxjs/operators';
 import {Feature} from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -10,19 +10,9 @@ import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style} from 'ol/style';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
-import {
-  FEATURE_COLLECTION_STROKE_COLOR,
-  FEATURE_COLLECTION_FILL_COLOR,
-  FEATURE_COLLECTION_STROKE_WIDTH,
-  FEATURE_COLLECTION_ZINDEX,
-} from '../readonly';
-import CircleStyle from 'ol/style/Circle';
-import {Type} from 'ol/geom/Geometry';
+import {FEATURE_COLLECTION_ZINDEX} from '../readonly';
 import {Store} from '@ngrx/store';
-import {partitionToggleState} from '../store/map-core.selector';
-import {WmFeatureCollection} from './feature-collection.directive';
 import {setHitMapFeatureCollections} from '../store/map-core.actions';
-
 @Directive({
   selector: '[wmMapHitMapCollection]',
 })
