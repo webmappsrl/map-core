@@ -11,6 +11,7 @@ import VectorLayer from 'ol/layer/Vector';
 import {getLineStyle} from '../utils';
 import {Icon, Style} from 'ol/style';
 import {Feature} from 'ol';
+import {Extent} from 'ol/extent';
 @Directive({
   selector: '[wmMapGeojson]',
 })
@@ -74,10 +75,12 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
       }
       if (this._init === false) {
         const extent = this._featureCollectionLayer.getSource().getExtent();
+        const size = this.mapCmp.map.getSize();
+        const sizeFitted = [50, 50];
         this.mapCmp.map.getView().fit(extent, {
           duration: 0,
           maxZoom: 17,
-          size: this.fit ? [100, 100] : this.mapCmp.map.getSize(),
+          size: this.fit ? sizeFitted : size,
         });
         this._featureCollectionLayer.changed();
         this._init = true;
@@ -85,7 +88,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
     }
   }
 
-  private _getFeatureCollection(trackgeojson: any): any {
+  private _getFeatureCollection(trackgeojson: any): WmFeatureCollection {
     if (trackgeojson == null) {
       return null;
     }
