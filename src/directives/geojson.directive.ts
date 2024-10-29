@@ -6,9 +6,11 @@ import {WmMapBaseDirective} from './base.directive';
 import GeoJSON from 'ol/format/GeoJSON';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Geometry} from 'ol/geom';
+import {Geometry as geojsonGeometry} from 'geojson';
 import VectorLayer from 'ol/layer/Vector';
 import {getLineStyle} from '../utils';
 import {Icon, Style} from 'ol/style';
+import {Feature} from 'ol';
 @Directive({
   selector: '[wmMapGeojson]',
 })
@@ -16,7 +18,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _init = false;
 
-  @Input('wmMapGeojson') set geojson(feature: WmFeatureCollection | WmFeature<any>) {
+  @Input('wmMapGeojson') set geojson(feature: WmFeatureCollection | WmFeature<geojsonGeometry>) {
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
@@ -35,6 +37,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
 
   private _buildGeojson(featureCollection: WmFeatureCollection): void {
     if (featureCollection != null) {
+      console.log('Building GeoJSON');
       const features = new GeoJSON({
         featureProjection: 'EPSG:3857',
       }).readFeatures(featureCollection);
@@ -45,7 +48,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
             format: new GeoJSON({featureProjection: 'EPSG:3857'}),
             features,
           }),
-          style: feature => {
+          style: (feature: Feature<Geometry>) => {
             const getType = feature.getGeometry().getType();
             if (getType === 'Point') {
               return [

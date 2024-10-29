@@ -108,9 +108,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   }
 
   private _buildGeojson(geojson: WmFeatureCollection): void {
-    geojson.features.map(f => {
-      f.properties;
-    });
     this._resetSelectedFeature();
     let count = 0;
     const features = new GeoJSON({
