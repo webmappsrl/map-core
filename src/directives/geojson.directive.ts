@@ -38,7 +38,6 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
 
   private _buildGeojson(featureCollection: WmFeatureCollection): void {
     if (featureCollection != null) {
-      console.log('Building GeoJSON');
       const features = new GeoJSON({
         featureProjection: 'EPSG:3857',
       }).readFeatures(featureCollection);
