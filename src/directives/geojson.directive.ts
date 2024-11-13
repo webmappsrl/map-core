@@ -94,6 +94,8 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
     const features = [];
     if (trackgeojson.type === 'FeatureCollection') {
       return trackgeojson;
+    } else if (trackgeojson.type === 'Feature') {
+      features.push(trackgeojson);
     } else if (trackgeojson?.geoJson) {
       features.push(trackgeojson.geoJson);
     } else if (trackgeojson?.geometry) {
