@@ -327,14 +327,14 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * adds the PinchRotate interaction to the map, and centers the map view to the track.
    */
   private _init(): void {
-    const startPosition = this.track.geometry.coordinates[0];
-    const endPosition = this.track.geometry.coordinates[this.track.geometry.coordinates.length - 1];
+    const trackgeojson = this._getGeoJson(this.track);
+    const startPosition = trackgeojson.coordinates[0];
+    const endPosition = trackgeojson.coordinates[trackgeojson.coordinates.length - 1];
     this._startFeature = createIconFeatureFromHtml(startIconHtml, startPosition);
     this._endFeature = createIconFeatureFromHtml(endIconHtml, endPosition);
     let drawTrack = true;
     if (this.wmMapLayerLayer != null && this.wmMapLayerLayer.edges != null) {
       const edges = this.wmMapLayerLayer.edges;
-      console.log(this.track);
       const properties = this.track.properties;
       const trackID = properties.id;
       const zIndex = 500;

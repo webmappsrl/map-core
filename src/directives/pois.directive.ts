@@ -19,8 +19,7 @@ import {Cluster} from 'ol/source';
 import VectorSource from 'ol/source/Vector';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
-import {FitOptions} from 'ol/View';
-import {BehaviorSubject, from} from 'rxjs';
+import {BehaviorSubject} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
 import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from '../../src/utils';
@@ -40,26 +39,23 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _disabled = false;
   private _hullClusterLayer: VectorLayer<Cluster>;
   private _olFeatures = [];
-  private _poisClusterLayer: VectorLayer<Cluster>;
   private _popupOverlay: Popup;
-  private _selectCluster: any;
-  private _selectedPoiLayer: VectorLayer<VectorSource>;
-  private _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+
+  protected _poisClusterLayer: VectorLayer<Cluster>;
+  protected _selectCluster: any;
+  protected _selectedPoiLayer: VectorLayer<VectorSource>;
+  protected _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
   }
 
   @Input() set wmMapPoisDisableClusterLayer(disabled: boolean) {
-    this._disabled = disabled;
-    this._poisClusterLayer?.setVisible(!disabled);
+    this._disableClusterLayer(disabled);
   }
 
   @Input() set wmMapPoisPois(pois: any) {
-    if (this._popupOverlay != null) {
-      this._popupOverlay.hide();
-    }
-    this._wmMapPoisPois.next(pois);
+    this._setPois(pois);
   }
 
   @Input() WmMapPoisUnselectPoi: boolean;
@@ -149,6 +145,50 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
   }
 
+  protected _disableClusterLayer(disabled: boolean): void {
+    this._disabled = disabled;
+    this._poisClusterLayer?.setVisible(!disabled);
+  }
+
+  protected _getIconStyle(properties: any, isSelected: boolean = true): Style {
+    console.log('GET ICON STYLE POIS DIRECTIVE');
+    const taxonomy = properties.taxonomy || null;
+    const poyType = taxonomy?.poi_type || null;
+    const poiColor = poyType?.color
+      ? poyType.color
+      : properties.color
+      ? properties.color
+      : '#ff8c00';
+    const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
+
+    if (properties.svgIcon) {
+      return new Style({
+        zIndex: isSelected ? 200 : undefined,
+        image: new Icon({
+          anchor: [0.5, 0.5],
+          scale: isSelected ? 1 : 1,
+          src: `data:image/svg+xml;utf8,${properties.svgIcon
+            .replaceAll(
+              `<circle fill="darkorange"`,
+              isSelected ? '<circle fill="white" ' : `<circle fill="${namedPoiColor}" `
+            )
+            .replaceAll(
+              `<g fill="white"`,
+              `<g fill="${isSelected ? namedPoiColor : 'white'}" `
+            )}`,
+        }),
+      });
+    }
+
+    return new Style({
+      image: new Icon({
+        anchor: [0.5, 0.5],
+        scale: 0.5,
+        src: `${ICN_PATH}/${this._getIcnFromTaxonomies(properties.taxonomyIdentifiers)}.png`,
+      }),
+    });
+  }
+
   /**
    * @description
    * This code adds a feature to a cluster layer on a map.
@@ -172,50 +212,23 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (poiCollection) {
       for (const poi of poiCollection.filter(poi => poi.geometry != null)) {
         const properties = poi.properties || null;
-        const taxonomy = properties.taxonomy || null;
-        const poyType = taxonomy?.poi_type || null;
-        const icn = this._getIcnFromTaxonomies(properties.taxonomyIdentifiers);
         const coordinates = [
           poi.geometry.coordinates[0] as number,
           poi.geometry.coordinates[1] as number,
         ] || [0, 0];
 
-        const poiColor = poyType?.color
-          ? poyType.color
-          : properties.color
-          ? properties.color
-          : '#ff8c00';
-        const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         const iconFeature = new Feature({
           type: 'icon',
           geometry: new Point([position[0], position[1]]),
           properties: {
             ...properties,
-            ...{color: poiColor},
+            ...{color: properties.taxonomy?.poi_type?.color || properties.color || '#ff8c00'},
             ...{taxonomyIdentifiers: properties.taxonomyIdentifiers},
           },
         });
-        let iconStyle = new Style({
-          image: new Icon({
-            anchor: [0.5, 0.5],
-            scale: 0.5,
-            src: `${ICN_PATH}/${icn}.png`,
-          }),
-        });
-        if (poi != null && poi.properties != null && poi.properties.svgIcon != null) {
-          const src = `data:image/svg+xml;utf8,${poi.properties.svgIcon.replaceAll(
-            'darkorange',
-            namedPoiColor,
-          )}`;
-          iconStyle = new Style({
-            image: new Icon({
-              anchor: [0.5, 0.5],
-              scale: 1,
-              src,
-            }),
-          });
-        }
+
+        const iconStyle = this._getIconStyle(properties, false);
 
         iconFeature.setStyle(iconStyle);
         iconFeature.setId(poi.properties.id);
@@ -435,26 +448,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
 
       if (currentPoi.properties != null && currentPoi.properties.svgIcon != null) {
         const iconFeature = new Feature({type: 'icon', geometry});
-        const properties = currentPoi.properties || null;
-        const taxonomy = properties.taxonomy || null;
-        const poyType = taxonomy?.poi_type || null;
-        const poiColor = poyType?.color
-          ? poyType.color
-          : properties.color
-          ? properties.color
-          : '#ff8c00';
-        const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
-        let iconStyle = new Style({
-          zIndex: 200,
-
-          image: new Icon({
-            anchor: [0.5, 0.5],
-            scale: 1,
-            src: `data:image/svg+xml;utf8,${currentPoi.properties.svgIcon
-              .replaceAll(`<circle fill="darkorange"`, '<circle fill="white" ')
-              .replaceAll(`<g fill="white"`, `<g fill="${namedPoiColor || 'darkorange'}" `)}`,
-          }),
-        });
+        const iconStyle = this._getIconStyle(currentPoi.properties);
         iconFeature.setStyle(iconStyle);
         iconFeature.setId(currentPoi.properties.id);
         selectedPoiLayerSource.addFeature(iconFeature);
@@ -541,6 +535,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
+  }
+
+  private _setPois(pois: IGeojsonGeneric[]): void {
+    if (this._popupOverlay != null) {
+      this._popupOverlay.hide();
+    }
+    this._wmMapPoisPois.next(pois);
   }
 
   /**

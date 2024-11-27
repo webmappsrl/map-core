@@ -12,7 +12,8 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "paths": {
-      "map-core": ["dist/map-core"]
+      "map-core/*": ["src/*"],
+      "@wm-types/*": ["../wm-types/src/*"]
     },
     "declaration": false,
     "downlevelIteration": true,

@@ -1,7 +1,5 @@
-import {Feature, GeoJsonProperties, LineString} from 'geojson';
 import * as localforage from 'localforage';
-import {downloadFile, isValidUrl} from './httpRequest';
-import {getTilesByGeometry} from '.';
+import {downloadFile} from './httpRequest';
 
 /**
  * Clears the storage by removing all items with a key containing 'geohub'
@@ -72,69 +70,6 @@ export async function downloadTiles(
   return totalSize;
 }
 
-export async function downloadTrack(
-  trackid: string,
-  track: Feature<LineString>,
-  callBackStatusFn = updateStatus,
-): Promise<number> {
-  let totalSize = 0;
-  const status = {finish: false, map: 0, media: 0, data: 0};
-  const tiles = getTilesByGeometry(track.geometry);
-  totalSize += await downloadTiles(tiles, trackid, callBackStatusFn);
-  totalSize += await saveTrack(trackid, track, callBackStatusFn);
-  track.properties.size = totalSize;
-  await saveTrack(trackid, track, callBackStatusFn);
-  return Promise.resolve(totalSize);
-}
-
-export function findImgInsideProperties(
-  properties: GeoJsonProperties,
-  excludeFolders = ['Resize'],
-): string[] {
-  let urls: string[] = [];
-
-  function recurse(o: any) {
-    if (typeof o === 'object' && o !== null) {
-      for (const key in o) {
-        if (o.hasOwnProperty(key)) {
-          const value = o[key];
-          if (typeof value === 'string' && isImageUrl(value) && !containsExcludedFolder(value)) {
-            urls.push(value);
-          } else if (typeof value === 'object') {
-            recurse(value);
-          }
-        }
-      }
-    }
-  }
-
-  function isImageUrl(url: string): boolean {
-    const imagePattern = /\.(jpeg|jpg|gif|png|svg|webp)$/i;
-    const urlPattern = /^(https?:\/\/)?([^\s$.?#].[^\s]*)$/i;
-    return imagePattern.test(url.toLowerCase()) && urlPattern.test(url);
-  }
-  function containsExcludedFolder(url: string): boolean {
-    for (const folder of excludeFolders) {
-      if (url.includes(folder)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  recurse(properties);
-  return urls;
-}
-
-export async function getImgTrack(url: string): Promise<ArrayBuffer | null> {
-  try {
-    const asd = await imgTrackLocalForage.getItem<ArrayBuffer>(url);
-    return asd;
-  } catch (error) {
-    console.error('Failed to get img track:', error);
-    return null;
-  }
-}
-
 export async function getPbf(url: string): Promise<string | null> {
   try {
     return await pbfLocalForage.getItem<string>(url);
@@ -150,43 +85,6 @@ export async function getTile(tileId: string): Promise<ArrayBuffer | null> {
   } catch (error) {
     console.error('Failed to get tile:', error);
     return null;
-  }
-}
-
-export async function getTrack(trackId: string): Promise<Feature<LineString>> {
-  try {
-    return await trackLocalForage.getItem<Feature<LineString>>(trackId);
-  } catch (error) {
-    console.error('Failed to get track:', error);
-    return null;
-  }
-}
-
-export async function getTracks(): Promise<Feature<LineString>[]> {
-  try {
-    const keys = await trackLocalForage.keys();
-    return Promise.all(keys.map(key => getTrack(key)));
-  } catch (error) {
-    console.error('Failed to get tracks:', error);
-    return [];
-  }
-}
-
-export async function removeImgInsideTrack(track: Feature<LineString>): Promise<void> {
-  const properties = track.properties;
-  if (properties == null) return;
-  const urls = findImgInsideProperties(properties) || [];
-  if (urls == null || urls.length === 0) return;
-  urls.forEach(async url => {
-    await removeImgTrack(url);
-  });
-}
-
-export async function removeImgTrack(url: string): Promise<void> {
-  try {
-    await imgTrackLocalForage.removeItem(url);
-  } catch (error) {
-    console.error('Failed to remove img:', error);
   }
 }
 
@@ -226,54 +124,6 @@ export async function removeTiles(tilesIDS: string[], prefix?: number | string):
   }
 }
 
-export async function removeTrack(trackId: string): Promise<void> {
-  try {
-    const track = await getTrack(trackId);
-    if (track != null) {
-      await removeImgInsideTrack(track);
-      const tiles = getTilesByGeometry(track.geometry);
-      await removeTiles(tiles, trackId);
-    }
-
-    await trackLocalForage.removeItem(trackId);
-  } catch (error) {
-    console.error('Failed to remove track:', error);
-  }
-}
-
-export async function saveImgInsideTrack(
-  track: Feature<LineString>,
-  callBackStatusFn = updateStatus,
-): Promise<number> {
-  const properties = track.properties;
-  let totalSize = 0;
-  if (properties == null) {
-    callBackStatusFn({
-      finish: false,
-      media: 1,
-    });
-    return Promise.resolve(totalSize);
-  }
-  const urls = findImgInsideProperties(properties) || [];
-  for (let i = 0; i < urls.length; i++) {
-    const url = urls[i];
-    const d = await downloadFile(url);
-    totalSize += (d && d.byteLength) ?? 0;
-    await saveImgTrack(url, d);
-    callBackStatusFn({
-      finish: false,
-      media: (i + 1) / urls.length,
-    });
-  }
-  return Promise.resolve(totalSize);
-}
-
-export function saveImgTrack(url: string, value: ArrayBuffer | null): void {
-  if (value == null) return;
-  if (isValidUrl(url) === false) return;
-  imgTrackLocalForage.setItem(url, value);
-}
-
 /**
  * @description
  * Caches the value of a given URL in local storage or localforage, depending on the URL.
@@ -310,18 +160,6 @@ export async function saveTile(
   }
 }
 
-export async function saveTrack(
-  trackId: string,
-  track: Feature<LineString>,
-  callBackStatusFn = updateStatus,
-): Promise<number> {
-  let totalSize = 0;
-  totalSize += await saveImgInsideTrack(track, callBackStatusFn);
-  trackLocalForage.setItem(trackId, track);
-
-  return Promise.resolve(totalSize);
-}
-
 export function updateStatus(status: {
   finish: boolean;
   map?: number;
@@ -342,22 +180,14 @@ export async function updateTileHandlerLocalForage(tileId, prefix) {
 }
 
 export const tileLocalForage = localforage.createInstance({
-  name: 'wm-tiles',
+  name: 'map-core',
   storeName: 'tiles',
 });
 export const tileHandlerLocalForage = localforage.createInstance({
-  name: 'wm-tiles',
+  name: 'map-core',
   storeName: 'handler',
 });
 export const pbfLocalForage = localforage.createInstance({
-  name: 'wm-tiles',
+  name: 'map-core',
   storeName: 'pbf',
-});
-export const trackLocalForage = localforage.createInstance({
-  name: 'wm-tracks',
-  storeName: 'tracks',
-});
-export const imgTrackLocalForage = localforage.createInstance({
-  name: 'wm-tracks',
-  storeName: 'img',
 });

@@ -1,3 +1,4 @@
+import {WmFeatureCollection, WmFeature} from '@wm-types/feature';
 import {Directive, Host, Input} from '@angular/core';
 import {filter, take} from 'rxjs/operators';
 import {WmMapComponent} from '../components';
@@ -5,10 +6,12 @@ import {WmMapBaseDirective} from './base.directive';
 import GeoJSON from 'ol/format/GeoJSON';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Geometry} from 'ol/geom';
+import {Geometry as geojsonGeometry} from 'geojson';
 import VectorLayer from 'ol/layer/Vector';
-import View from 'ol/View';
 import {getLineStyle} from '../utils';
 import {Icon, Style} from 'ol/style';
+import {Feature} from 'ol';
+import {Extent} from 'ol/extent';
 @Directive({
   selector: '[wmMapGeojson]',
 })
@@ -16,14 +19,14 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
   private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
   private _init = false;
 
-  @Input('wmMapGeojson') set geojson(geojson: any) {
+  @Input('wmMapGeojson') set geojson(feature: WmFeatureCollection | WmFeature<geojsonGeometry>) {
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
         take(1),
       )
       .subscribe(() => {
-        this._buildGeojson(this._getFeatureCollection(geojson));
+        this._buildGeojson(this._getFeatureCollection(feature));
       });
   }
 
@@ -33,11 +36,11 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
     super(mapCmp);
   }
 
-  private _buildGeojson(geojson: any): void {
-    if (geojson != null) {
+  private _buildGeojson(featureCollection: WmFeatureCollection): void {
+    if (featureCollection != null) {
       const features = new GeoJSON({
         featureProjection: 'EPSG:3857',
-      }).readFeatures(geojson);
+      }).readFeatures(featureCollection);
 
       if (this._featureCollectionLayer == null) {
         this._featureCollectionLayer = new VectorLayer({
@@ -45,7 +48,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
             format: new GeoJSON({featureProjection: 'EPSG:3857'}),
             features,
           }),
-          style: feature => {
+          style: (feature: Feature<Geometry>) => {
             const getType = feature.getGeometry().getType();
             if (getType === 'Point') {
               return [
@@ -71,10 +74,12 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
       }
       if (this._init === false) {
         const extent = this._featureCollectionLayer.getSource().getExtent();
+        const size = this.mapCmp.map.getSize();
+        const sizeFitted = [50, 50];
         this.mapCmp.map.getView().fit(extent, {
           duration: 0,
           maxZoom: 17,
-          size: this.fit ? [100, 100] : this.mapCmp.map.getSize(),
+          size: this.fit ? sizeFitted : size,
         });
         this._featureCollectionLayer.changed();
         this._init = true;
@@ -82,13 +87,15 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
     }
   }
 
-  private _getFeatureCollection(trackgeojson: any): any {
+  private _getFeatureCollection(trackgeojson: any): WmFeatureCollection {
     if (trackgeojson == null) {
       return null;
     }
     const features = [];
     if (trackgeojson.type === 'FeatureCollection') {
       return trackgeojson;
+    } else if (trackgeojson.type === 'Feature') {
+      features.push(trackgeojson);
     } else if (trackgeojson?.geoJson) {
       features.push(trackgeojson.geoJson);
     } else if (trackgeojson?.geometry) {

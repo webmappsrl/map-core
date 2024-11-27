@@ -18,17 +18,9 @@ import {
 } from '../readonly';
 import CircleStyle from 'ol/style/Circle';
 import {Type} from 'ol/geom/Geometry';
-import {FeatureCollection, GeoJsonProperties} from 'geojson';
 import {Store} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
-
-export interface WmFeatureCollection extends FeatureCollection {
-  properties: WmGeoJsonProperties;
-}
-
-export interface WmGeoJsonProperties extends GeoJsonProperties {
-  distinctProperty: string;
-}
+import {WmFeatureCollection} from '@wm-types/feature';
 
 @Directive({
   selector: '[wmMapFeatureCollection]',
@@ -116,9 +108,6 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   }
 
   private _buildGeojson(geojson: WmFeatureCollection): void {
-    geojson.features.map(f => {
-      f.properties;
-    });
     this._resetSelectedFeature();
     let count = 0;
     const features = new GeoJSON({

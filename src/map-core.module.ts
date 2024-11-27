@@ -1,7 +1,6 @@
 import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
 import {WmMapPopover} from './components/popover/popover.map';
-
 import {IonicModule} from '@ionic/angular';
 
 import {WmMapComponent} from './components/map/map.component';
@@ -23,6 +22,8 @@ import {WmMapControlsModule} from './components/controls/controls.module';
 import {WmMapGeojsonDirective} from './directives/geojson.directive';
 import {StoreModule} from '@ngrx/store';
 import {featureKey, MapCoreReducer} from './store/map-core.reducer';
+import { WmMapUcgTracksDirective } from './directives/ugc-tracks.directive';
+import { WmUgcPoisDirective } from './directives/ugc-pois.directive';
 
 const directives = [
   WmMapTrackDirective,
@@ -31,12 +32,14 @@ const directives = [
   WmMapPoisDirective,
   wmMapCustomTrackDrawTrackDirective,
   WmMapCustomTracksDirective,
+  WmMapUcgTracksDirective,
   WmMapTrackHighLightDirective,
   WmMapLayerProgressBarDirective,
   WmMapPositionDirective,
   WmMapFeatureCollectionDirective,
   WmMapHitMapDirective,
   WmMapGeojsonDirective,
+  WmUgcPoisDirective
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
