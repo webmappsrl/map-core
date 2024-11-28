@@ -12,7 +12,7 @@ import VectorSource from 'ol/source/Vector';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {Coordinate} from 'ol/coordinate';
 import {containsCoordinate} from 'ol/extent';
-import {ILAYER} from 'map-core/types/layer';
+import {ILAYER} from '@map-core/types/layer';
 
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
