@@ -1,22 +1,37 @@
-import { ChangeDetectorRef, Directive, EventEmitter, Host, Input, OnChanges, Output, SimpleChanges } from "@angular/core";
-import { WmMapBaseDirective } from "./base.directive";
-import { filter, take } from "rxjs/operators";
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import { BehaviorSubject } from "rxjs";
+import {
+  ChangeDetectorRef,
+  Directive,
+  EventEmitter,
+  Host,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
+import {WmMapBaseDirective} from './base.directive';
+import {filter, take} from 'rxjs/operators';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import {BehaviorSubject} from 'rxjs';
 import {WmMapComponent} from '../components';
-import { CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, UGC_POI_ZINDEX } from "../readonly";
-import { Icon, Style } from "ol/style";
-import { clearLayer, clusterHullStyle, createCluster, createHull, createLayer }  from '../../src/utils';
-import { Feature, MapBrowserEvent } from "ol";
-import { Point } from "ol/geom";
-import { Point as PointGeojson } from "geojson";
-import { fromLonLat } from "ol/proj";
-import { FitOptions } from "ol/View";
-import { WmFeature } from "@wm-types/feature";
-import { Cluster } from "ol/source";
+import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, UGC_POI_ZINDEX} from '../readonly';
+import {Icon, Style} from 'ol/style';
+import {
+  clearLayer,
+  clusterHullStyle,
+  createCluster,
+  createHull,
+  createLayer,
+} from '../../src/utils';
+import {Feature, MapBrowserEvent} from 'ol';
+import {Point} from 'ol/geom';
+import {Point as PointGeojson} from 'geojson';
+import {fromLonLat} from 'ol/proj';
+import {FitOptions} from 'ol/View';
+import {WmFeature} from '@wm-types/feature';
+import {Cluster} from 'ol/source';
 import Popup from 'ol-ext/overlay/Popup';
-import { createEmpty, extend } from "ol/extent";
+import {createEmpty, extend} from 'ol/extent';
 
 const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 2;
@@ -31,7 +46,9 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectCluster: any;
   private _selectedUgcPoiLayer: VectorLayer<VectorSource>;
   private _ugcPoisClusterLayer: VectorLayer<Cluster>;
-  private _wmMapUgcPois: BehaviorSubject<WmFeature<PointGeojson>[]> = new BehaviorSubject<WmFeature<PointGeojson>[]>([]);
+  private _wmMapUgcPois: BehaviorSubject<WmFeature<PointGeojson>[]> = new BehaviorSubject<
+    WmFeature<PointGeojson>[]
+  >([]);
   private _wmMapUgcPoisLayer: VectorLayer<VectorSource>;
 
   @Input() set wmMapUgcPoiDisableClusterLayer(disabled: boolean) {
@@ -58,43 +75,43 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         this._initLayer();
         this.mapCmp.map.once('rendercomplete', () => {
           this._wmMapUgcPois
-          .pipe(
-            filter(p => !!p),
-            take(1),
-          )
-          .subscribe(p => {
-            this._addPoisLayer(p);
-          });
+            .pipe(
+              filter(p => !!p),
+              take(1),
+            )
+            .subscribe(p => {
+              this._addPoisLayer(p);
+            });
         });
       });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     this.mapCmp.isInit$
-    .pipe(
-      filter(f => f === true),
-      take(1),
-    )
-    .subscribe(() => {
-      if (changes.wmMapUgcPoi) {
-        this.mapCmp.map.once('rendercomplete', () => {
-          this._setPoi(this.wmMapUgcPoi);
-        });
-      }
-      if (changes.wmMapUgcUnselectedPoi != null) {
-        clearLayer(this._selectedUgcPoiLayer);
-      }
-    })
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        if (changes.wmMapUgcPoi) {
+          this.mapCmp.map.once('rendercomplete', () => {
+            this._setPoi(this.wmMapUgcPoi);
+          });
+        }
+        if (changes.wmMapUgcUnselectedPoi != null) {
+          clearLayer(this._selectedUgcPoiLayer);
+        }
+      });
   }
 
-  private _addPoisLayer(poiFeatureCollection: WmFeature<PointGeojson>[]): void{
+  private _addPoisLayer(poiFeatureCollection: WmFeature<PointGeojson>[]): void {
     const iconFeatures = [];
     clearLayer(this._wmMapUgcPoisLayer);
     const clusterSource: Cluster = this._ugcPoisClusterLayer.getSource();
     const featureSource = clusterSource.getSource();
     featureSource.clear();
     if (poiFeatureCollection) {
-      for (const poi of poiFeatureCollection.filter(poi => poi.geometry != null)){
+      for (const poi of poiFeatureCollection.filter(poi => poi.geometry != null)) {
         const coordinates = [
           poi.geometry.coordinates[0] as number,
           poi.geometry.coordinates[1] as number,
@@ -239,7 +256,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         default:
           this.currentUgcPoiEvt.emit(currentPoi);
           break;
-       }
+      }
       this.mapCmp.map.once('rendercomplete', () => {
         const geometryExtent = geometry.getExtent();
         const view = this.mapCmp.map.getView();
