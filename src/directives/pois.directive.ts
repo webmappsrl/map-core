@@ -151,7 +151,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   protected _getIconStyle(properties: any, isSelected: boolean = true): Style {
-    console.log('GET ICON STYLE POIS DIRECTIVE');
     const taxonomy = properties.taxonomy || null;
     const poyType = taxonomy?.poi_type || null;
     const poiColor = poyType?.color
@@ -170,12 +169,9 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           src: `data:image/svg+xml;utf8,${properties.svgIcon
             .replaceAll(
               `<circle fill="darkorange"`,
-              isSelected ? '<circle fill="white" ' : `<circle fill="${namedPoiColor}" `
+              isSelected ? '<circle fill="white" ' : `<circle fill="${namedPoiColor}" `,
             )
-            .replaceAll(
-              `<g fill="white"`,
-              `<g fill="${isSelected ? namedPoiColor : 'white'}" `
-            )}`,
+            .replaceAll(`<g fill="white"`, `<g fill="${isSelected ? namedPoiColor : 'white'}" `)}`,
         }),
       });
     }
