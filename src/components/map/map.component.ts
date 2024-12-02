@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {filter, take} from 'rxjs/operators';
+import {debounceTime, filter, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
@@ -122,7 +122,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
         take(1),
       )
       .subscribe(conf => {
-        this._initMap(conf);
+        setTimeout(() => {
+          this._initMap(conf);
+        }, 200); // wait for the view to be initialized
       });
   }
 
@@ -205,6 +207,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     });
   }
 
+  resetView(): void {
+    this._view.fit(this._centerExtent, {
+      padding: this.wmMapPadding,
+      maxZoom: this._view.getZoom(),
+      duration: 1000,
+    });
+  }
+
   /**
    * Sets the map overlay.
    * @param overlay The overlay to set.
@@ -256,6 +266,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
    * @param resetChange The change object for the reset property.
    */
   private _handleWmMapPaddingChange(wmMapPaddingChange: SimpleChange): void {
+    console.log('wmMapPaddingChange', wmMapPaddingChange);
     if (wmMapPaddingChange && this._view) {
       this._view.fit(this._centerExtent, {
         padding: this.wmMapPadding,
