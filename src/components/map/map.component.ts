@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {debounceTime, filter, take} from 'rxjs/operators';
+import {debounceTime, delay, filter, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
@@ -120,11 +120,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       .pipe(
         filter(f => f != null),
         take(1),
+        delay(250),
       )
       .subscribe(conf => {
-        setTimeout(() => {
-          this._initMap(conf);
-        }, 200); // wait for the view to be initialized
+        this._initMap(conf);
       });
   }
 
