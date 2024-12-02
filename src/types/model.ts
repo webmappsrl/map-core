@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+import {WmFeature} from '@wm-types/feature';
+import {Point} from 'geojson';
 import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
 import {ILAYER} from './layer';
@@ -217,7 +219,7 @@ export interface IWmImage {
  * @extends {iMarker}
  */
 export interface PoiMarker extends iMarker {
-  poi: IGeojsonFeature;
+  poi: WmFeature<Point>;
   style?: any;
 }
 

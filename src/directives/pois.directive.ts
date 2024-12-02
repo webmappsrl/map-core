@@ -11,7 +11,7 @@ import {
 import Popup from 'ol-ext/overlay/Popup';
 import {createEmpty, extend} from 'ol/extent';
 import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
+import {Point as OlPoint} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import {fromLonLat} from 'ol/proj';
@@ -28,7 +28,8 @@ import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {ILAYER} from '../types/layer';
-
+import {WmFeature} from '@wm-types/feature';
+import {Point} from 'geojson';
 const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 2;
 @Directive({
@@ -44,7 +45,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   protected _poisClusterLayer: VectorLayer<Cluster>;
   protected _selectCluster: any;
   protected _selectedPoiLayer: VectorLayer<VectorSource>;
-  protected _wmMapPoisPois: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  protected _wmMapPoisPois: BehaviorSubject<WmFeature<Point>[]> = new BehaviorSubject<any>(null);
 
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
@@ -54,7 +55,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._disableClusterLayer(disabled);
   }
 
-  @Input() set wmMapPoisPois(pois: any) {
+  @Input() set wmMapPoisPois(pois: WmFeature<Point>[]) {
     this._setPois(pois);
   }
 
@@ -78,11 +79,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             filter(f => f != null),
             take(1),
           )
-          .subscribe(conf => {
-            if (conf != null && conf.features != null && conf.features.length > 0) {
+          .subscribe(features => {
+            if (features != null && features.length > 0) {
               this.wmMapStateEvt.emit('rendering:pois_start');
               this.mapCmp.map.once('rendercomplete', () => {
-                this._renderPois(conf);
+                this._renderPois(features);
                 this._updatePois();
               });
             }
@@ -139,7 +140,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           take(1),
         )
         .subscribe(pois => {
-          const currentPoi = pois.features.find(p => +p.properties.id === +id);
+          const currentPoi = pois.find(p => +p.properties.id === +id);
           this._selectIcon(currentPoi);
         });
     }
@@ -196,17 +197,17 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * It also sets up two event listeners for when the map moves and when the mouse pointer moves over it.
    *
    * @private
-   * @param {IGeojsonFeature[]} poiCollection
+   * @param {WmFeature<Point>[]} poiCollection
    * @memberof WmMapPoisDirective
    */
-  private _addPoisFeature(poiCollection: IGeojsonFeature[]): void {
+  private _addPoisFeature(features: WmFeature<Point>[]): void {
     const iconFeatures = [];
     clearLayer(this._poisClusterLayer);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     const featureSource = clusterSource.getSource();
     featureSource.clear();
-    if (poiCollection) {
-      for (const poi of poiCollection.filter(poi => poi.geometry != null)) {
+    if (features) {
+      for (const poi of features.filter(poi => poi.geometry != null)) {
         const properties = poi.properties || null;
         const coordinates = [
           poi.geometry.coordinates[0] as number,
@@ -216,7 +217,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         const iconFeature = new Feature({
           type: 'icon',
-          geometry: new Point([position[0], position[1]]),
+          geometry: new OlPoint([position[0], position[1]]),
           properties: {
             ...properties,
             ...{color: properties.taxonomy?.poi_type?.color || properties.color || '#ff8c00'},
@@ -403,11 +404,11 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @private
    * @memberof WmMapPoisDirective
    */
-  private _renderPois(inlineConf?: any): void {
+  private _renderPois(inlineConf?: WmFeature<Point>[]): void {
     if (inlineConf != null) {
-      this._addPoisFeature(inlineConf.features);
+      this._addPoisFeature(inlineConf);
     } else if (this.wmMapPoisPois != null) {
-      this._addPoisFeature(this.wmMapPoisPois.features);
+      this._addPoisFeature(this.wmMapPoisPois);
     }
   }
 
@@ -425,7 +426,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
    * @param {IGeojsonGeneric} currentPoi
    * @memberof WmMapPoisDirective
    */
-  private _selectIcon(currentPoi: IGeojsonGeneric): void {
+  private _selectIcon(currentPoi: WmFeature<Point>): void {
     clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();
@@ -437,7 +438,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           currentPoi.geometry.coordinates[1] as number,
         ] || [0, 0];
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
-        geometry = new Point([position[0], position[1]]);
+        geometry = new OlPoint([position[0], position[1]]);
       } else {
         geometry = currentPoi.geometry;
       }
@@ -533,7 +534,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
   }
 
-  private _setPois(pois: IGeojsonGeneric[]): void {
+  private _setPois(pois: WmFeature<Point>[]): void {
     if (this._popupOverlay != null) {
       this._popupOverlay.hide();
     }

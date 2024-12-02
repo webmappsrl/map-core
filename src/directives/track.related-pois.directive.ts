@@ -12,7 +12,8 @@ import {BehaviorSubject, Subscription} from 'rxjs';
 
 import Feature from 'ol/Feature';
 import Geometry from 'ol/geom/Geometry';
-import Point from 'ol/geom/Point';
+import {Point as OlPoint} from 'ol/geom';
+import {Point} from 'geojson';
 import VectorLayer from 'ol/layer/Vector';
 import {fromLonLat} from 'ol/proj';
 import Icon from 'ol/style/Icon';
@@ -39,6 +40,7 @@ import {IGeojsonFeature, PoiMarker} from '../types/model';
 import {FeatureCollection} from 'geojson';
 import GeoJSON from 'ol/format/GeoJSON';
 import Collection from 'ol/Collection';
+import {WmFeature} from '@wm-types/feature';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -53,7 +55,7 @@ export class WmMapTrackRelatedPoisDirective
   private _poiIcons: {[identifier: string]: string} = {};
   private _poiMarkers: PoiMarker[] = [];
   private _poisLayer: VectorLayer<VectorSource>;
-  private _relatedPois: IGeojsonFeature[] = [];
+  private _relatedPois: WmFeature<Point>[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
   private _wmMapPoisPois: BehaviorSubject<VectorSource<Geometry>> =
@@ -95,24 +97,30 @@ export class WmMapTrackRelatedPoisDirective
     }
   }
 
-  @Input() set wmMapPoisPois(pois: FeatureCollection | null) {
-    if (pois != null) {
-      const features = new GeoJSON({
+  @Input() set wmMapPoisPois(features: WmFeature<Point>[] | null) {
+    if (features != null && features.length > 0) {
+      const featureCollection = {
+        type: 'FeatureCollection',
+        features,
+      };
+      const olFeatureCollection = new GeoJSON({
         featureProjection: 'EPSG:3857',
-      }).readFeatures(pois);
-      const featureCollection = new Collection(
-        features.map(feature => {
-          const id = feature.getProperties().id;
-          feature.setId(id);
-          return feature;
-        }),
-      );
+      }).readFeatures(featureCollection);
+      olFeatureCollection.forEach(f => {
+        const id = f.getProperties().id;
+        f.setId(id);
+      });
+
       const vectorSource = new VectorSource({
-        features: featureCollection,
+        features: olFeatureCollection,
       });
 
       this._wmMapPoisPois.next(vectorSource);
     }
+  }
+
+  @Input() set wmMapReletedPoisDisableClusterLayer(disabled: boolean) {
+    this._poisLayer?.setVisible(!disabled);
   }
 
   @Input() set wmTrackRelatedPoiIcons(poiIcons: {[identifier: string]: string}) {
@@ -134,10 +142,6 @@ export class WmMapTrackRelatedPoisDirective
    * The input property for the radius of the alert POI in the track.
    */
   @Input() wmMapTrackRelatedPoisAlertPoiRadius: number;
-
-  @Input() set wmMapReletedPoisDisableClusterLayer(disabled: boolean) {
-    this._poisLayer?.setVisible(!disabled);
-  }
   /**
    * @description
    * The output event for POI click.
@@ -227,15 +231,17 @@ export class WmMapTrackRelatedPoisDirective
       this.mapCmp.map != null &&
       this._initPois === false
     ) {
-      this._resetView();
-      this._relatedPois = currentTrack.properties.related_pois;
-      this._addPoisMarkers(this._relatedPois);
-      calculateNearestPoint(
-        this.wmMapPositioncurrentLocation as any,
-        this._poisLayer,
-        this.wmMapTrackRelatedPoisAlertPoiRadius,
-      );
-      this._initPois = true;
+      setTimeout(() => {
+        this._resetView();
+        this._relatedPois = currentTrack.properties.related_pois;
+        this._addPoisMarkers(this._relatedPois);
+        calculateNearestPoint(
+          this.wmMapPositioncurrentLocation as any,
+          this._poisLayer,
+          this.wmMapTrackRelatedPoisAlertPoiRadius,
+        );
+        this._initPois = true;
+      }, 600); // TODO remove timeout move logic inside contructor after map is initialized
     }
     // Calculate nearest poi when currentLocation changes
     if (
@@ -297,7 +303,7 @@ export class WmMapTrackRelatedPoisDirective
    *
    * @param poiCollection - The collection of POIs to be added as markers.
    */
-  private async _addPoisMarkers(poiCollection: Array<IGeojsonFeature>) {
+  private async _addPoisMarkers(poiCollection: WmFeature<Point>[]): Promise<void> {
     this._poisLayer = createLayer(this._poisLayer, CLUSTER_ZINDEX);
     this.mapCmp.map.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
@@ -344,7 +350,7 @@ export class WmMapTrackRelatedPoisDirective
 
     const iconFeature = new Feature({
       type: 'icon',
-      geometry: new Point([position[0], position[1]]),
+      geometry: new OlPoint([position[0], position[1]]),
     });
     const style = new Style({
       image: new Icon({
@@ -441,10 +447,14 @@ export class WmMapTrackRelatedPoisDirective
     return createCanvasForHtml(htmlTextCanvas, 46);
   }
 
-  private async _createPoiMarker(poi, selected = false) {
-    const svgIcon = poi?.properties?.taxonomy?.poi_type?.icon ?? null;
-    const poiFromPois = this._wmMapPoisPois.value.getFeatureById(poi.properties.id);
-    if (poi.properties?.feature_image?.sizes['108x137'] != null) {
+  private async _createPoiMarker(poi: WmFeature<Point>, selected = false) {
+    const properties = poi.properties || null;
+    if (properties == null) {
+      return;
+    }
+    const svgIcon = properties?.taxonomy?.poi_type?.icon ?? null;
+    const poiFromPois = this._wmMapPoisPois.value.getFeatureById(properties.id);
+    if (properties?.feature_image?.sizes['108x137'] != null) {
       const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
       return marker;
     } else if (poiFromPois != null) {
@@ -504,7 +514,7 @@ export class WmMapTrackRelatedPoisDirective
         poi.geometry.coordinates[1] as number,
       ];
       const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
-      const geometry = new Point([position[0], position[1]]);
+      const geometry = new OlPoint([position[0], position[1]]);
       const iconFeature = new Feature({
         type: 'icon',
         geometry,
