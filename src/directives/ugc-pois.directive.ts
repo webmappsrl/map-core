@@ -24,8 +24,8 @@ import {
   createLayer,
 } from '../../src/utils';
 import {Feature, MapBrowserEvent} from 'ol';
-import {Point} from 'ol/geom';
-import {Point as PointGeojson} from 'geojson';
+import {Point as OlPoint} from 'ol/geom';
+import {Point} from 'geojson';
 import {fromLonLat} from 'ol/proj';
 import {FitOptions} from 'ol/View';
 import {WmFeature} from '@wm-types/feature';
@@ -46,8 +46,8 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _selectCluster: any;
   private _selectedUgcPoiLayer: VectorLayer<VectorSource>;
   private _ugcPoisClusterLayer: VectorLayer<Cluster>;
-  private _wmMapUgcPois: BehaviorSubject<WmFeature<PointGeojson>[]> = new BehaviorSubject<
-    WmFeature<PointGeojson>[]
+  private _wmMapUgcPois: BehaviorSubject<WmFeature<Point>[]> = new BehaviorSubject<
+    WmFeature<Point>[]
   >([]);
   private _wmMapUgcPoisLayer: VectorLayer<VectorSource>;
 
@@ -56,7 +56,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._ugcPoisClusterLayer?.setVisible(!disabled);
   }
 
-  @Input() set wmMapUgcPois(ugcPois: WmFeature<PointGeojson>[]) {
+  @Input() set wmMapUgcPois(ugcPois: WmFeature<Point>[]) {
     this._wmMapUgcPois.next(ugcPois);
   }
 
@@ -76,7 +76,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         this.mapCmp.map.once('rendercomplete', () => {
           this._wmMapUgcPois
             .pipe(
-              filter(p => !!p),
+              filter(p => !!p && p.length > 0),
               take(1),
             )
             .subscribe(p => {
@@ -104,7 +104,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
       });
   }
 
-  private _addPoisLayer(poiFeatureCollection: WmFeature<PointGeojson>[]): void {
+  private _addPoisLayer(poiFeatureCollection: WmFeature<Point>[]): void {
     const iconFeatures = [];
     clearLayer(this._wmMapUgcPoisLayer);
     const clusterSource: Cluster = this._ugcPoisClusterLayer.getSource();
@@ -119,7 +119,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         const iconFeature = new Feature({
           type: 'icon',
-          geometry: new Point([position[0], position[1]]),
+          geometry: new OlPoint([position[0], position[1]]),
           properties: poi.properties,
         });
         let iconStyle = new Style({
@@ -227,7 +227,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
           currentPoi.geometry.coordinates[1] as number,
         ] || [0, 0];
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
-        geometry = new Point([position[0], position[1]]);
+        geometry = new OlPoint([position[0], position[1]]);
       } else {
         geometry = currentPoi.geometry;
       }

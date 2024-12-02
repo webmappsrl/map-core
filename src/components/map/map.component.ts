@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {debounceTime, delay, filter, take} from 'rxjs/operators';
+import {delay, filter, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
