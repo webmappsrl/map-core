@@ -210,7 +210,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     this._view.fit(this._centerExtent, {
       padding: this.wmMapPadding,
       maxZoom: this._view.getZoom(),
-      duration: 1000,
+      duration: 1500,
     });
   }
 
