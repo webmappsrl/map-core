@@ -88,10 +88,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
     const hostname: string = window.location.href;
-    if (
-      l != null &&
-      l.bbox != null
-    ) {
+    if (l != null && l.bbox != null) {
       this.fitViewFromLonLat(l.bbox);
     }
     this._updateMap();
@@ -209,6 +206,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    * @memberof WmMapLayerDirective
    */
   private _initLayer(map: IMAP) {
+    clearPbfDB();
     if (this._dataLayerUrls != null) {
       this.wmMapStateEvt.emit('rendering:layer_start');
       this._initializeDataLayers(map);
