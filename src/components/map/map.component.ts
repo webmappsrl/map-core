@@ -265,7 +265,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
    * @param resetChange The change object for the reset property.
    */
   private _handleWmMapPaddingChange(wmMapPaddingChange: SimpleChange): void {
-    console.log('wmMapPaddingChange', wmMapPaddingChange);
     if (wmMapPaddingChange && this._view) {
       this._view.fit(this._centerExtent, {
         padding: this.wmMapPadding,
