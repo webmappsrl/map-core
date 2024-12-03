@@ -53,7 +53,7 @@ export class WmMapControls implements OnChanges, OnInit {
    * Evento emesso quando si selezionano i dati.
    */
   @Output('wmMapControlData') dataEVT = new EventEmitter<{
-    type: 'layers' | 'pois';
+    type: 'layers' | 'pois' | 'ugc';
     toggle: boolean;
   }>(false);
   /**
@@ -103,7 +103,7 @@ export class WmMapControls implements OnChanges, OnInit {
   selectDirective(idx: number, data: ICONTROLSBUTTON): void {
     this.currentDataIdx[idx] = !this.currentDataIdx[idx];
     this.dataEVT.emit({
-      type: data.url as 'layers' | 'pois',
+      type: data.url as 'layers' | 'pois' | 'ugc',
       toggle: this.currentDataIdx[idx],
     });
   }
@@ -171,15 +171,15 @@ export class WmMapControls implements OnChanges, OnInit {
    * Metodo privato per inizializzare i dati.
    */
   private _initializeData(): void {
-    (this.conf?.data || [])
-      .filter(data => data.type === 'button')
-      .forEach((data: ICONTROLSBUTTON) => {
+    (this.conf?.data || []).forEach((data: ICONTROLSBUTTON) => {
+      if (data.type === 'button') {
         this.currentDataIdx[data.id] = data.default ?? true;
         this.dataEVT.emit({
-          type: data.url as 'layers' | 'pois',
+          type: data.url as 'layers' | 'pois' | 'ugc',
           toggle: this.currentDataIdx[data.id],
         });
-      });
+      }
+    });
   }
 
   /**

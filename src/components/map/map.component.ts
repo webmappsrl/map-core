@@ -76,7 +76,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
-  @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois'; toggle: boolean}> =
+  @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois' | 'ugc'; toggle: boolean}> =
     new EventEmitter();
   @ViewChild('mapContainer') mapContainer: ElementRef;
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
@@ -226,7 +226,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
    * Toggles map data visibility.
    * @param data Object specifying the type of data to toggle and its new visibility state.
    */
-  toggleData(data: {type: 'layers' | 'pois'; toggle: boolean}): void {
+  toggleData(data: {type: 'layers' | 'pois' | 'ugc'; toggle: boolean}): void {
     this.wmMapToggleDataEVT$.emit(data);
   }
 
