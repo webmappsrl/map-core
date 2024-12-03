@@ -144,6 +144,10 @@ export class WmMapControls implements OnChanges, OnInit {
     if (overlaysChange && overlaysChange.length > 1) {
       this.showButton$.next(true);
     }
+    const dataChange = changes.conf?.currentValue?.data;
+    if (dataChange && dataChange.length > 1) {
+      this._initializeData();
+    }
   }
 
   /**
