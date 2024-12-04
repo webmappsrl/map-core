@@ -355,6 +355,7 @@ export function createCircleFeature(lonLat: Coordinate, options?: CircleOptions)
 export function createCluster(
   clusterLayer: VectorLayer<Cluster> | null,
   zIndex: number,
+  clusterColor: {r: number; g: number; b: number} = {r: 41, g: 128, b: 185}, // Oggetto RGB
 ): VectorLayer<Cluster> {
   if (clusterLayer == null) {
     clusterLayer = new AnimatedCluster({
@@ -369,7 +370,7 @@ export function createCluster(
           return <Point>feature.getGeometry();
         },
       }),
-      style: getClusterStyle,
+      style: (feature, resolution) => getClusterStyle(feature, resolution, clusterColor), // Passa il colore
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex,

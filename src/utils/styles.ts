@@ -344,10 +344,10 @@ export function getClusterStyle(
     getProperties: () => {(): any; new (): any; features: any[]};
   },
   resolution: any,
+  color: {r: number; g: number; b: number} = {r: 41, g: 128, b: 185},
 ) {
   var size = feature.get('features').length;
   var style = null;
-  var color = '41,128,185';
   var radius = Math.max(8, Math.min(size * 0.75, 20));
   var dashv = (2 * Math.PI * radius) / 6;
   var dash = [0, dashv, dashv, dashv, dashv, dashv, dashv];
@@ -360,13 +360,13 @@ export function getClusterStyle(
       image: new Circle({
         radius: radius,
         stroke: new Stroke({
-          color: 'rgba(' + color + ',0.5)',
+          color: `rgba(${color.r},${color.g},${color.b},0.5)`,
           width: 15,
           lineDash: dash,
           lineCap: 'butt',
         }),
         fill: new Fill({
-          color: 'rgba(' + color + ',1)',
+          color: `rgba(${color.r},${color.g},${color.b},1)`,
         }),
       }),
       text: new Text({

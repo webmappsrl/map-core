@@ -156,8 +156,12 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _initLayer(): void {
-    this._ugcPoisClusterLayer = createCluster(this._ugcPoisClusterLayer, CLUSTER_ZINDEX);
-    this._wmMapUgcPoisLayer = createLayer(this._wmMapUgcPoisLayer, UGC_POI_ZINDEX);
+    (this._ugcPoisClusterLayer = createCluster(this._ugcPoisClusterLayer, CLUSTER_ZINDEX, {
+      r: 202,
+      g: 21,
+      b: 81,
+    })),
+      (this._wmMapUgcPoisLayer = createLayer(this._wmMapUgcPoisLayer, UGC_POI_ZINDEX));
     this._selectedUgcPoiLayer = createLayer(this._selectedUgcPoiLayer, UGC_POI_ZINDEX + 100);
     const clusterSource: Cluster = this._ugcPoisClusterLayer.getSource();
     this._hullClusterLayer = new VectorLayer({
