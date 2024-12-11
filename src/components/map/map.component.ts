@@ -378,22 +378,26 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
     this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       const layersAtPixel: {olUID: string; zIndex: number}[] = [];
-      this.map.forEachFeatureAtPixel(evt.pixel, (_, layer) => {
-        if (layer == null) return;
-        const olUID = layer['ol_uid'];
-        const zIndex = layer.getZIndex();
-        layersAtPixel.push({olUID, zIndex});
-      });
-      layersAtPixel.sort((a, b) => b.zIndex - a.zIndex);
       try {
-        const topLayer = layersAtPixel[0] ?? null;
-        if (topLayer != null) {
-          const directive = this.getDirective(topLayer.olUID);
-          if (directive && directive.onClick) {
-            directive.onClick(evt);
-          } else {
-            console.warn('No directive or onClick method found for layer:', topLayer.olUID);
+        this.map.forEachFeatureAtPixel(evt.pixel, (_, layer) => {
+          if (layer == null) return;
+          const olUID = layer['ol_uid'];
+          const zIndex = layer.getZIndex();
+          layersAtPixel.push({olUID, zIndex});
+        });
+        layersAtPixel.sort((a, b) => b.zIndex - a.zIndex);
+        try {
+          const topLayer = layersAtPixel[0] ?? null;
+          if (topLayer != null) {
+            const directive = this.getDirective(topLayer.olUID);
+            if (directive && directive.onClick) {
+              directive.onClick(evt);
+            } else {
+              console.warn('No directive or onClick method found for layer:', topLayer.olUID);
+            }
           }
+        } catch (_) {
+          console.log(_);
         }
       } catch (_) {
         console.log(_);

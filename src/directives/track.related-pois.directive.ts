@@ -52,6 +52,7 @@ export class WmMapTrackRelatedPoisDirective
 {
   private _defaultFeatureColor = DEF_LINE_COLOR;
   private _initPois;
+  private _lastID = null;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poiIcons: {[identifier: string]: string} = {};
   private _poiMarkers: PoiMarker[] = [];
@@ -86,9 +87,9 @@ export class WmMapTrackRelatedPoisDirective
       this.mapCmp.map.removeLayer(this._selectedPoiLayer);
       this._selectedPoiLayer = undefined;
       this.relatedPoiEvt.next(null);
-    } else {
+    } else if (id != this._lastID) {
       const currentPoi = this._poiMarkers.find(p => +p.id === +id);
-
+      this._lastID = id;
       if (currentPoi != null) {
         this._fitView(currentPoi.icon.getGeometry() as any);
         this._selectCurrentPoi(currentPoi);
@@ -177,6 +178,17 @@ export class WmMapTrackRelatedPoisDirective
    */
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        this.mapCmp.map.on('click', event => {
+          this.onClick(event);
+          stopPropagation(event);
+        });
+      });
   }
 
   /**
@@ -301,7 +313,6 @@ export class WmMapTrackRelatedPoisDirective
   private async _addPoisMarkers(poiCollection: WmFeature<Point>[]): Promise<void> {
     this._poisLayer = createLayer(this._poisLayer, CLUSTER_ZINDEX);
     this.mapCmp.map.addLayer(this._poisLayer);
-    this.mapCmp.registerDirective(this._poisLayer['ol_uid'], this);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
       if (!poiCollection?.find(x => x.properties.id + '' === ov.id)) {
@@ -449,7 +460,7 @@ export class WmMapTrackRelatedPoisDirective
       return;
     }
     const svgIcon = properties?.taxonomy?.poi_type?.icon ?? null;
-    const poiFromPois = this._wmMapPoisPois.value.getFeatureById(properties.id);
+    const poiFromPois = this._wmMapPoisPois?.value?.getFeatureById(properties.id) ?? null;
     if (properties?.feature_image?.sizes['108x137'] != null) {
       const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
       return marker;
