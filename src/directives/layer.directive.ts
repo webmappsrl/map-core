@@ -136,49 +136,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
         });
-
-        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          const features = [];
-          this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-            if (layer === this._vectorTileLayer) {
-              features.push(feature);
-            }
-          });
-          if (features.length === 0) {
-            return;
-          }
-          const zoom = this.mapCmp.map.getView().getZoom();
-          if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
-            this._zoomOnClick(evt);
-          } else {
-            try {
-              const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
-              const clickedFeature = features[0];
-              const properties = clickedFeature?.getProperties();
-              const geometryType = clickedFeature.getGeometry()?.getType();
-              // Controlla se la geometria è un Point e, in tal caso, non prosegue
-              if (geometryType === 'Point') {
-                return;
-              }
-
-              const isPbfLayer = properties?.name == null;
-              if (isPbfLayer) {
-                this._zoomOnClick(evt);
-              }
-              const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-              const clickedLayerId =
-                JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-              if (clickedFeatureId > -1 && !isPbfLayer) {
-                this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-                const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
-
-                this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-              }
-
-              return true;
-            } catch (_) {}
-          }
-        });
       });
   }
 
@@ -192,6 +149,46 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       if (this._animatedVectorLayer != null) {
         this._animatedVectorLayer.getSource().clear();
       }
+    }
+  }
+
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    const features = [];
+    this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+      if (layer === this._vectorTileLayer) {
+        features.push(feature);
+      }
+    });
+    if (features.length === 0) {
+      return;
+    }
+    const zoom = this.mapCmp.map.getView().getZoom();
+    if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
+      this._zoomOnClick(evt);
+    } else {
+      try {
+        const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
+        const clickedFeature = features[0];
+        const properties = clickedFeature?.getProperties();
+        const geometryType = clickedFeature.getGeometry()?.getType();
+        // Controlla se la geometria è un Point e, in tal caso, non prosegue
+        if (geometryType === 'Point') {
+          return;
+        }
+
+        const isPbfLayer = properties?.name == null;
+        if (isPbfLayer) {
+          this._zoomOnClick(evt);
+        }
+        const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+        const clickedLayerId = JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+        if (clickedFeatureId > -1 && !isPbfLayer) {
+          this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+          const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+
+          this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+        }
+      } catch (_) {}
     }
   }
 
@@ -248,6 +245,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
       this.mapCmp.map.addLayer(this._vectorTileLayer);
       this.mapCmp.map.addLayer(this._animatedVectorLayer);
+      this.mapCmp.registerDirective(this._vectorTileLayer['ol_uid'], this);
     }
   }
 

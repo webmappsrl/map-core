@@ -37,6 +37,7 @@ import {
   scaleUnits,
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
+import {stopPropagation} from 'ol/events/Event';
 
 @Component({
   selector: 'wm-map',
@@ -47,6 +48,7 @@ import {IMAP} from '../../types/model';
 })
 export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   private _centerExtent: Extent;
+  private _directiveRegistry = new Map();
   private _view: View;
 
   @Input() set wmMapCloseTopRightBtns(selector: string) {
@@ -175,6 +177,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
   }
 
+  getDirective(olUUID: string): any {
+    return this._directiveRegistry.get(olUUID);
+  }
+
   getZoom(): number {
     if (this.map != null) {
       const view = this.map.getView();
@@ -193,6 +199,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       duration: DEF_MAP_ROTATION_DURATION,
       rotation: 0,
     });
+  }
+
+  registerDirective(olUUID: string, directive: any): void {
+    this._directiveRegistry.set(olUUID, directive);
   }
 
   /**
@@ -366,6 +376,29 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
         maxZoom: conf.defZoom,
       });
     }
+    this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      const layersAtPixel: {olUID: string; zIndex: number}[] = [];
+      this.map.forEachFeatureAtPixel(evt.pixel, (_, layer) => {
+        if (layer == null) return;
+        const olUID = layer['ol_uid'];
+        const zIndex = layer.getZIndex();
+        layersAtPixel.push({olUID, zIndex});
+      });
+      layersAtPixel.sort((a, b) => b.zIndex - a.zIndex);
+      try {
+        const topLayer = layersAtPixel[0] ?? null;
+        if (topLayer != null) {
+          const directive = this.getDirective(topLayer.olUID);
+          if (directive && directive.onClick) {
+            directive.onClick(evt);
+          } else {
+            console.warn('No directive or onClick method found for layer:', topLayer.olUID);
+          }
+        }
+      } catch (_) {
+        console.log(_);
+      }
+    });
     this.map.render();
     this.map.changed();
     this.map.updateSize();

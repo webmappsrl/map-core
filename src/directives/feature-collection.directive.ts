@@ -2,7 +2,7 @@ import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {BehaviorSubject} from 'rxjs';
 import {filter, switchMap} from 'rxjs/operators';
-import {Feature} from 'ol';
+import {Feature, MapBrowserEvent} from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
@@ -83,6 +83,8 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   @Output()
   wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
+  features: Feature<Geometry>[];
+
   constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
     super(mapCmp);
     this._enabled$
@@ -107,15 +109,76 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     });
   }
 
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    if (this._overlay$.value != null) {
+      const feat = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+        layerFilter: l => l === this._featureCollectionLayer,
+        hitTolerance: 10,
+      });
+      const selectedFeature = feat[feat.length - 1] as Feature<Geometry>;
+
+      if (selectedFeature != null) {
+        const prop = selectedFeature.getProperties() ?? null;
+        if (prop != null) {
+          if (prop['clickable'] === true) {
+            if (this._selectedFeature != null) {
+              this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
+              this._selectedFeature = null;
+            }
+            if (this.features.length > 0) {
+              this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
+              this._selectedFeature = selectedFeature;
+            }
+          }
+          if (prop['popup'] != null) {
+            this._resetStyle(this._selectedFeature);
+            this._selectedFeature = selectedFeature;
+            const geometryType = this._selectedFeature.getGeometry().getType();
+            if (geometryType === 'MultiLineString' || geometryType === 'LineString') {
+              this._setStrokeColor(this._selectedFeature, this._overlay$.value.fillColor);
+              this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
+              this._setStrokeWidth(this._selectedFeature, this._overlay$.value.strokeWidth + 20);
+            } else if (geometryType === 'Point') {
+              this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
+            } else if (geometryType === 'MultiPolygon' || geometryType === 'Polygon') {
+              this._setFeatureAphaFillColor(this._selectedFeature, 0.8);
+            }
+            const extent = this._selectedFeature.getGeometry().getExtent();
+            this.mapCmp.map.getView().fit(extent, {
+              duration: 300, // Durata dell'animazione in millisecondi
+              padding: [50, 50, 50, 50], // Margine intorno alla feature
+            });
+            this.wmMapFeatureCollectionPopup.emit(prop['popup']);
+          }
+          if (prop['layer_id'] != null) {
+            this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
+          }
+        } else {
+          this.wmMapFeatureCollectionPopup.emit(null);
+        }
+      } else {
+        this.wmMapFeatureCollectionLayerSelected.emit(null);
+        this.wmMapFeatureCollectionPopup.emit(null);
+        if (this._selectedFeature != null) {
+          this._resetStyle(this._selectedFeature);
+          this._selectedFeature = null;
+        }
+      }
+    } else if (this._selectedFeature != null) {
+      this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
+      this.wmMapFeatureCollectionPopup.emit('');
+    }
+  }
+
   private _buildGeojson(geojson: WmFeatureCollection): void {
     this._resetSelectedFeature();
     let count = 0;
-    const features = new GeoJSON({
+    this.features = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
     const vectorSource = new VectorSource({
       format: new GeoJSON(),
-      features: features,
+      features: this.features,
     });
     if (this._featureCollectionLayer != null && this._featureCollectionLayer.getSource() != null) {
       this._featureCollectionLayer.getSource().clear();
@@ -133,68 +196,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     });
     if (this.mapCmp.map != null) {
       this.mapCmp.map.addLayer(this._featureCollectionLayer);
+      this.mapCmp.registerDirective(this._featureCollectionLayer['ol_uid'], this);
     }
 
-    this.mapCmp.map.on('click', e => {
-      if (this._overlay$.value != null) {
-        const feat = this.mapCmp.map.getFeaturesAtPixel(e.pixel, {
-          layerFilter: l => l === this._featureCollectionLayer,
-          hitTolerance: 10,
-        });
-        const selectedFeature = feat[feat.length - 1] as Feature<Geometry>;
-
-        if (selectedFeature != null) {
-          const prop = selectedFeature.getProperties() ?? null;
-          if (prop != null) {
-            if (prop['clickable'] === true) {
-              if (this._selectedFeature != null) {
-                this._featureCollectionLayer.getSource().addFeature(this._selectedFeature);
-                this._selectedFeature = null;
-              }
-              if (features.length > 0) {
-                this._featureCollectionLayer.getSource().removeFeature(selectedFeature);
-                this._selectedFeature = selectedFeature;
-              }
-            }
-            if (prop['popup'] != null) {
-              this._resetStyle(this._selectedFeature);
-              this._selectedFeature = selectedFeature;
-              const geometryType = this._selectedFeature.getGeometry().getType();
-              if (geometryType === 'MultiLineString' || geometryType === 'LineString') {
-                this._setStrokeColor(this._selectedFeature, this._overlay$.value.fillColor);
-                this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
-                this._setStrokeWidth(this._selectedFeature, this._overlay$.value.strokeWidth + 20);
-              } else if (geometryType === 'Point') {
-                this._setFillColor(this._selectedFeature, this._overlay$.value.strokeColor);
-              } else if (geometryType === 'MultiPolygon' || geometryType === 'Polygon') {
-                this._setFeatureAphaFillColor(this._selectedFeature, 0.8);
-              }
-              const extent = this._selectedFeature.getGeometry().getExtent();
-              this.mapCmp.map.getView().fit(extent, {
-                duration: 300, // Durata dell'animazione in millisecondi
-                padding: [50, 50, 50, 50], // Margine intorno alla feature
-              });
-              this.wmMapFeatureCollectionPopup.emit(prop['popup']);
-            }
-            if (prop['layer_id'] != null) {
-              this.wmMapFeatureCollectionLayerSelected.emit(prop['layer_id']);
-            }
-          } else {
-            this.wmMapFeatureCollectionPopup.emit(null);
-          }
-        } else {
-          this.wmMapFeatureCollectionLayerSelected.emit(null);
-          this.wmMapFeatureCollectionPopup.emit(null);
-          if (this._selectedFeature != null) {
-            this._resetStyle(this._selectedFeature);
-            this._selectedFeature = null;
-          }
-        }
-      } else if (this._selectedFeature != null) {
-        this._selectedFeature.setStyle(this.getStyle(this._selectedFeature));
-        this.wmMapFeatureCollectionPopup.emit('');
-      }
-    });
     this.mapCmp.map.getView().on('change:resolution', () => {
       this._updateFeaturesStyle();
     });

@@ -2,7 +2,7 @@ import {WmFeatureCollection} from '@wm-types/feature';
 import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {filter, switchMap, take} from 'rxjs/operators';
-import {Feature} from 'ol';
+import {Feature, MapBrowserEvent} from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
@@ -56,6 +56,30 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     super(mapCmp);
   }
 
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    const feats = this.mapCmp.map
+      .getFeaturesAtPixel(evt.pixel, {hitTolerance: 30})
+      .filter(f => f.getProperties().carg_code != null);
+    if (feats.length > 0) {
+      const newSelectedFeature = feats[0] as Feature<Geometry>;
+      if (this._selectedFeature != null) {
+        if (this._selectedFeature.getId() === newSelectedFeature.getId()) {
+          return;
+        } else {
+          this._selectedFeature.setStyle(this.unselectedStyle());
+        }
+      }
+      this._selectedFeature = newSelectedFeature;
+      const prop = this._selectedFeature?.getProperties() ?? null;
+      const hitMapfeatureCollections = prop['featureCollections'];
+      this._selectedFeature.setStyle(this.selectedStyle());
+      this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections}));
+      this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
+    } else {
+      this._resetFeaturesStyle();
+    }
+  }
+
   private _buildGeojson(geojson: WmFeatureCollection): void {
     geojson.features.map(f => {
       f.properties;
@@ -84,31 +108,9 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     });
     if (this.mapCmp.map != null) {
       this.mapCmp.map.addLayer(this._hitMapLayer);
+      this.mapCmp.registerDirective(this._hitMapLayer['ol_uid'], this);
     }
 
-    this.mapCmp.map.on('click', e => {
-      const feats = this.mapCmp.map
-        .getFeaturesAtPixel(e.pixel, {hitTolerance: 30})
-        .filter(f => f.getProperties().carg_code != null);
-      if (feats.length > 0) {
-        const newSelectedFeature = feats[0] as Feature<Geometry>;
-        if (this._selectedFeature != null) {
-          if (this._selectedFeature.getId() === newSelectedFeature.getId()) {
-            return;
-          } else {
-            this._selectedFeature.setStyle(this.unselectedStyle());
-          }
-        }
-        this._selectedFeature = newSelectedFeature;
-        const prop = this._selectedFeature?.getProperties() ?? null;
-        const hitMapfeatureCollections = prop['featureCollections'];
-        this._selectedFeature.setStyle(this.selectedStyle());
-        this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections}));
-        this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
-      } else {
-        this._resetFeaturesStyle();
-      }
-    });
     this.mapCmp.map.getView().on('change:resolution', () => {});
   }
 

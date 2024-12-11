@@ -41,6 +41,7 @@ import {FeatureCollection} from 'geojson';
 import GeoJSON from 'ol/format/GeoJSON';
 import Collection from 'ol/Collection';
 import {WmFeature} from '@wm-types/feature';
+import {MapBrowserEvent} from 'ol';
 
 @Directive({
   selector: '[wmMapTrackRelatedPois]',
@@ -176,26 +177,6 @@ export class WmMapTrackRelatedPoisDirective
    */
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
-    this.mapCmp.isInit$
-      .pipe(
-        filter(f => f === true),
-        take(1),
-      )
-      .subscribe(() => {
-        this.mapCmp.map.on('click', event => {
-          this._deselectCurrentPoi();
-          const poiFeature = nearestFeatureOfLayer(this._poisLayer, event, this.mapCmp.map);
-          if (poiFeature) {
-            preventDefault(event);
-            stopPropagation(event);
-            const currentID = +poiFeature.getId() || -1;
-            this.currentRelatedPoi$.next(this._getPoi(currentID));
-            this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
-            this.poiClick.emit(currentID);
-            this.setPoi = currentID;
-          }
-        });
-      });
   }
 
   /**
@@ -267,6 +248,20 @@ export class WmMapTrackRelatedPoisDirective
     this._onClickSub.unsubscribe();
   }
 
+  onClick(evt: MapBrowserEvent<UIEvent>) {
+    this._deselectCurrentPoi();
+    const poiFeature = nearestFeatureOfLayer(this._poisLayer, evt, this.mapCmp.map);
+    if (poiFeature) {
+      preventDefault(event);
+      stopPropagation(event);
+      const currentID = +poiFeature.getId() || -1;
+      this.currentRelatedPoi$.next(this._getPoi(currentID));
+      this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);
+      this.poiClick.emit(currentID);
+      this.setPoi = currentID;
+    }
+  }
+
   /**
    * @description
    * Switches to the next point of interest (POI).
@@ -306,6 +301,7 @@ export class WmMapTrackRelatedPoisDirective
   private async _addPoisMarkers(poiCollection: WmFeature<Point>[]): Promise<void> {
     this._poisLayer = createLayer(this._poisLayer, CLUSTER_ZINDEX);
     this.mapCmp.map.addLayer(this._poisLayer);
+    this.mapCmp.registerDirective(this._poisLayer['ol_uid'], this);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
       if (!poiCollection?.find(x => x.properties.id + '' === ov.id)) {

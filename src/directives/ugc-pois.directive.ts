@@ -27,7 +27,6 @@ import {Feature, MapBrowserEvent} from 'ol';
 import {Point as OlPoint} from 'ol/geom';
 import {Point} from 'geojson';
 import {fromLonLat} from 'ol/proj';
-import {FitOptions} from 'ol/View';
 import {WmFeature} from '@wm-types/feature';
 import {Cluster} from 'ol/source';
 import Popup from 'ol-ext/overlay/Popup';
@@ -45,7 +44,6 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _popupOverlay: Popup;
   private _selectCluster: any;
   private _selectedUgcPoiLayer: VectorLayer<VectorSource>;
-  private _ugcPoisClusterLayer: VectorLayer<Cluster>;
   private _wmMapUgcPois: BehaviorSubject<WmFeature<Point>[]> = new BehaviorSubject<
     WmFeature<Point>[]
   >([]);
@@ -63,6 +61,8 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() wmMapUgcPoi: number | 'reset';
   @Input() wmMapUgcUnselectedPoi: boolean;
   @Output() currentUgcPoiEvt: EventEmitter<any> = new EventEmitter<any>();
+
+  _ugcPoisClusterLayer: VectorLayer<Cluster>;
 
   constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -104,10 +104,40 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
       });
   }
 
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    this._ugcPoisClusterLayer.getFeatures(evt.pixel).then(features => {
+      if (features.length > 0) {
+        this.mapCmp.map.addInteraction(this._selectCluster);
+        this._selectCluster.getFeatures().on(['add'], e => {
+          var c = e.element.get('features');
+          if (c != null && c.length === 1) {
+            const poi = c[0].getProperties();
+            this._selectIcon(poi);
+          }
+        });
+        const clusterMembers = features[0].get('features');
+        const view = this.mapCmp.map.getView();
+        if (clusterMembers.length > 3) {
+          setTimeout(() => {
+            // Zoom to the extent of the cluster members.
+            const extent = createEmpty();
+            clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
+            view.fit(extent, {duration: 500, padding: PADDING});
+          }, 400);
+        }
+        if (clusterMembers.length === 1) {
+          const poiFeature = clusterMembers[0].getProperties();
+          this._selectIcon(poiFeature);
+        }
+      }
+    });
+  }
+
   private _addPoisLayer(poiFeatureCollection: WmFeature<Point>[]): void {
     const iconFeatures = [];
     clearLayer(this._wmMapUgcPoisLayer);
     const clusterSource: Cluster = this._ugcPoisClusterLayer.getSource();
+    this._ugcPoisClusterLayer.set('onClick', this.onClick);
     const featureSource = clusterSource.getSource();
     featureSource.clear();
     if (poiFeatureCollection) {
@@ -156,12 +186,13 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _initLayer(): void {
-    (this._ugcPoisClusterLayer = createCluster(this._ugcPoisClusterLayer, CLUSTER_ZINDEX, {
+    this._ugcPoisClusterLayer = createCluster(this._ugcPoisClusterLayer, CLUSTER_ZINDEX, {
       r: 202,
       g: 21,
       b: 81,
-    })),
-      (this._wmMapUgcPoisLayer = createLayer(this._wmMapUgcPoisLayer, UGC_POI_ZINDEX));
+    });
+    this._wmMapUgcPoisLayer = createLayer(this._wmMapUgcPoisLayer, UGC_POI_ZINDEX);
+    this._wmMapUgcPoisLayer.set('name', 'ugc-pois');
     this._selectedUgcPoiLayer = createLayer(this._selectedUgcPoiLayer, UGC_POI_ZINDEX + 100);
     const clusterSource: Cluster = this._ugcPoisClusterLayer.getSource();
     this._hullClusterLayer = new VectorLayer({
@@ -188,35 +219,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._wmMapUgcPoisLayer);
     this.mapCmp.map.addLayer(this._selectedUgcPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
-
-    this.mapCmp.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
-      this._ugcPoisClusterLayer.getFeatures(event.pixel).then(features => {
-        if (features.length > 0) {
-          this.mapCmp.map.addInteraction(this._selectCluster);
-          this._selectCluster.getFeatures().on(['add'], e => {
-            var c = e.element.get('features');
-            if (c != null && c.length === 1) {
-              const poi = c[0].getProperties();
-              this._selectIcon(poi);
-            }
-          });
-          const clusterMembers = features[0].get('features');
-          const view = this.mapCmp.map.getView();
-          if (clusterMembers.length > 3) {
-            setTimeout(() => {
-              // Zoom to the extent of the cluster members.
-              const extent = createEmpty();
-              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
-              view.fit(extent, {duration: 500, padding: PADDING});
-            }, 400);
-          }
-          if (clusterMembers.length === 1) {
-            const poiFeature = clusterMembers[0].getProperties();
-            this._selectIcon(poiFeature);
-          }
-        }
-      });
-    });
+    this.mapCmp.registerDirective(this._ugcPoisClusterLayer['ol_uid'], this);
   }
 
   private _selectIcon(currentPoi: any): void {

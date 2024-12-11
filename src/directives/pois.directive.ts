@@ -123,6 +123,35 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       });
   }
 
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    this._poisClusterLayer.getFeatures(evt.pixel).then(features => {
+      if (features.length > 0) {
+        this.mapCmp.map.addInteraction(this._selectCluster);
+        this._selectCluster.getFeatures().on(['add'], e => {
+          var c = e.element.get('features');
+          if (c != null && c.length === 1) {
+            const poi = c[0].getProperties();
+            this._selectIcon(poi);
+          }
+        });
+        const clusterMembers = features[0].get('features');
+        if (clusterMembers.length > 4) {
+          setTimeout(() => {
+            // Zoom to the extent of the cluster members.
+            const view = this.mapCmp.map.getView();
+            const extent = createEmpty();
+            clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
+            view.fit(extent, {duration: 500, padding: PADDING});
+          }, 400);
+        }
+        if (clusterMembers.length === 1) {
+          const poi = clusterMembers[0].getProperties();
+          this._selectIcon(poi);
+        }
+      }
+    });
+  }
+
   /**
    * @description
    * This function sets a Point of Interest (POI) on a map.
@@ -357,35 +386,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._hullClusterLayer);
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
+    this.mapCmp.registerDirective(this._poisClusterLayer['ol_uid'], this);
 
-    this.mapCmp.map.on('click', (event: MapBrowserEvent<UIEvent>) => {
-      this._poisClusterLayer.getFeatures(event.pixel).then(features => {
-        if (features.length > 0) {
-          this.mapCmp.map.addInteraction(this._selectCluster);
-          this._selectCluster.getFeatures().on(['add'], e => {
-            var c = e.element.get('features');
-            if (c != null && c.length === 1) {
-              const poi = c[0].getProperties();
-              this._selectIcon(poi);
-            }
-          });
-          const clusterMembers = features[0].get('features');
-          if (clusterMembers.length > 4) {
-            setTimeout(() => {
-              // Zoom to the extent of the cluster members.
-              const view = this.mapCmp.map.getView();
-              const extent = createEmpty();
-              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
-              view.fit(extent, {duration: 500, padding: PADDING});
-            }, 400);
-          }
-          if (clusterMembers.length === 1) {
-            const poi = clusterMembers[0].getProperties();
-            this._selectIcon(poi);
-          }
-        }
-      });
-    });
     this.mapCmp.map.once('rendercomplete', () => {
       this.wmMapStateEvt.emit('rendering:pois_done');
     });

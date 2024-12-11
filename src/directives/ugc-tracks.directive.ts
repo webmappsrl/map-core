@@ -16,10 +16,11 @@ import {LineString} from 'geojson';
   selector: '[wmMapUgcTracks]',
 })
 export class WmMapUcgTracksDirective extends WmMapBaseDirective {
-  private _ugcTrackLayer: VectorLayer<VectorSource>;
   private _wmMapUgcTracks: BehaviorSubject<WmFeature<LineString>[]> = new BehaviorSubject<
     WmFeature<LineString>[]
   >([]);
+
+  protected _ugcTrackLayer: VectorLayer<VectorSource>;
 
   @Input() set wmMapUgcTrackDisableLayer(disabled: boolean) {
     this._ugcTrackLayer?.setVisible(!disabled);
@@ -51,23 +52,6 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
               this._addTracksLayer(t);
             });
         });
-        this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-          try {
-            this.mapCmp.map.forEachFeatureAtPixel(
-              evt.pixel,
-              function (clickedFeature) {
-                const clickedUgcTracProperties = clickedFeature?.getProperties();
-                const clickedUgcTrackId: string = clickedUgcTracProperties?.id ?? undefined;
-                if (clickedUgcTrackId && clickedUgcTracProperties.uuid) {
-                  this.ugcTrackSelectedFromMapEVT.emit(clickedUgcTrackId);
-                }
-              }.bind(this),
-              {
-                hitTolerance: 50,
-              },
-            );
-          } catch (_) {}
-        });
       });
   }
 
@@ -87,6 +71,19 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
           this._addTracksLayer(changes.wmMapUgcTracks.currentValue);
         }
       });
+  }
+
+  onClick(evt: MapBrowserEvent<UIEvent>): void {
+    this._ugcTrackLayer.getFeatures(evt.pixel).then(features => {
+      if (features.length > 0) {
+        const clickedFeature = features[0];
+        const clickedUgcTracProperties = clickedFeature?.getProperties();
+        const clickedUgcTrackId: string = clickedUgcTracProperties?.id ?? undefined;
+        if (clickedUgcTrackId && clickedUgcTracProperties.uuid) {
+          this.ugcTrackSelectedFromMapEVT.emit(clickedUgcTrackId);
+        }
+      }
+    });
   }
 
   private _addTracksLayer(tracks: WmFeature<LineString>[]): void {
@@ -118,6 +115,8 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
         updateWhileInteracting: true,
         zIndex: UGC_TRACK_ZINDEX,
       });
+      this._ugcTrackLayer.set('name', 'ugcTrackLayer');
+      this.mapCmp.registerDirective(this._ugcTrackLayer['ol_uid'], this);
     }
   }
 }
