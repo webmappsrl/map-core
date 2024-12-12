@@ -186,7 +186,6 @@ export class WmMapTrackRelatedPoisDirective
       .subscribe(() => {
         this.mapCmp.map.on('click', event => {
           this.onClick(event);
-          stopPropagation(event);
         });
       });
   }
@@ -264,8 +263,8 @@ export class WmMapTrackRelatedPoisDirective
     this._deselectCurrentPoi();
     const poiFeature = nearestFeatureOfLayer(this._poisLayer, evt, this.mapCmp.map);
     if (poiFeature) {
-      preventDefault(event);
-      stopPropagation(event);
+      preventDefault(evt);
+      stopPropagation(evt);
       const currentID = +poiFeature.getId() || -1;
       this.currentRelatedPoi$.next(this._getPoi(currentID));
       this.relatedPoiEvt.emit(this.currentRelatedPoi$.value);

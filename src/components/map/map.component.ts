@@ -37,8 +37,8 @@ import {
   scaleUnits,
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
-import {stopPropagation} from 'ol/events/Event';
-import {ActivatedRoute, Route} from '@angular/router';
+import {ActivatedRoute} from '@angular/router';
+import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
 
 @Component({
   selector: 'wm-map',
@@ -49,6 +49,7 @@ import {ActivatedRoute, Route} from '@angular/router';
 })
 export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   private _centerExtent: Extent;
+  private _customDrawDirective: wmMapCustomTrackDrawTrackDirective;
   private _directiveRegistry = new Map();
   private _view: View;
 
@@ -224,6 +225,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       maxZoom: this._view.getZoom(),
       duration: 1500,
     });
+  }
+
+  setCustomDrawDirective(directive: wmMapCustomTrackDrawTrackDirective): void {
+    this._customDrawDirective = directive;
   }
 
   /**
