@@ -179,6 +179,10 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
   }
 
+  isEnabled(): boolean {
+    return this._enabled$.value;
+  }
+
   onClick(evt: MapBrowserEvent<UIEvent>): void {
     if (this._enabled$.value) {
       this._popoverRef.instance.message$.next(null);
@@ -297,7 +301,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         });
         this.mapCmp.map.addLayer(this._customPoiLayer);
         this.mapCmp.map.getRenderer();
-        this.mapCmp.registerDirective(this._customTrackLayer['ol_uid'], this);
+        this.mapCmp.setCustomDrawDirective(this);
       }
     }
   }

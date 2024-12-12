@@ -37,8 +37,8 @@ import {
   scaleUnits,
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
-import {stopPropagation} from 'ol/events/Event';
-import {ActivatedRoute, Route} from '@angular/router';
+import {ActivatedRoute} from '@angular/router';
+import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
 
 @Component({
   selector: 'wm-map',
@@ -49,6 +49,7 @@ import {ActivatedRoute, Route} from '@angular/router';
 })
 export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   private _centerExtent: Extent;
+  private _customDrawDirective: wmMapCustomTrackDrawTrackDirective;
   private _directiveRegistry = new Map();
   private _view: View;
 
@@ -226,6 +227,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     });
   }
 
+  setCustomDrawDirective(directive: wmMapCustomTrackDrawTrackDirective): void {
+    this._customDrawDirective = directive;
+  }
+
   /**
    * Sets the map overlay.
    * @param overlay The overlay to set.
@@ -380,6 +385,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
     this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       const layersAtPixel: {olUID: string; zIndex: number}[] = [];
+      if (this._customDrawDirective && this._customDrawDirective.isEnabled()) {
+        this._customDrawDirective.onClick(evt);
+        return;
+      }
       try {
         this.map.forEachFeatureAtPixel(evt.pixel, (_, layer) => {
           if (layer == null) return;
