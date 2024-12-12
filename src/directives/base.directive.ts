@@ -3,6 +3,7 @@ import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {Extent} from 'ol/extent';
 import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {FitOptions} from 'ol/View';
+import {take} from 'rxjs/operators';
 
 import {extentFromLonLat} from '../../src/utils';
 import {WmMapComponent} from '../components/map/map.component';
@@ -30,18 +31,31 @@ export class WmMapBaseDirective {
    * @memberof WmMapBaseDirective
    */
   fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    if (this.mapCmp.map != null) {
+    const stack = new Error().stack;
+    const caller = stack?.split('\n')[2]?.trim();
+
+    if (this.mapCmp.map == null) return;
+
+    this.mapCmp.queryParams$.pipe(take(1)).subscribe(params => {
+      const keys = Object.keys(params);
+
+      // Determina se eseguire il fit in base alle condizioni
+      const shouldFit =
+        (keys.length > 1 && caller?.includes('WmMapTrackDirective')) || keys.length <= 1;
+
+      if (!shouldFit) return;
+
       const view = this.mapCmp.map.getView();
-      if (view != null) {
-        if (optOptions == null) {
-          optOptions = {
-            duration: 500,
-            padding: this.wmMapPadding ?? undefined,
-          };
-        }
-        view.fit(geometryOrExtent as any, optOptions);
-      }
-    }
+      if (view == null) return;
+
+      // Imposta le opzioni di fit di default se non sono state passate
+      optOptions = optOptions ?? {
+        duration: 500,
+        padding: this.wmMapPadding ?? undefined,
+      };
+
+      view.fit(geometryOrExtent as any, optOptions);
+    });
   }
 
   /**
@@ -58,19 +72,16 @@ export class WmMapBaseDirective {
    */
   fitViewFromLonLat(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
     if (this.mapCmp.map != null) {
-      const view = this.mapCmp.map.getView();
-      if (view != null) {
-        if (optOptions == null) {
-          optOptions = {
-            padding: this.wmMapPadding ?? undefined,
-            maxZoom: this.wmMapConf.maxZoom,
-            duration: 500,
-            nearest: true,
-          };
-        }
+      if (optOptions == null) {
+        optOptions = {
+          padding: this.wmMapPadding ?? undefined,
+          maxZoom: this.wmMapConf.maxZoom,
+          duration: 500,
+          nearest: true,
+        };
 
         this.mapCmp.map.once('rendercomplete', () => {
-          view.fit(extentFromLonLat(geometryOrExtent as any), optOptions);
+          this.fitView(extentFromLonLat(geometryOrExtent as any), optOptions);
         });
       }
     }

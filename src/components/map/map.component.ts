@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {delay, filter, take} from 'rxjs/operators';
+import {delay, filter, shareReplay, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
 import Collection from 'ol/Collection';
@@ -38,6 +38,7 @@ import {
 } from '../../readonly/constants';
 import {IMAP} from '../../types/model';
 import {stopPropagation} from 'ol/events/Event';
+import {ActivatedRoute, Route} from '@angular/router';
 
 @Component({
   selector: 'wm-map',
@@ -88,10 +89,11 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   map: Map;
   map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
   mapDegrees: number;
+  queryParams$ = this._route.queryParams.pipe(shareReplay(1));
   tileLayers: TileLayer<XYZ>[] = [];
   wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
-  constructor() {}
+  constructor(private _route: ActivatedRoute) {}
 
   /**
    * @description
@@ -403,6 +405,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
         console.log(_);
       }
     });
+
     this.map.render();
     this.map.changed();
     this.map.updateSize();
