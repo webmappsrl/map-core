@@ -101,6 +101,14 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         if (changes.wmMapUgcUnselectedPoi != null) {
           clearLayer(this._selectedUgcPoiLayer);
         }
+        if (
+          changes.wmMapUgcPois &&
+          changes.wmMapUgcPois.previousValue != null &&
+          changes.wmMapUgcPois.currentValue != null &&
+          changes.wmMapUgcPois.previousValue.length != changes.wmMapUgcPois.currentValue.length
+        ) {
+          this._addPoisLayer(changes.wmMapUgcPois.currentValue);
+        }
       });
   }
 
