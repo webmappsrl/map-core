@@ -385,10 +385,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
     this.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       const layersAtPixel: {olUID: string; zIndex: number}[] = [];
-      if (this._customDrawDirective && this._customDrawDirective.isEnabled()) {
-        this._customDrawDirective.onClick(evt);
-        return;
-      }
       try {
         this.map.forEachFeatureAtPixel(evt.pixel, (_, layer) => {
           if (layer == null) return;

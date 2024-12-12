@@ -31,6 +31,7 @@ import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent, WmMapPopover} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
+import { stopPropagation } from 'ol/events/Event';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
@@ -170,6 +171,10 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     });
     this._customTrackLayer.setVisible(this._enabled$.value);
     this._initPopover();
+
+    this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
+      this.onClick(evt);
+    });
   }
 
   _initPopover(): void {
@@ -177,10 +182,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._popoverRef.setInput('cssClass', 'draw-path-alert');
     const host = this._element.nativeElement;
     host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
-  }
-
-  isEnabled(): boolean {
-    return this._enabled$.value;
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
@@ -249,6 +250,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
           this._customTrackLayer.getSource().clear();
         }
         this._redrawPoints();
+        stopPropagation(evt);
       } catch (err) {
         console.error(err);
       }
@@ -301,7 +303,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         });
         this.mapCmp.map.addLayer(this._customPoiLayer);
         this.mapCmp.map.getRenderer();
-        this.mapCmp.setCustomDrawDirective(this);
       }
     }
   }
