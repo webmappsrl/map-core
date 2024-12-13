@@ -524,9 +524,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             duration: 0,
           });
           // Dopo un breve intervallo, zoom fino al livello massimo desiderato
-          setTimeout(() => {
-            this.fitView(geometry as any);
-          }, 600); // Intervallo tra i due zoom (puoi regolarlo)
+// Intervallo tra i due zoom (puoi regolarlo)
         } else {
           // Se lo zoom target è <= 13, esegui un singolo zoom
           this.fitView(geometry as any);
