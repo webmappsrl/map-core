@@ -1,6 +1,5 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "prettier.singleQuote": true,
   "prettier.configPath": ".prettierrc",
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
