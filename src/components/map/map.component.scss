@@ -62,6 +62,25 @@ wm-map {
         margin: 7px;
       }
     }
+    .bottom {
+      position: absolute;
+      right: 0;
+      left: 0;
+      bottom: 4px;
+      z-index: 2;
+      display: inline-flex;
+      flex-direction: row-reverse;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-content: stretch;
+      align-items: flex-start;
+      > * {
+        order: 0;
+        flex: 0 1 auto;
+        align-self: auto;
+        margin-left: 10px;
+      }
+    }
     .top-right {
       position: absolute;
       right: 22px;

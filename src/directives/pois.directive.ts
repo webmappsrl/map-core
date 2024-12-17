@@ -85,6 +85,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
               this.mapCmp.map.once('rendercomplete', () => {
                 this._renderPois(features);
                 this._updatePois();
+                this.wmMapStateEvt.emit('rendering:pois_done');
               });
             }
           });
@@ -387,10 +388,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
     this.mapCmp.registerDirective(this._poisClusterLayer['ol_uid'], this);
-
-    this.mapCmp.map.once('rendercomplete', () => {
-      this.wmMapStateEvt.emit('rendering:pois_done');
-    });
   }
 
   private _isArrayContained(needle: any[], haystack: any[]): boolean {
@@ -524,7 +521,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             duration: 0,
           });
           // Dopo un breve intervallo, zoom fino al livello massimo desiderato
-// Intervallo tra i due zoom (puoi regolarlo)
+          // Intervallo tra i due zoom (puoi regolarlo)
         } else {
           // Se lo zoom target è <= 13, esegui un singolo zoom
           this.fitView(geometry as any);
