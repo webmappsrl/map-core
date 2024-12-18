@@ -178,21 +178,6 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
   }
 
-  private _checkZoom(layer: VectorLayer<any>): void {
-    if (!this._disabled) {
-      const view = this.mapCmp.map.getView();
-      if (view != null && this.wmMapConf != null) {
-        const newZoom = +view.getZoom();
-        const poisMinZoom = +this.wmMapConf?.pois?.poiMinZoom || 15;
-        if (newZoom >= poisMinZoom) {
-          layer.setVisible(true);
-        } else {
-          layer.setVisible(false);
-        }
-      }
-    }
-  }
-
   private _initLayer(): void {
     this._ugcPoisClusterLayer = createCluster(this._ugcPoisClusterLayer, CLUSTER_ZINDEX, {
       r: 202,
