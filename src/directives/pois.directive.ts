@@ -62,7 +62,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() WmMapPoisUnselectPoi: boolean;
   @Input() wmMapInputTyped: string;
   @Input() wmMapPoisFilters: any[] = [];
-  @Input() wmMapPoisPoi: number | 'reset';
+  @Input() wmMapPoisPoi: number | 'reset' | null;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {

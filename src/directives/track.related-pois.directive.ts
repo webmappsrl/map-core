@@ -208,7 +208,6 @@ export class WmMapTrackRelatedPoisDirective
    * @param changes The SimpleChanges object containing the changed properties.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    console.group(changes);
     const resetCondition =
       (changes.track &&
         changes.track.previousValue != null &&
@@ -552,8 +551,6 @@ export class WmMapTrackRelatedPoisDirective
         id: poi.properties.id,
       };
       return marker;
-    } else {
-      console.log('puppa');
     }
   }
 
