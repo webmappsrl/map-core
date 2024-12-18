@@ -22,7 +22,7 @@ import {FitOptions} from 'ol/View';
 
 import {preventDefault, stopPropagation} from 'ol/events/Event';
 import VectorSource from 'ol/source/Vector';
-import {filter, take} from 'rxjs/operators';
+import {debounceTime, filter, switchMap, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
 import {
   addFeatureToLayer,
@@ -37,9 +37,7 @@ import {
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_LINE_COLOR, ICN_PATH, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
-import {FeatureCollection} from 'geojson';
 import GeoJSON from 'ol/format/GeoJSON';
-import Collection from 'ol/Collection';
 import {WmFeature} from '@wm-types/feature';
 import {MapBrowserEvent} from 'ol';
 
@@ -51,7 +49,7 @@ export class WmMapTrackRelatedPoisDirective
   implements OnChanges, OnDestroy
 {
   private _defaultFeatureColor = DEF_LINE_COLOR;
-  private _initPois;
+  private _initPois$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _lastID = null;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poiIcons: {[identifier: string]: string} = {};
@@ -82,21 +80,30 @@ export class WmMapTrackRelatedPoisDirective
    * If the ID is -1, the selectedPoiLayer is removed and related events are emitted.
    * @param id The ID of the POI or 'reset' value.
    */
-  @Input('poi') set setPoi(id: number | 'reset') {
-    if (id === -1 && this._selectedPoiLayer != null) {
-      this.mapCmp.map.removeLayer(this._selectedPoiLayer);
-      this._selectedPoiLayer = undefined;
-      this.relatedPoiEvt.next(null);
-    } else if (id != this._lastID) {
-      const currentPoi = this._poiMarkers.find(p => +p.id === +id);
-      this._lastID = id;
-      if (currentPoi != null) {
-        this._fitView(currentPoi.icon.getGeometry() as any);
-        this._selectCurrentPoi(currentPoi);
-        this.currentRelatedPoi$.next(this._getPoi(+id));
-        this.relatedPoiEvt.next(this.currentRelatedPoi$.value);
-      }
-    }
+  @Input('related-current-ec-poi-id') set setPoi(id: number | 'reset') {
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f),
+        switchMap(() => this._initPois$),
+        filter(f => f),
+        debounceTime(500),
+        take(1),
+      )
+      .subscribe(() => {
+        if (id === -1 && this._selectedPoiLayer != null) {
+          this.mapCmp.map.removeLayer(this._selectedPoiLayer);
+          this._selectedPoiLayer = undefined;
+          this.relatedPoiEvt.next(null);
+        } else if (id != this._lastID) {
+          const currentPoi = this._poiMarkers.find(p => +p.id === +id);
+          this._lastID = id;
+          if (currentPoi != null) {
+            this._fitView(currentPoi.icon.getGeometry() as any);
+            this._selectCurrentPoi(currentPoi);
+            this.currentRelatedPoi$.next(this._getPoi(+id));
+          }
+        }
+      });
   }
 
   @Input() set wmMapPoisPois(features: WmFeature<Point>[] | null) {
@@ -201,6 +208,7 @@ export class WmMapTrackRelatedPoisDirective
    * @param changes The SimpleChanges object containing the changed properties.
    */
   ngOnChanges(changes: SimpleChanges): void {
+    console.group(changes);
     const resetCondition =
       (changes.track &&
         changes.track.previousValue != null &&
@@ -212,7 +220,7 @@ export class WmMapTrackRelatedPoisDirective
     // Reset view and initialization of pois if necessary
     if (this.track == null || this.mapCmp.map == null || resetCondition) {
       this._resetView();
-      this._initPois = false;
+      this._initPois$.next(false);
     }
     // Initialize pois if track and related_pois are available
     const currentTrack = changes.track != null ? changes.track.currentValue : null;
@@ -220,20 +228,23 @@ export class WmMapTrackRelatedPoisDirective
       currentTrack != null &&
       currentTrack.properties != null &&
       currentTrack.properties.related_pois != null &&
-      this.mapCmp.map != null &&
-      this._initPois === false
+      this._initPois$.value === false
     ) {
-      setTimeout(() => {
-        this._resetView();
-        this._relatedPois = currentTrack.properties.related_pois;
-        this._addPoisMarkers(this._relatedPois);
-        calculateNearestPoint(
-          this.wmMapPositioncurrentLocation as any,
-          this._poisLayer,
-          this.wmMapTrackRelatedPoisAlertPoiRadius,
-        );
-        this._initPois = true;
-      }, 600); // TODO remove timeout move logic inside contructor after map is initialized
+      this.mapCmp.isInit$
+        .pipe(
+          filter(f => f === true),
+          take(1),
+        )
+        .subscribe(() => {
+          this._resetView();
+          this._relatedPois = currentTrack.properties.related_pois;
+          this._addPoisMarkers(this._relatedPois);
+          calculateNearestPoint(
+            this.wmMapPositioncurrentLocation as any,
+            this._poisLayer,
+            this.wmMapTrackRelatedPoisAlertPoiRadius,
+          );
+        }); // TODO remove timeout move logic inside contructor after map is initialized
     }
     // Calculate nearest poi when currentLocation changes
     if (
@@ -326,6 +337,7 @@ export class WmMapTrackRelatedPoisDirective
         addFeatureToLayer(this._poisLayer, marker.icon);
       }
     }
+    this._initPois$.next(true);
   }
 
   /**
