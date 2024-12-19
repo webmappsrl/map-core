@@ -388,6 +388,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
     this.mapCmp.registerDirective(this._poisClusterLayer['ol_uid'], this);
+    this._poisClusterLayer?.setVisible(!this._disabled);
   }
 
   private _isArrayContained(needle: any[], haystack: any[]): boolean {

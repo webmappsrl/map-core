@@ -76,7 +76,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   @Input() set wmMapLayerDisableLayers(disable: boolean) {
     this._disabled = disable;
     if (this._vectorTileLayer != null) {
-      this._vectorTileLayer.setVisible(!disable);
+      this._vectorTileLayer.setVisible(!this._disabled);
     }
   }
 
@@ -246,6 +246,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this.mapCmp.map.addLayer(this._vectorTileLayer);
       this.mapCmp.map.addLayer(this._animatedVectorLayer);
       this.mapCmp.registerDirective(this._vectorTileLayer['ol_uid'], this);
+      this._vectorTileLayer.setVisible(!this._disabled);
     }
   }
 
