@@ -31,7 +31,9 @@ import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent, WmMapPopover} from '../components';
 import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
-import { stopPropagation } from 'ol/events/Event';
+import {stopPropagation} from 'ol/events/Event';
+import {WmFeature} from '@wm-types/feature';
+import {LineString} from 'geojson';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
@@ -106,7 +108,9 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
   @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input() wmMapCustomTrackDrawTrackHost: string;
-  @Output() currentCustomTrack: EventEmitter<any> = new EventEmitter<any>();
+  @Output() currentCustomTrack: EventEmitter<WmFeature<LineString>> = new EventEmitter<
+    WmFeature<LineString>
+  >();
 
   reset$ = new Subject();
 
@@ -206,16 +210,22 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
         if (this._points.length > 1) {
           this._graphHopperRoutingObj.doRequest({points: this._points}).then(
             (res: GraphHopperResponse) => {
-              this._customTrack.geometry = res.paths[0].points;
-              this._customTrack.properties.ascent = res.paths[0].ascend
-                ? Math.round(res.paths[0].ascend)
-                : this._customTrack.properties.ascent;
-              this._customTrack.properties.descent = res.paths[0].descend
-                ? Math.round(res.paths[0].descend)
-                : this._customTrack.properties.descent;
-              this._customTrack.properties.distance = res.paths[0].distance
-                ? res.paths[0].distance / 1000
-                : this._customTrack.properties.distance;
+              this._customTrack = {
+                ...this._customTrack,
+                geometry: res.paths[0].points ?? [],
+                properties: {
+                  ...this._customTrack.properties,
+                  ascent: res.paths[0].ascend
+                    ? Math.round(res.paths[0].ascend)
+                    : this._customTrack.properties.ascent,
+                  descent: res.paths[0].descend
+                    ? Math.round(res.paths[0].descend)
+                    : this._customTrack.properties.descent,
+                  distance: res.paths[0].distance
+                    ? res.paths[0].distance / 1000
+                    : this._customTrack.properties.distance,
+                },
+              };
               let time: number =
                 res.paths[0].distance && res.paths[0].ascend
                   ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
