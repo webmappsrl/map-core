@@ -57,6 +57,8 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
+    this.mapCmp.wmMapEmptyClickEVT$.emit();
+
     const feats = this.mapCmp.map
       .getFeaturesAtPixel(evt.pixel, {hitTolerance: 30})
       .filter(f => f.getProperties().carg_code != null);
