@@ -78,6 +78,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     MapBrowserEvent<UIEvent>
   >();
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
+  @Output() wmMapEmptyClickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter();
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois' | 'ugc'; toggle: boolean}> =
@@ -402,6 +403,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
             } else {
               console.warn('No directive or onClick method found for layer:', topLayer.olUID);
             }
+          } else {
+            this.wmMapEmptyClickEVT$.emit(evt);
           }
         } catch (_) {
           console.log(_);

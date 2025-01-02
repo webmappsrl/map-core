@@ -107,6 +107,9 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
       this._partitionToggleState = partitionToggleState;
       this._updateFeaturesStyle();
     });
+    this.mapCmp.wmMapEmptyClickEVT$.subscribe(() => {
+      this.unselect = null;
+    });
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
