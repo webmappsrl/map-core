@@ -37,18 +37,8 @@ export class WmMapBaseDirective {
     if (this.mapCmp.map == null) return;
 
     this.mapCmp.queryParams$.pipe(take(1)).subscribe(params => {
-      const keys = Object.keys(params);
-
-      // Determina se eseguire il fit in base alle condizioni
-      const shouldFit =
-        (keys.length > 1 && caller?.includes('WmMapTrackDirective')) || keys.length <= 1;
-
-      if (!shouldFit) return;
-
       const view = this.mapCmp.map.getView();
       if (view == null) return;
-
-      // Imposta le opzioni di fit di default se non sono state passate
       optOptions = optOptions ?? {
         duration: 500,
         padding: this.wmMapPadding ?? undefined,
