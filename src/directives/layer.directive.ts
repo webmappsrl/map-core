@@ -87,7 +87,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   @Input() set wmMapLayerLayer(l: ILAYER) {
     this._currentLayer = l;
-    const hostname: string = window.location.href;
     if (l != null && l.bbox != null) {
       this.fitViewFromLonLat(l.bbox);
     }

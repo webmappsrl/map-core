@@ -91,6 +91,8 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
       .subscribe(() => {
         if (changes.track && changes?.track.currentValue != null) {
           this.track = changes.track.currentValue;
+        } else if (this.wmMapLayerLayer != null && this.wmMapLayerLayer.bbox) {
+          this.fitViewFromLonLat(this.wmMapLayerLayer.bbox);
         }
         const resetCondition =
           (changes.track &&
