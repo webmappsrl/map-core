@@ -30,13 +30,22 @@ export class WmMapBaseDirective {
    * @param {FitOptions} [optOptions]
    * @memberof WmMapBaseDirective
    */
-  fitView(geometryOrExtent: SimpleGeometry | Extent, optOptions?: FitOptions): void {
-    const stack = new Error().stack;
-    const caller = stack?.split('\n')[2]?.trim();
-
+  fitView(
+    geometryOrExtent: SimpleGeometry | Extent,
+    optOptions?: FitOptions,
+    caller?: string,
+  ): void {
     if (this.mapCmp.map == null) return;
 
     this.mapCmp.queryParams$.pipe(take(1)).subscribe(params => {
+      const keys = Object.keys(params);
+
+      // Determina se eseguire il fit in base alle condizioni
+      const shouldFit =
+        (keys.length > 1 && caller?.includes('WmMapTrackDirective')) || keys.length <= 1;
+
+      if (!shouldFit) return;
+
       const view = this.mapCmp.map.getView();
       if (view == null) return;
       optOptions = optOptions ?? {
