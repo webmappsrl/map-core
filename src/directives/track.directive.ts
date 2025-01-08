@@ -341,83 +341,85 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _init(): void {
     const trackgeojson = this._getGeoJson(this.track);
     const startPosition = trackgeojson.coordinates[0];
-    const endPosition = trackgeojson.coordinates[trackgeojson.coordinates.length - 1];
-    this._startFeature = createIconFeatureFromHtml(startIconHtml, startPosition);
-    this._endFeature = createIconFeatureFromHtml(endIconHtml, endPosition);
-    let drawTrack = true;
-    if (this.wmMapLayerLayer != null && this.wmMapLayerLayer.edges != null) {
-      const edges = this.wmMapLayerLayer.edges;
-      const properties = this.track.properties;
-      const trackID = properties.id;
-      const zIndex = 500;
-      if (trackID != null && edges[trackID] != null) {
-        const edge = edges[trackID];
-        const crossroadsIcon = new Icon({
-          src: 'assets/men-crossroads-icon.svg',
-          scale: 0.08,
-          size: [512, 512],
-        });
-        const moveIcon = new Icon({
-          src: 'assets/walk-next-icon.svg',
-          scale: 0.08,
-          size: [512, 512],
-        });
+    if (startPosition != null) {
+      const endPosition = trackgeojson.coordinates[trackgeojson.coordinates.length - 1];
+      this._startFeature = createIconFeatureFromHtml(startIconHtml, startPosition);
+      this._endFeature = createIconFeatureFromHtml(endIconHtml, endPosition);
+      let drawTrack = true;
+      if (this.wmMapLayerLayer != null && this.wmMapLayerLayer.edges != null) {
+        const edges = this.wmMapLayerLayer.edges;
+        const properties = this.track.properties;
+        const trackID = properties.id;
+        const zIndex = 500;
+        if (trackID != null && edges[trackID] != null) {
+          const edge = edges[trackID];
+          const crossroadsIcon = new Icon({
+            src: 'assets/men-crossroads-icon.svg',
+            scale: 0.08,
+            size: [512, 512],
+          });
+          const moveIcon = new Icon({
+            src: 'assets/walk-next-icon.svg',
+            scale: 0.08,
+            size: [512, 512],
+          });
 
-        drawTrack = false;
-        if (edge.prevCrossroads) {
-          const styles = new Style({
-            geometry: new Point(fromLonLat(startPosition)),
-            image: crossroadsIcon,
-            zIndex,
-          });
-          this._startFeature = new Feature({
-            geometry: new Point(fromLonLat(startPosition)),
-          });
-          this._startFeature.setStyle(styles);
-        } else if (edge.prev.length > 0) {
-          const styles = new Style({
-            geometry: new Point(fromLonLat(startPosition)),
-            image: moveIcon,
-            zIndex,
-          });
-          this._startFeature = new Feature({
-            geometry: new Point(fromLonLat(startPosition)),
-          });
-          this._startFeature.setStyle(styles);
-        }
-        if (edge.nextCrossroads) {
-          const styles = new Style({
-            geometry: new Point(fromLonLat(endPosition)),
-            image: crossroadsIcon,
-            zIndex,
-          });
-          this._endFeature = new Feature({
-            geometry: new Point(fromLonLat(endPosition)),
-          });
-          this._endFeature.setStyle(styles);
-        } else if (edge.next.length > 0) {
-          const styles = new Style({
-            geometry: new Point(fromLonLat(endPosition)),
-            image: moveIcon,
-            zIndex,
-          });
-          this._endFeature = new Feature({
-            geometry: new Point(fromLonLat(endPosition)),
-          });
-          this._endFeature.setStyle(styles);
+          drawTrack = false;
+          if (edge.prevCrossroads) {
+            const styles = new Style({
+              geometry: new Point(fromLonLat(startPosition)),
+              image: crossroadsIcon,
+              zIndex,
+            });
+            this._startFeature = new Feature({
+              geometry: new Point(fromLonLat(startPosition)),
+            });
+            this._startFeature.setStyle(styles);
+          } else if (edge.prev.length > 0) {
+            const styles = new Style({
+              geometry: new Point(fromLonLat(startPosition)),
+              image: moveIcon,
+              zIndex,
+            });
+            this._startFeature = new Feature({
+              geometry: new Point(fromLonLat(startPosition)),
+            });
+            this._startFeature.setStyle(styles);
+          }
+          if (edge.nextCrossroads) {
+            const styles = new Style({
+              geometry: new Point(fromLonLat(endPosition)),
+              image: crossroadsIcon,
+              zIndex,
+            });
+            this._endFeature = new Feature({
+              geometry: new Point(fromLonLat(endPosition)),
+            });
+            this._endFeature.setStyle(styles);
+          } else if (edge.next.length > 0) {
+            const styles = new Style({
+              geometry: new Point(fromLonLat(endPosition)),
+              image: moveIcon,
+              zIndex,
+            });
+            this._endFeature = new Feature({
+              geometry: new Point(fromLonLat(endPosition)),
+            });
+            this._endFeature.setStyle(styles);
+          }
         }
       }
+      this._startEndLayer = new VectorLayer({
+        zIndex: FLAG_TRACK_ZINDEX,
+        source: new VectorSource({
+          features: [this._startFeature, this._endFeature],
+        }),
+      });
+      this.mapCmp.map.addLayer(this._startEndLayer);
+      this.drawTrack(this.track, drawTrack);
+      this.mapCmp.map.getInteractions().extend([new PinchRotate()]);
+      this._centerMapToTrack();
     }
-    this._startEndLayer = new VectorLayer({
-      zIndex: FLAG_TRACK_ZINDEX,
-      source: new VectorSource({
-        features: [this._startFeature, this._endFeature],
-      }),
-    });
-    this.mapCmp.map.addLayer(this._startEndLayer);
-    this.drawTrack(this.track, drawTrack);
-    this.mapCmp.map.getInteractions().extend([new PinchRotate()]);
-    this._centerMapToTrack();
   }
 
   /**

@@ -101,6 +101,10 @@ export class WmMapTrackRelatedPoisDirective
             this._fitView(currentPoi.icon.getGeometry() as any);
             this._selectCurrentPoi(currentPoi);
             this.currentRelatedPoi$.next(this._getPoi(+id));
+          } else {
+            this.mapCmp.map.removeLayer(this._selectedPoiLayer);
+            this._selectedPoiLayer = undefined;
+            this.relatedPoiEvt.next(null);
           }
         }
       });
