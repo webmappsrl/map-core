@@ -42,7 +42,9 @@ export class WmMapBaseDirective {
 
       // Determina se eseguire il fit in base alle condizioni
       const shouldFit =
-        (keys.length > 1 && caller?.includes('WmMapTrackDirective')) || keys.length <= 1;
+        (keys.length > 1 && caller?.includes('WmMapTrackDirective')) ||
+        keys.length <= 1 ||
+        (keys.length > 1 && keys.includes('poi'));
 
       if (!shouldFit) return;
 
