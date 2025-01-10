@@ -111,25 +111,27 @@ export class WmMapTrackRelatedPoisDirective
   }
 
   @Input() set wmMapPoisPois(features: WmFeature<Point>[] | null) {
-    if (features != null && features.length > 0) {
-      const featureCollection = {
-        type: 'FeatureCollection',
-        features,
-      };
-      const olFeatureCollection = new GeoJSON({
-        featureProjection: 'EPSG:3857',
-      }).readFeatures(featureCollection);
-      olFeatureCollection.forEach(f => {
-        const id = f.getProperties().id;
-        f.setId(id);
-      });
+    try {
+      if (features != null && features.length > 0) {
+        const featureCollection = {
+          type: 'FeatureCollection',
+          features,
+        };
+        const olFeatureCollection = new GeoJSON({
+          featureProjection: 'EPSG:3857',
+        }).readFeatures(featureCollection);
+        olFeatureCollection.forEach(f => {
+          const id = f.getProperties().id;
+          f.setId(id);
+        });
 
-      const vectorSource = new VectorSource({
-        features: olFeatureCollection,
-      });
+        const vectorSource = new VectorSource({
+          features: olFeatureCollection,
+        });
 
-      this._wmMapPoisPois.next(vectorSource);
-    }
+        this._wmMapPoisPois.next(vectorSource);
+      }
+    } catch (e) {}
   }
 
   @Input() set wmMapReletedPoisDisableClusterLayer(disabled: boolean) {
