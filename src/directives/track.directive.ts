@@ -38,6 +38,7 @@ import {ILineString} from '../types/model';
 import {filter, take} from 'rxjs/operators';
 import {Icon} from 'ol/style';
 import {fromLonLat} from 'ol/proj';
+import {WmSlopeChartHoverElements} from '@wm-types/slope-chart';
 const POINTER_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 1;
 const FLAG_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 2;
 
@@ -58,7 +59,7 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
   private _trackLayer: VectorLayer<VectorSource>;
 
   @Input() track;
-  @Input() trackElevationChartElements: any;
+  @Input() trackElevationChartElements: WmSlopeChartHoverElements;
   @Input() wmMapLayerLayer;
   @Input() wmMapTrackColor = '#caaf15';
 
