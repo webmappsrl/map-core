@@ -198,21 +198,19 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
    * Center the current map view to the current physical location
    */
   private _centerMapToTrack() {
-    this.mapCmp.map.once('rendercomplete', () => {
-      if (this._trackLayer) {
-        const ext = this._trackLayer.getSource().getExtent();
-        if (ext) {
-          this.fitView(
-            ext,
-            {
-              padding: [80, 80, 80, 80],
-              duration: 500,
-            },
-            'WmMapTrackDirective',
-          );
-        }
+    if (this._trackLayer) {
+      const ext = this._trackLayer.getSource().getExtent();
+      if (ext) {
+        this.fitView(
+          ext,
+          {
+            padding: [80, 80, 80, 80],
+            duration: 500,
+          },
+          'WmMapTrackDirective',
+        );
       }
-    });
+    }
   }
 
   /**
