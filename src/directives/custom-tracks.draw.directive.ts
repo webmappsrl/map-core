@@ -29,11 +29,11 @@ import {filter, take} from 'rxjs/operators';
 import {createIconFeatureFromSrc} from '../../src/utils/ol';
 import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent, WmMapPopover} from '../components';
-import {ITrackElevationChartHoverElements} from '../types/track-elevation-charts';
 import {WmMapBaseDirective} from './base.directive';
 import {stopPropagation} from 'ol/events/Event';
 import {WmFeature} from '@wm-types/feature';
 import {LineString} from 'geojson';
+import {WmSlopeChartHoverElements} from '@wm-types/slope-chart';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
@@ -105,7 +105,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
   }
 
   @Input() customTracks: any[];
-  @Input() trackElevationChartElements: ITrackElevationChartHoverElements;
+  @Input() trackElevationChartElements: WmSlopeChartHoverElements;
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input() wmMapCustomTrackDrawTrackHost: string;
   @Output() currentCustomTrack: EventEmitter<WmFeature<LineString>> = new EventEmitter<
