@@ -803,14 +803,14 @@ export function initVectorTileLayer(
 
   const layer = new VectorTileLayer({
     zIndex: TRACK_ZINDEX,
-    renderBuffer: 2048,
+    renderBuffer: 256,
     renderMode: 'vector',
     declutter: true,
     source: new VectorTileSource({
       format: new MVT(),
       url: url,
       overlaps: false,
-      tileLoadFunction: tileLoadFn,
+      //  tileLoadFunction: tileLoadFn,
     }),
     style: styleFn,
   });
