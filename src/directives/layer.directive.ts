@@ -153,6 +153,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this._animatedVectorLayer.getSource().clear();
       }
     }
+    this._updateMap();
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
