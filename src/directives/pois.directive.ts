@@ -76,13 +76,13 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
         this._initDirective();
         this._wmMapPoisPois
           .pipe(
-            filter(f => f != null),
+            filter(f => f != null && f.length > 0),
             take(1),
           )
           .subscribe(features => {
             if (features != null && features.length > 0) {
               this.wmMapStateEvt.emit('rendering:pois_start');
-              this.mapCmp.map.once('rendercomplete', () => {
+              this._poisClusterLayer.once('change', () => {
                 this._renderPois(features);
                 this._updatePois();
                 this.wmMapStateEvt.emit('rendering:pois_done');
@@ -93,6 +93,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
@@ -100,7 +101,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       )
       .subscribe(() => {
         if (changes.wmMapPoisPoi) {
-          this.mapCmp.map.once('rendercomplete', () => {
+          this._poisClusterLayer.once('change', () => {
             this.setPoi(this.wmMapPoisPoi);
           });
         }
@@ -511,22 +512,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }, 500);
           break;
       }
-      this.mapCmp.map.once('rendercomplete', () => {
-        const geometryExtent = geometry.getExtent();
-        const view = this.mapCmp.map.getView();
-        const targetZoom = view.getZoomForResolution(view.getResolutionForExtent(geometryExtent));
-        const currentZoom = Math.floor(view.getZoom());
-        if (targetZoom > DEF_MAP_MAX_PBF_ZOOM && currentZoom < DEF_MAP_MAX_PBF_ZOOM) {
-          this.fitView(geometry as any, {
-            maxZoom: DEF_MAP_MAX_PBF_ZOOM,
-            duration: 0,
-          });
-          // Dopo un breve intervallo, zoom fino al livello massimo desiderato
-          // Intervallo tra i due zoom (puoi regolarlo)
-        } else {
-          // Se lo zoom target è <= 13, esegui un singolo zoom
-          this.fitView(geometry as any);
-        }
+      this._poisClusterLayer.once('change', () => {
+        this.fitView(geometry as any);
         this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
