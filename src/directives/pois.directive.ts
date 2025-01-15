@@ -93,7 +93,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
@@ -101,7 +100,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       )
       .subscribe(() => {
         if (changes.wmMapPoisPoi) {
-          this._poisClusterLayer.once('change', () => {
+          this.mapCmp.map.once('rendercomplete', () => {
             this.setPoi(this.wmMapPoisPoi);
           });
         }
@@ -512,10 +511,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }, 500);
           break;
       }
-      this._poisClusterLayer.once('change', () => {
-        this.fitView(geometry as any);
-        this.mapCmp.map.removeInteraction(this._selectCluster);
-      });
+      this.fitView(geometry as any);
+      this.mapCmp.map.removeInteraction(this._selectCluster);
     }
   }
 
