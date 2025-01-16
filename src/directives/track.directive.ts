@@ -204,7 +204,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
         this.fitView(
           ext,
           {
-            padding: [80, 80, 80, 80],
             duration: 500,
           },
           'WmMapTrackDirective',
