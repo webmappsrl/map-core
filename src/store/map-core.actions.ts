@@ -13,5 +13,5 @@ export const setHitMapFeatureCollections = createAction(
 export const padding = createAction('[map-core] Set padding', props<{padding: number[]}>());
 export const leftPadding = createAction(
   '[map-core] Set left padding',
-  props<{leftPadding: number[]}>(),
+  props<{leftPadding: number}>(),
 );
