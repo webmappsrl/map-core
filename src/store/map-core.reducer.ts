@@ -1,15 +1,25 @@
 import {createReducer, on} from '@ngrx/store';
-import {resetTogglePartition, setHitMapFeatureCollections, setTogglePartition} from './map-core.actions';
+import {
+  leftPadding,
+  padding,
+  resetTogglePartition,
+  setHitMapFeatureCollections,
+  setTogglePartition,
+} from './map-core.actions';
 
 export const featureKey = 'map-core';
 export interface IUIRootState {
   [featureKey]: {
     partitionToggleState: {[key: string | number]: any};
     hitMapfeatureCollections: {[sey: string]: string};
+    padding: [number, number, number, number];
+    leftPadding: number;
   };
 }
 const initialUIState: any = {
   partitionToggleState: {},
+  padding: [10, 10, 10, 10],
+  leftPadding: 10,
 };
 export const MapCoreReducer = createReducer(
   initialUIState,
@@ -27,12 +37,24 @@ export const MapCoreReducer = createReducer(
   }),
   on(resetTogglePartition, state => ({
     ...state,
-    partitionToggleState: {}
+    partitionToggleState: {},
   })),
   on(setHitMapFeatureCollections, (state, {hitMapfeatureCollections}) => {
     return {
       ...state,
       ...{hitMapfeatureCollections},
+    };
+  }),
+  on(padding, (state, {padding}) => {
+    return {
+      ...state,
+      ...{padding},
+    };
+  }),
+  on(leftPadding, (state, {leftPadding}) => {
+    return {
+      ...state,
+      ...{leftPadding},
     };
   }),
 );

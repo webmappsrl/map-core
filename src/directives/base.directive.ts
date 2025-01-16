@@ -81,7 +81,9 @@ export class WmMapBaseDirective {
           nearest: true,
         };
 
-        this.fitView(extentFromLonLat(geometryOrExtent as any), optOptions);
+        this.mapCmp.map.once('rendercomplete', () => {
+          this.fitView(extentFromLonLat(geometryOrExtent as any), optOptions);
+        });
       }
     }
   }
