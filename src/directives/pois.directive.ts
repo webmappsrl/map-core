@@ -26,7 +26,6 @@ import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
-import {IGeojsonFeature, IGeojsonGeneric} from '../types/model';
 import {ILAYER} from '../types/layer';
 import {WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
