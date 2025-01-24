@@ -168,9 +168,6 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
     const geojson: any = this._getGeoJson(trackgeojson);
 
-    if (isFlowLine) {
-      this._initPopover();
-    }
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
