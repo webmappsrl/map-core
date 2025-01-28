@@ -302,7 +302,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       doubleClickZoom: false,
       dragPan: true,
       mouseWheelZoom: true,
-      pinchRotate: false,
+      pinchRotate: true,
       altShiftDragRotate: false,
     });
   }
@@ -444,7 +444,6 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       this.wmMapRotateEVT$.emit(degree);
     }
     this.mapDegrees = degree;
-    this.map.updateSize();
   }
 
   /**
