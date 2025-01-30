@@ -52,6 +52,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   private _customDrawDirective: wmMapCustomTrackDrawTrackDirective;
   private _directiveRegistry = new Map();
   private _view: View;
+  private resizeObserver: ResizeObserver;
 
   @Input() set wmMapCloseTopRightBtns(selector: string) {
     this.wmMapCloseTopRightBtnsEVT$.emit(selector);
@@ -122,6 +123,16 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
    * @returns void
    */
   ngAfterViewInit(): void {
+    this.resizeObserver = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        this.map?.updateSize();
+      });
+    });
+
+    if (this.mapContainer?.nativeElement) {
+      this.resizeObserver.observe(this.mapContainer.nativeElement);
+    }
+
     this.wmMapConf$
       .pipe(
         filter(f => f != null),
