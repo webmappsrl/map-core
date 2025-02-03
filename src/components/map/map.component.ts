@@ -442,6 +442,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     const degree = (this.map.getView().getRotation() / (2 * Math.PI)) * 360;
     if (degree != this.mapDegrees) {
       this.wmMapRotateEVT$.emit(degree);
+    } else {
+      this.map?.updateSize(); // This is a hack to fix the map not updating after resize
     }
     this.mapDegrees = degree;
   }
