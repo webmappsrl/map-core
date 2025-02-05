@@ -58,7 +58,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._wmMapUgcPois.next(ugcPois);
   }
 
-  @Input() wmMapUgcPoi: number | 'reset';
+  @Input() wmMapUgcPoi: number | string | null;
   @Input() wmMapUgcUnselectedPoi: boolean;
   @Output() currentUgcPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
@@ -278,17 +278,15 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     }
   }
 
-  private _setPoi(id: number | 'reset'): void {
-    if (id != 'reset' && id > -1) {
-      this._wmMapUgcPois
-        .pipe(
-          filter(p => !!p),
-          take(1),
-        )
-        .subscribe(pois => {
-          const currentPoi = pois.find(p => +p.properties.id === +id);
-          this._selectIcon(currentPoi);
-        });
-    }
+  private _setPoi(id: number | string | null): void {
+    this._wmMapUgcPois
+      .pipe(
+        filter(p => !!p),
+        take(1),
+      )
+      .subscribe(pois => {
+        const currentPoi = pois.find(p => +p.properties.id == +id || p.properties.uuid == id);
+        this._selectIcon(currentPoi);
+      });
   }
 }
