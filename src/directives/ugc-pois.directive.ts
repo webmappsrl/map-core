@@ -279,6 +279,10 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   private _setPoi(id: number | string | null): void {
+    if (id == null) {
+      this._selectIcon(null);
+      return;
+    }
     this._wmMapUgcPois
       .pipe(
         filter(p => !!p),
