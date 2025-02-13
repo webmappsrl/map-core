@@ -35,6 +35,27 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
         });
       });
   }
+  @Input() set wmMapHitMapChangeFeatureById(id: number | null) {
+    if (id == null) {
+      this._resetFeaturesStyle();
+      return;
+    }
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f),
+        take(1),
+      )
+      .subscribe(() => {
+        this.mapCmp.map.once('rendercomplete', () => {
+          try {
+            const feature = this._hitMapLayer.getSource()?.getFeatureById(id);
+            if (feature) this._changeFeature(feature);
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      });
+  }
 
   @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
     if (value == null) return '';
@@ -64,22 +85,26 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       .filter(f => f.getProperties().carg_code != null);
     if (feats.length > 0) {
       const newSelectedFeature = feats[0] as Feature<Geometry>;
-      if (this._selectedFeature != null) {
-        if (this._selectedFeature.getId() === newSelectedFeature.getId()) {
-          return;
-        } else {
-          this._selectedFeature.setStyle(this.unselectedStyle);
-        }
-      }
-      this._selectedFeature = newSelectedFeature;
-      const prop = this._selectedFeature?.getProperties() ?? null;
-      const hitMapfeatureCollections = prop['featureCollections'];
-      this._selectedFeature.setStyle(this.selectedStyle());
-      this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections}));
-      this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
+      this._changeFeature(newSelectedFeature);
     } else {
       this._resetFeaturesStyle();
     }
+  }
+
+  private _changeFeature(feature: Feature<Geometry>): void {
+    if (this._selectedFeature != null) {
+      if (this._selectedFeature.getId() === feature.getId()) {
+        return;
+      } else {
+        this._selectedFeature.setStyle(this.unselectedStyle);
+      }
+    }
+    this._selectedFeature = feature;
+    const prop = this._selectedFeature?.getProperties() ?? null;
+    const hitMapfeatureCollections = prop['featureCollections'];
+    this._selectedFeature.setStyle(this.selectedStyle());
+    this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections}));
+    this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
   }
 
   private _buildGeojson(geojson: WmFeatureCollection): void {
@@ -112,7 +137,6 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       this.mapCmp.map.addLayer(this._hitMapLayer);
       this.mapCmp.registerDirective(this._hitMapLayer['ol_uid'], this);
     }
-
     this.mapCmp.map.getView().on('change:resolution', () => {});
   }
 
@@ -138,9 +162,9 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     });
   }
 
-  private unselectedStyle(feature:Feature): Style {
+  private unselectedStyle(feature: Feature): Style {
     const properties = feature.getProperties();
-    const cargCode = properties['carg_code']??'';
+    const cargCode = properties['carg_code'] ?? '';
     return new Style({
       stroke: new Stroke({
         color: 'rgba(231, 67, 58,0.5)',
@@ -159,7 +183,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
           color: 'rgba(255, 255, 255, 0.8)',
           width: 3,
         }),
-      })
+      }),
     });
   }
 }
