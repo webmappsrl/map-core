@@ -7,7 +7,7 @@ import GeoJSON from 'ol/format/GeoJSON';
 import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import {default as VectorSource} from 'ol/source/Vector';
-import {Fill, Stroke, Style} from 'ol/style';
+import {Fill, Stroke, Style, Text} from 'ol/style';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {FEATURE_COLLECTION_ZINDEX} from '../readonly';
@@ -68,7 +68,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
         if (this._selectedFeature.getId() === newSelectedFeature.getId()) {
           return;
         } else {
-          this._selectedFeature.setStyle(this.unselectedStyle());
+          this._selectedFeature.setStyle(this.unselectedStyle);
         }
       }
       this._selectedFeature = newSelectedFeature;
@@ -102,7 +102,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       style: (f: Feature<Geometry>) => {
         f.setId(count);
         count++;
-        f.setStyle(this.unselectedStyle());
+        f.setStyle(this.unselectedStyle);
       },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
@@ -121,7 +121,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       const features = this._hitMapLayer.getSource().getFeatures();
       features
         .filter(f => f != this._selectedFeature)
-        .forEach(feature => feature.setStyle(this.unselectedStyle()));
+        .forEach(feature => feature.setStyle(this.unselectedStyle));
     }
     this._selectedFeature = null;
   }
@@ -138,7 +138,9 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     });
   }
 
-  private unselectedStyle(): Style {
+  private unselectedStyle(feature:Feature): Style {
+    const properties = feature.getProperties();
+    const cargCode = properties['carg_code']??'';
     return new Style({
       stroke: new Stroke({
         color: 'rgba(231, 67, 58,0.5)',
@@ -147,6 +149,17 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       fill: new Fill({
         color: 'rgba(231, 240, 58,0.5)',
       }),
+      text: new Text({
+        text: cargCode,
+        font: '12px Calibri,sans-serif',
+        fill: new Fill({
+          color: 'rgba(0, 0, 0, 1)',
+        }),
+        stroke: new Stroke({
+          color: 'rgba(255, 255, 255, 0.8)',
+          width: 3,
+        }),
+      })
     });
   }
 }
