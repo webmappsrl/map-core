@@ -96,7 +96,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       if (this._selectedFeature.getId() === feature.getId()) {
         return;
       } else {
-        this._selectedFeature.setStyle(this.unselectedStyle);
+        this._selectedFeature.setStyle(this.unselectedStyle.bind(this));
       }
     }
     this._selectedFeature = feature;
@@ -127,7 +127,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       style: (f: Feature<Geometry>) => {
         f.setId(count);
         count++;
-        f.setStyle(this.unselectedStyle);
+        f.setStyle(this.unselectedStyle.bind(this));
       },
       updateWhileAnimating: true,
       updateWhileInteracting: true,
@@ -145,7 +145,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       const features = this._hitMapLayer.getSource().getFeatures();
       features
         .filter(f => f != this._selectedFeature)
-        .forEach(feature => feature.setStyle(this.unselectedStyle));
+        .forEach(feature => feature.setStyle(this.unselectedStyle.bind(this)));
     }
     this._selectedFeature = null;
   }
@@ -165,7 +165,11 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   private unselectedStyle(feature: Feature): Style {
     const properties = feature.getProperties();
     const cargCode = properties['carg_code'] ?? '';
-    return new Style({
+    // Dividi la stringa in due parti
+    const numericPartMatch = cargCode.match(/^([\d\-]+)/); // Cattura numeri e trattini iniziali
+    const numericPart = numericPartMatch ? numericPartMatch[0].trim() : '';
+    const textPart = cargCode.substring(numericPart.length).trim();
+    const baseStyle = {
       stroke: new Stroke({
         color: 'rgba(231, 67, 58,0.5)',
         width: 2,
@@ -173,9 +177,14 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       fill: new Fill({
         color: 'rgba(231, 240, 58,0.5)',
       }),
-      text: new Text({
-        text: cargCode,
-        font: '12px Calibri,sans-serif',
+    };
+    const currentZoom = this.mapCmp?.getZoom() ?? 0;
+    if (currentZoom >= 9) {
+      baseStyle['text'] = new Text({
+        text: `${numericPart}\n${textPart}`,
+        font: '10px Calibri,sans-serif',
+        textAlign: 'center',
+        textBaseline: 'middle',
         fill: new Fill({
           color: 'rgba(0, 0, 0, 1)',
         }),
@@ -183,7 +192,8 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
           color: 'rgba(255, 255, 255, 0.8)',
           width: 3,
         }),
-      }),
-    });
+      });
+    }
+    return new Style(baseStyle);
   }
 }
