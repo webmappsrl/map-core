@@ -48,7 +48,8 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       .subscribe(() => {
         this.mapCmp.map.once('rendercomplete', () => {
           try {
-            const feature = this._hitMapLayer.getSource()?.getFeatureById(id);
+            const features = this._hitMapLayer.getSource()?.getFeatures();
+            const feature = features?.find(f => f.getProperties().id === id);
             if (feature) this._changeFeature(feature);
           } catch (e) {
             console.error(e);
