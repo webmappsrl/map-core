@@ -6,6 +6,9 @@ import {Feature, MapBrowserEvent} from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
+import TileLayer from 'ol/layer/Tile';
+import XYZ from 'ol/source/XYZ';
+import TileGrid from 'ol/tilegrid/TileGrid';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style, Text} from 'ol/style';
 import {WmMapComponent} from '../components';
@@ -18,6 +21,7 @@ import {setHitMapFeatureCollections} from '../store/map-core.actions';
 })
 export class WmMapHitMapDirective extends WmMapBaseDirective {
   private _hitMapLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _tileLayer: TileLayer<XYZ> | undefined;
   private _selectedFeature: Feature | null = null;
 
   @Input() set wmMapHitMapUrl(url: undefined | string) {
@@ -32,9 +36,11 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       .subscribe((geojson: WmFeatureCollection) => {
         this.mapCmp.map.once('precompose', () => {
           this._buildGeojson(geojson);
+          this._addTileLayer(); // Aggiunta del nuovo tile sopra il layer esistente
         });
       });
   }
+
   @Input() set wmMapHitMapChangeFeatureById(id: number | null) {
     if (id == null) {
       this._resetFeaturesStyle();
@@ -48,7 +54,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       .subscribe(() => {
         this.mapCmp.map.once('rendercomplete', () => {
           try {
-            const features = this._hitMapLayer.getSource()?.getFeatures();
+            const features = this._hitMapLayer?.getSource()?.getFeatures();
             const feature = features?.find(f => f.getProperties().id === id);
             if (feature) this._changeFeature(feature);
           } catch (e) {
@@ -58,19 +64,11 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       });
   }
 
-  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
-    if (value == null) return '';
-    if (typeof value === 'string') return value;
-    for (const val in value) {
-      if (value[val]) {
-        return value[val];
-      }
-    }
-  };
   @Output()
   wmMapFeatureCollectionPartitionsSelected: EventEmitter<any[] | null> = new EventEmitter<
     any[] | null
   >();
+
   @Output()
   wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
@@ -90,6 +88,37 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     } else {
       this._resetFeaturesStyle();
     }
+  }
+
+  private _addTileLayer(): void {
+    if (this._tileLayer) {
+      this.mapCmp.map.removeLayer(this._tileLayer);
+    }
+
+    const existingTileLayer = this.mapCmp.map
+      .getLayers()
+      .getArray()
+      .find(layer => layer instanceof TileLayer) as TileLayer<XYZ> | undefined;
+
+    if (!existingTileLayer) {
+      console.warn('Nessun TileLayer esistente trovato.');
+      return;
+    }
+
+    const existingSource = existingTileLayer.getSource() as XYZ;
+    const existingTileGrid = existingSource.getTileGrid() as TileGrid;
+
+    this._tileLayer = new TileLayer({
+      source: new XYZ({
+        url: 'https://tiles.webmapp.it/carg/{z}/{x}/{y}.png',
+        tileGrid: existingTileGrid, // Usa la stessa griglia del tile esistente
+        projection: existingSource.getProjection(), // Usa la stessa proiezione
+      }),
+      opacity: 1,
+      zIndex: existingTileLayer.getZIndex() + 1, // Posiziona sopra il tile esistente
+    });
+
+    this.mapCmp.map.addLayer(this._tileLayer);
   }
 
   private _changeFeature(feature: Feature<Geometry>): void {
@@ -166,8 +195,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   private unselectedStyle(feature: Feature): Style {
     const properties = feature.getProperties();
     const cargCode = properties['carg_code'] ?? '';
-    // Dividi la stringa in due parti
-    const numericPartMatch = cargCode.match(/^([\d\-]+)/); // Cattura numeri e trattini iniziali
+    const numericPartMatch = cargCode.match(/^([\d\-]+)/);
     const numericPart = numericPartMatch ? numericPartMatch[0].trim() : '';
     const textPart = cargCode.substring(numericPart.length).trim();
     const baseStyle = {
