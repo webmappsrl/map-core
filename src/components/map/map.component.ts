@@ -151,6 +151,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     }
     return new XYZ({
       url: tile,
+      cacheSize: 50000,
     });
   }
 
