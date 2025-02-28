@@ -130,7 +130,6 @@ export function buildTileLayers(
     }
     return new CustomTileSource({
       url: tile,
-      cacheSize: 50000,
       projection: 'EPSG:3857',
     });
   };
