@@ -95,27 +95,15 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       this.mapCmp.map.removeLayer(this._tileLayer);
     }
 
-    const existingTileLayer = this.mapCmp.map
-      .getLayers()
-      .getArray()
-      .find(layer => layer instanceof TileLayer) as TileLayer<XYZ> | undefined;
-
-    if (!existingTileLayer) {
-      console.warn('Nessun TileLayer esistente trovato.');
-      return;
-    }
-
-    const existingSource = existingTileLayer.getSource() as XYZ;
-    const existingTileGrid = existingSource.getTileGrid() as TileGrid;
-
+    // Crea il nuovo TileLayer con zIndex subito dopo l'ultimo
     this._tileLayer = new TileLayer({
       source: new XYZ({
         url: 'https://tiles.webmapp.it/carg/{z}/{x}/{y}.png',
-        tileGrid: existingTileGrid, // Usa la stessa griglia del tile esistente
-        projection: existingSource.getProjection(), // Usa la stessa proiezione
+        projection: 'EPSG:3857',
       }),
+      visible: true,
       opacity: 1,
-      zIndex: existingTileLayer.getZIndex() + 1, // Posiziona sopra il tile esistente
+      zIndex: 1,
     });
 
     this.mapCmp.map.addLayer(this._tileLayer);
