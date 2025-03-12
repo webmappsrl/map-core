@@ -365,7 +365,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   private getStyle(feature: Feature): Style {
     try {
-      const geometryType: Type = feature.getGeometry().getType();
+      const geometryType: Type = feature?.getGeometry()?.getType();
       const properties = feature.getProperties();
       const overlay = this._overlay$.value;
       let radius = MIN_RADIUS;
