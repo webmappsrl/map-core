@@ -7,9 +7,10 @@ wm-map {
     flex-grow: 1;
     height: 100%;
     position: relative;
-    .bottom-right {
+    > .bottom-right {
       position: absolute;
-      right: 22px;
+      right: calc(16px + constant(safe-area-inset-right));
+      right: calc(16px + env(safe-area-inset-right));
       bottom: 40px;
       display: inline-flex;
       flex-direction: column;
@@ -18,7 +19,7 @@ wm-map {
       align-content: stretch;
       align-items: center;
       z-index: 1;
-      > * {
+      > *:not(:empty) {
         order: 0;
         flex: 0 1 auto;
         align-self: auto;
@@ -26,15 +27,17 @@ wm-map {
       }
       ion-fab {
         position: relative;
+        left: 0;
+        top: 0;
       }
       ion-fab-button,
       .wm-btn-track-recording {
         height: 42px;
         width: 42px;
-        margin: 7px;
+        margin: 7px 0px;
       }
     }
-    .bottom-center {
+    > .bottom-center {
       position: absolute;
       right: 0;
       left: 0;
@@ -62,7 +65,7 @@ wm-map {
         margin: 7px;
       }
     }
-    .bottom {
+    > .bottom {
       position: absolute;
       right: 0;
       left: 0;
@@ -81,11 +84,12 @@ wm-map {
         margin-left: 10px;
       }
     }
-    .top-right {
+    > .top-right {
       position: absolute;
-      right: 22px;
-      top: calc(10px + constant(safe-area-inset-top));
-      top: calc(10px + env(safe-area-inset-top));
+      right: calc(16px + constant(safe-area-inset-right));
+      right: calc(16px + env(safe-area-inset-right));
+      top: calc(16px + constant(safe-area-inset-top));
+      top: calc(16px + env(safe-area-inset-top));
       z-index: 2;
       display: inline-flex;
       flex-direction: row-reverse;
@@ -93,14 +97,14 @@ wm-map {
       justify-content: flex-start;
       align-content: stretch;
       align-items: flex-start;
-      > * {
+      > *:not(:empty) {
         order: 0;
         flex: 0 1 auto;
         align-self: auto;
         margin-left: 10px;
       }
     }
-    .top-left {
+    > .top-left {
       position: absolute;
       left: 22px;
       top: constant(safe-area-inset-top, 30px); // for ios 11.1
@@ -123,8 +127,24 @@ wm-map {
       position: absolute;
       top: 50%;
       right: 20px;
+      left: 16px;
       width: fit-content;
-      height: 58px;
+      height: auto;
+      box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.2);
+      border-radius: 20px;
+      overflow: hidden;
+
+      button {
+        margin: 0;
+        height: 40px;
+        width: 40px;
+        font-size: 28px;
+
+        &:hover,
+        &:focus {
+          outline: none;
+        }
+      }
     }
     #webmapp-map-scale-line-container {
       position: absolute;
