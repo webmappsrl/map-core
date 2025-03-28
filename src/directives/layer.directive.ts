@@ -158,42 +158,46 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
     const features = [];
-    this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-      if (layer === this._vectorTileLayer) {
-        features.push(feature);
+    setTimeout(() => {
+      this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+        if (layer === this._vectorTileLayer) {
+          features.push(feature);
+        }
+      });
+      if (features.length === 0) {
+        return;
       }
-    });
-    if (features.length === 0) {
-      return;
-    }
-    const zoom = this.mapCmp.map.getView().getZoom();
-    if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
-      this._zoomOnClick(evt);
-    } else {
-      try {
-        const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
-        const clickedFeature = features[0];
-        const properties = clickedFeature?.getProperties();
-        const geometryType = clickedFeature.getGeometry()?.getType();
-        // Controlla se la geometria è un Point e, in tal caso, non prosegue
-        if (geometryType === 'Point') {
-          return;
-        }
+      const zoom = this.mapCmp.map.getView().getZoom();
+      if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
+        this._zoomOnClick(evt);
+      } else {
+        try {
+          const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
+          const clickedFeature = features[0];
+          const properties = clickedFeature?.getProperties();
+          console.log(properties.id);
+          const geometryType = clickedFeature.getGeometry()?.getType();
+          // Controlla se la geometria è un Point e, in tal caso, non prosegue
+          if (geometryType === 'Point') {
+            return;
+          }
 
-        const isPbfLayer = properties?.name == null;
-        if (isPbfLayer) {
-          this._zoomOnClick(evt);
-        }
-        const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-        const clickedLayerId = JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
-        if (clickedFeatureId > -1 && !isPbfLayer) {
-          this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
-          const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
+          const isPbfLayer = properties?.name == null;
+          if (isPbfLayer) {
+            this._zoomOnClick(evt);
+          }
+          const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
+          const clickedLayerId =
+            JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+          if (clickedFeatureId > -1 && !isPbfLayer) {
+            this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
+            const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
 
-          this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
-        }
-      } catch (_) {}
-    }
+            this.colorSelectedFromLayerEVT.emit(fromNameToHEX[color] ?? color);
+          }
+        } catch (_) {}
+      }
+    }, 100);
   }
 
   /**
