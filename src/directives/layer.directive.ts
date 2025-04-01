@@ -90,7 +90,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     if (l != null && l.bbox != null) {
       this.mapCmp.queryParams$.pipe(take(1)).subscribe(params => {
         if (params.track == null) {
-          this.fitViewFromLonLat(l.bbox);
+          this.mapCmp.isInit$
+            .pipe(
+              filter(f => f),
+              take(1),
+            )
+            .subscribe(() => {
+              this.fitViewFromLonLat(l.bbox);
+            });
         }
       });
     }
