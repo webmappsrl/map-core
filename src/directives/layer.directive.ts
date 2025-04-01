@@ -180,7 +180,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       try {
         const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
         const clickedFeature = features[0];
-        const properties = clickedFeature?.getProperties();
+        const properties = clickedFeature?.getProperties() ?? {};
         console.table(properties);
         const geometryType = clickedFeature.getGeometry()?.getType();
         // Controlla se la geometria è un Point e, in tal caso, non prosegue
@@ -192,8 +192,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         if (isPbfLayer) {
           this._zoomOnClick(evt);
         }
-        const clickedFeatureId: number = clickedFeature?.getProperties()?.id ?? undefined;
-        const clickedLayerId = JSON.parse(clickedFeature?.getProperties()?.layers)[0] ?? undefined;
+        const clickedFeatureId: number = properties?.id ?? undefined;
+        const clickedLayerId = JSON.parse(properties?.layers ?? '[]')[0] ?? undefined;
         if (clickedFeatureId > -1 && !isPbfLayer) {
           this.trackSelectedFromLayerEVT.emit(clickedFeatureId);
           const color = getColorFromLayer(clickedLayerId, this.wmMapConf.layers);
