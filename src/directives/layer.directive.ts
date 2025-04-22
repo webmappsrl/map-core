@@ -26,7 +26,13 @@ import {IMAP} from '../types/model';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
-import {DEF_ZOOM_ON_CLICK, MAP_ZOOM_ON_CLICK_TRESHOLD} from '../readonly/constants';
+import {
+  DEF_ZOOM_ON_CLICK,
+  MAP_ZOOM_ON_CLICK_TRESHOLD,
+  FEATURES_IN_VIEWPORT_ZOOM_MIN,
+  FEATURES_IN_VIEWPORT_ZOOM_MAX,
+} from '../readonly/constants';
+import {debounce} from 'lodash';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -125,6 +131,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   @Input() track;
   @Input() wmMapInputTyped: string;
+  @Input() wmMapEnableFeaturesInViewport: boolean = true;
+
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
   /**
@@ -134,6 +142,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   @Output()
   trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
+
+  @Output()
+  featuresInViewportEVT: EventEmitter<any[]> = new EventEmitter<any[]>();
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -146,6 +157,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
         });
+        this.mapCmp.map.on('moveend', debounce(() => {
+          this._featuresInViewport();
+        }, 250));
       });
   }
 
@@ -288,5 +302,27 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this.mapCmp.map.once('moveend', e => {
       this._updateMap();
     });
+  }
+
+  private _featuresInViewport(): void {
+    if (this._vectorTileLayer && this.wmMapEnableFeaturesInViewport) {
+      const zoom = this.mapCmp.map.getView().getZoom();
+      const minZoom = FEATURES_IN_VIEWPORT_ZOOM_MIN;
+      const maxZoom = FEATURES_IN_VIEWPORT_ZOOM_MAX;
+      const features = [];
+      if (zoom >= minZoom && zoom < maxZoom) {
+        const extent = this.mapCmp.map.getView().calculateExtent(this.mapCmp.map.getSize());
+        const source = this._vectorTileLayer.getSource();
+        source.getFeaturesInExtent(extent).forEach(feature => {
+          if (feature.getGeometry().getType() == 'LineString') {
+            features.push(feature);
+          }
+        });
+      }
+      this.featuresInViewportEVT.emit(features);
+    }
+    else {
+      this.featuresInViewportEVT.emit([]);
+    }
   }
 }
