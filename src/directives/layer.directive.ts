@@ -51,6 +51,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _disabled = false;
   private _opacity = 1;
   private _vectorTileLayer: VectorTileLayer;
+  private _moveEndListener: (() => void) | null = debounce(() => {
+    this._featuresInViewport();
+  }, 250);
 
   /**
    * @description
@@ -157,9 +160,16 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
         });
-        this.mapCmp.map.on('moveend', debounce(() => {
-          this._featuresInViewport();
-        }, 250));
+        const view = this.mapCmp.map.getView();
+        view.on('change:resolution', () => {
+          const zoom = view.getZoom();
+          if (this.wmMapEnableFeaturesInViewport && zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN && zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX) {
+            this.mapCmp.map.on('moveend', this._moveEndListener);
+          } else {
+            this.mapCmp.map.un('moveend', this._moveEndListener);
+            this.featuresInViewportEVT.emit([]);
+          }
+        });
       });
   }
 
@@ -305,24 +315,16 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   private _featuresInViewport(): void {
-    if (this._vectorTileLayer && this.wmMapEnableFeaturesInViewport) {
-      const zoom = this.mapCmp.map.getView().getZoom();
-      const minZoom = FEATURES_IN_VIEWPORT_ZOOM_MIN;
-      const maxZoom = FEATURES_IN_VIEWPORT_ZOOM_MAX;
-      const features = [];
-      if (zoom >= minZoom && zoom < maxZoom) {
-        const extent = this.mapCmp.map.getView().calculateExtent(this.mapCmp.map.getSize());
-        const source = this._vectorTileLayer.getSource();
-        source.getFeaturesInExtent(extent).forEach(feature => {
-          if (feature.getGeometry().getType() == 'LineString') {
-            features.push(feature);
-          }
-        });
-      }
-      this.featuresInViewportEVT.emit(features);
+    const features = [];
+    if (this._vectorTileLayer) {
+      const extent = this.mapCmp.map.getView().calculateExtent(this.mapCmp.map.getSize());
+      const source = this._vectorTileLayer.getSource();
+      source.getFeaturesInExtent(extent).forEach(feature => {
+        if (feature.getGeometry().getType() == 'LineString') {
+          features.push(feature);
+        }
+      });
     }
-    else {
-      this.featuresInViewportEVT.emit([]);
-    }
+    this.featuresInViewportEVT.emit(features);
   }
 }
