@@ -9,7 +9,8 @@ import {
 } from '@angular/core';
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import VectorTileLayer from 'ol/layer/VectorTile';
-import {filter, take} from 'rxjs/operators';
+import {debounceTime, filter, take} from 'rxjs/operators';
+import {Subject} from 'rxjs';
 import {WmMapBaseDirective} from '.';
 import {
   clearPbfDB,
@@ -32,7 +33,6 @@ import {
   FEATURES_IN_VIEWPORT_ZOOM_MIN,
   FEATURES_IN_VIEWPORT_ZOOM_MAX,
 } from '../readonly/constants';
-import {debounce} from 'lodash';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -51,9 +51,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _disabled = false;
   private _opacity = 1;
   private _vectorTileLayer: VectorTileLayer;
-  private _moveEndListener: (() => void) | null = debounce(() => {
-    this._featuresInViewport();
-  }, 250);
+  private _moveEndSubject$: Subject<void> = new Subject<void>();
+  private _moveEndListener: () => void;
 
   /**
    * @description
@@ -134,7 +133,34 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   @Input() track;
   @Input() wmMapInputTyped: string;
-  @Input() wmMapEnableFeaturesInViewport: boolean = true;
+  @Input() set wmMapLayerEnableFeaturesInViewport(enable: boolean) {
+    if(enable) {
+      this.mapCmp.isInit$
+        .pipe(
+          filter(f => f === true),
+          take(1),
+        )
+        .subscribe(() => {
+          this._moveEndSubject$.pipe(
+            debounceTime(100)
+          ).subscribe(() => {
+            this._featuresInViewport();
+          });
+          this._moveEndListener = () => this._moveEndSubject$.next();
+          const view = this.mapCmp.map.getView();
+          view.on('change:resolution', () => {
+            const zoom = view.getZoom();
+            if (this.wmMapLayerShowFeaturesInViewport && zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN && zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX) {
+              this.mapCmp.map.on('moveend', this._moveEndListener);
+            } else {
+              this.mapCmp.map.un('moveend', this._moveEndListener);
+              this.featuresInViewportEVT.emit([]);
+            }
+          });
+        });
+    }
+  }
+  @Input() wmMapLayerShowFeaturesInViewport: boolean = false;
 
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
@@ -159,16 +185,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       .subscribe(() => {
         this.mapCmp.map.once('precompose', () => {
           this._initLayer(this.wmMapConf);
-        });
-        const view = this.mapCmp.map.getView();
-        view.on('change:resolution', () => {
-          const zoom = view.getZoom();
-          if (this.wmMapEnableFeaturesInViewport && zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN && zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX) {
-            this.mapCmp.map.on('moveend', this._moveEndListener);
-          } else {
-            this.mapCmp.map.un('moveend', this._moveEndListener);
-            this.featuresInViewportEVT.emit([]);
-          }
         });
       });
   }
