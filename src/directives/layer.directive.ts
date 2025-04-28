@@ -7,10 +7,17 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
+
 import MapBrowserEvent from 'ol/MapBrowserEvent';
 import VectorTileLayer from 'ol/layer/VectorTile';
-import {filter, take} from 'rxjs/operators';
-import {WmMapBaseDirective} from '.';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import GeoJSON from 'ol/format/GeoJSON';
+
+import {debounceTime, filter, take} from 'rxjs/operators';
+import {Subject} from 'rxjs';
+
+import {WmMapBaseDirective} from '@map-core/directives';
 import {
   clearPbfDB,
   fromNameToHEX,
@@ -19,14 +26,16 @@ import {
   initVectorTileLayer,
   lowTileLoadFn,
   styleHighFn,
-} from '../../src/utils';
-import {WmMapComponent} from '../components';
-import {IDATALAYER, ILAYER} from '../types/layer';
-import {IMAP} from '../types/model';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
-import {DEF_ZOOM_ON_CLICK, MAP_ZOOM_ON_CLICK_TRESHOLD} from '../readonly/constants';
+} from '@map-core/utils';
+import {WmMapComponent} from '@map-core/components';
+import {IDATALAYER, ILAYER} from '@map-core/types/layer';
+import {IMAP} from '@map-core/types/model';
+import {
+  DEF_ZOOM_ON_CLICK,
+  MAP_ZOOM_ON_CLICK_TRESHOLD,
+  FEATURES_IN_VIEWPORT_ZOOM_MIN,
+  FEATURES_IN_VIEWPORT_ZOOM_MAX,
+} from '@map-core/readonly/constants';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -45,6 +54,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _disabled = false;
   private _opacity = 1;
   private _vectorTileLayer: VectorTileLayer;
+  private _moveEndSubject$: Subject<void> = new Subject<void>();
+  private _moveEndListener: () => void;
 
   /**
    * @description
@@ -125,6 +136,31 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   @Input() track;
   @Input() wmMapInputTyped: string;
+  @Input() set wmMapLayerEnableFeaturesInViewport(enable: boolean) {
+    this.mapCmp.isInit$
+      .pipe(
+        filter(f => f === true),
+        take(1),
+      )
+      .subscribe(() => {
+        const view = this.mapCmp.map.getView();
+        if(enable) {
+          this._moveEndSubject$.pipe(
+            debounceTime(100)
+          ).subscribe(() => {
+            this._featuresInViewport();
+          });
+          this._moveEndListener = () => this._moveEndSubject$.next();
+          view.on('change:resolution', this._enableFeaturesInViewportCallback);
+        } else {
+          this.wmMapLayerShowFeaturesInViewport = false;
+          this._enableFeaturesInViewportCallback()
+          view.un('change:resolution', this._enableFeaturesInViewportCallback);
+        }
+      });
+  }
+  @Input() wmMapLayerShowFeaturesInViewport: boolean = false;
+
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
   /**
@@ -134,6 +170,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   @Output()
   trackSelectedFromLayerEVT: EventEmitter<number> = new EventEmitter<number>();
+
+  @Output()
+  featuresInViewportEVT: EventEmitter<any[]> = new EventEmitter<any[]>();
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -285,5 +324,30 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this.mapCmp.map.once('moveend', e => {
       this._updateMap();
     });
+  }
+
+  private _featuresInViewport(): void {
+    const features = [];
+    if (this._vectorTileLayer) {
+      const extent = this.mapCmp.map.getView().calculateExtent(this.mapCmp.map.getSize());
+      const source = this._vectorTileLayer.getSource();
+      source.getFeaturesInExtent(extent).forEach(feature => {
+        if (feature.getGeometry().getType() == 'LineString') {
+          features.push(feature);
+        }
+      });
+    }
+    this.featuresInViewportEVT.emit(features);
+  }
+
+  private _enableFeaturesInViewportCallback = () => {
+    const view = this.mapCmp.map.getView();
+    const zoom = view.getZoom();
+    if (this.wmMapLayerShowFeaturesInViewport && zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN && zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX) {
+      this.mapCmp.map.on('moveend', this._moveEndListener);
+    } else {
+      this.mapCmp.map.un('moveend', this._moveEndListener);
+      this.featuresInViewportEVT.emit([]);
+    }
   }
 }
