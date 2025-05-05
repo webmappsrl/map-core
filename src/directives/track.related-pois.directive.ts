@@ -477,7 +477,7 @@ export class WmMapTrackRelatedPoisDirective
     }
     const svgIcon = properties?.taxonomy?.poi_type?.icon ?? null;
     const poiFromPois = this._wmMapPoisPois?.value?.getFeatureById(properties.id) ?? null;
-    if (properties?.feature_image?.sizes['108x137'] != null) {
+    if (properties?.feature_image?.sizes?.['108x137'] != null) {
       const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
       return marker;
     } else if (poiFromPois != null) {
