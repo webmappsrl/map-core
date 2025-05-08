@@ -14,7 +14,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, Observable, ReplaySubject} from 'rxjs';
 import {delay, filter, shareReplay, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
@@ -78,7 +78,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     MapBrowserEvent<UIEvent>
   >();
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
-  @Output() wmMapEmptyClickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter();
+  @Output() wmMapEmptyClickEVT$ = new ReplaySubject<MapBrowserEvent<UIEvent>>(1);
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois' | 'ugc'; toggle: boolean}> =

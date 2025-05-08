@@ -21,6 +21,7 @@ import {Type} from 'ol/geom/Geometry';
 import {Store} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
 import {WmFeatureCollection} from '@wm-types/feature';
+import {getFeatureCollection} from '@map-core/utils';
 
 @Directive({
   selector: '[wmMapFeatureCollection]',
@@ -95,7 +96,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._overlay$),
         filter(overlay => overlay != null && overlay.url != null),
         switchMap(overlay => {
-          return this._http.get(overlay.url);
+          return getFeatureCollection(overlay.url);
         }),
       )
       .subscribe((geojson: WmFeatureCollection) => {

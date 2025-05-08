@@ -14,7 +14,10 @@ export function bufferToString(buf: Uint8Array | ArrayBuffer): string | null {
   }
 }
 
-export async function downloadFile(url: string): Promise<ArrayBuffer | null> {
+export async function downloadFile(
+  url: string,
+  responseType: 'arraybuffer' | 'json' = 'arraybuffer',
+): Promise<ArrayBuffer | null | any> {
   if (!isValidUrl(url)) {
     console.warn(`Invalid URL: ${url}`);
     return null;
@@ -25,7 +28,11 @@ export async function downloadFile(url: string): Promise<ArrayBuffer | null> {
       console.warn(`Failed to fetch ${url}`);
       return null;
     }
-    return response.arrayBuffer();
+    if (responseType === 'arraybuffer') {
+      return response.arrayBuffer();
+    } else if (responseType === 'json') {
+      return response.json();
+    }
   } catch (e) {
     console.warn(`Failed to fetch ${url}`);
     return null;
