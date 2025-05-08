@@ -38,7 +38,7 @@ import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../types/model';
 import GeoJSON from 'ol/format/GeoJSON';
 
 // Sorgente tile personalizzata per gestire il caricamento delle tile offline
-class CustomTileSource extends XYZ {
+export class CustomTileSource extends XYZ {
   constructor(options) {
     super(options);
     this.setTileLoadFunction(this._customTileLoadFunction.bind(this));
@@ -725,7 +725,7 @@ export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
 
-export function getTilesByGeometry(geometry): string[] {
+export function getTilesByGeometry(geometry, min = 5, max = 16): string[] {
   const res = [];
   const feature = new GeoJSON({
     featureProjection: 'EPSG:4326',
@@ -733,7 +733,7 @@ export function getTilesByGeometry(geometry): string[] {
 
   const extent = feature[0].getGeometry().getExtent();
 
-  return getTilesForExtent(extent, 5, 16);
+  return getTilesForExtent(extent, min, max);
 }
 
 export function getTilesForExtent(extent: Extent, minZoom: number, maxZoom: number) {
