@@ -267,6 +267,13 @@ export async function saveHitmapFeature(
 
 export async function removeHitmapFeature(id: string): Promise<void> {
   try {
+    const currentHitmapFeatures = await getHitmapFeature(id);
+    const properties = currentHitmapFeatures?.properties;
+    const featureCollections = properties?.featureCollections;
+    const featureCollectionKeys = Object.values(featureCollections) as string[];
+    for (const featureCollectionKey of featureCollectionKeys) {
+      await removeFeatureCollection(featureCollectionKey);
+    }
     return await hitMapFeaturesLocalForage.removeItem(id);
   } catch (error) {
     console.error(error);
