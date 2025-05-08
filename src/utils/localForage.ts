@@ -1,6 +1,8 @@
 import * as localforage from 'localforage';
 import {downloadFile} from './httpRequest';
-
+import {WmFeature, WmFeatureCollection} from '@wm-types/feature';
+import {getTilesByGeometry} from './ol';
+import {MultiPolygon} from 'geojson';
 /**
  * Clears the storage by removing all items with a key containing 'geohub'
  * in the localStorage and clearing the entire localforage storage.
@@ -87,6 +89,34 @@ export async function getTile(tileId: string): Promise<ArrayBuffer | null> {
     return null;
   }
 }
+export async function getFeatureCollection(url: string): Promise<WmFeatureCollection | null> {
+  try {
+    const featureCollection = await featureCollectionLocalForage.getItem<WmFeatureCollection>(url);
+    if (featureCollection) {
+      return featureCollection;
+    }
+    return await downloadFile(url, 'json');
+  } catch (error) {
+    console.error('Failed to get feature collection:', error);
+    return null;
+  }
+}
+export async function getHitmapFeature(id: string): Promise<WmFeature<MultiPolygon> | null> {
+  try {
+    const hitmapFeature = await hitMapFeaturesLocalForage.getItem<WmFeature<MultiPolygon>>(id);
+    if (hitmapFeature) {
+      return hitmapFeature;
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to get hitmap feature collection:', error);
+    return null;
+  }
+}
+export async function getHitmapFeatures(): Promise<WmFeature<MultiPolygon>[]> {
+  const keys = await hitMapFeaturesLocalForage.keys();
+  return keys ? await Promise.all(keys.map(key => getHitmapFeature(key))) : [];
+}
 
 export async function removePbf(url: string): Promise<void> {
   try {
@@ -160,6 +190,90 @@ export async function saveTile(
   }
 }
 
+export async function downloadOverlay(
+  feature: WmFeature<MultiPolygon>,
+  overlayXYZ: string = `https://api.webmapp.it/tiles`,
+  callBackStatusFn = updateStatus,
+): Promise<void> {
+  console.log('downloadOverlay', overlayXYZ);
+  const properties = feature.properties;
+  const id = properties.id;
+  const geometry = feature.geometry;
+  const overlayUrls: {[url: string]: any} = properties.featureCollections;
+  saveHitmapFeature(id, feature);
+
+  const urls = Object.values(overlayUrls);
+  const tiles = getTilesByGeometry(geometry, 5, 14);
+
+  const totalUrls = urls.length;
+  for (let i = 0; i < totalUrls; i++) {
+    const url = urls[i];
+    await saveFeatureCollection(url, await downloadFile(url, 'json'));
+    // Aggiorna la progress bar
+    callBackStatusFn({
+      finish: false,
+      data: (i + 1) / totalUrls, // percentuale avanzamento
+    });
+  }
+  const totalTiles = tiles.length;
+  for (let i = 0; i < totalTiles; i++) {
+    const tile = tiles[i];
+    const wmTilesAPI = `${overlayXYZ}/${tile}.png`;
+    const tileData = await downloadFile(wmTilesAPI);
+    await saveTile(tile, tileData);
+    callBackStatusFn({
+      finish: false,
+      map: (i + 1) / totalTiles, // percentuale avanzamento
+    });
+  }
+
+  callBackStatusFn({
+    finish: true,
+    data: 1,
+    map: 1,
+  });
+}
+
+export async function saveFeatureCollection(
+  url: string,
+  featureCollection: WmFeatureCollection,
+): Promise<void> {
+  try {
+    await featureCollectionLocalForage.setItem(url, featureCollection);
+  } catch (error) {
+    console.error('Failed to save feature collection:', error);
+  }
+}
+
+export async function removeFeatureCollection(url: string): Promise<void> {
+  try {
+    return await featureCollectionLocalForage.removeItem(url);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+export async function saveHitmapFeature(
+  id: string,
+  hitMapFeature: WmFeature<MultiPolygon>,
+): Promise<void> {
+  try {
+    await hitMapFeaturesLocalForage.setItem(id, hitMapFeature);
+  } catch (error) {
+    console.error('Failed to save hitmap feature collection:', error);
+  }
+}
+
+export async function removeHitmapFeature(id: string): Promise<void> {
+  try {
+    return await hitMapFeaturesLocalForage.removeItem(id);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
 export function updateStatus(status: {
   finish: boolean;
   map?: number;
@@ -190,4 +304,16 @@ export const tileHandlerLocalForage = localforage.createInstance({
 export const pbfLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'pbf',
+});
+export const featureCollectionLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'feature-collection',
+});
+export const featureCollectionHandlerLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'featureCollectionHandler',
+});
+export const hitMapFeaturesLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'hitmapFeatureCollection',
 });
