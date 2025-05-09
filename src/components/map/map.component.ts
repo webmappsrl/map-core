@@ -39,6 +39,7 @@ import {
 import {IMAP} from '../../types/model';
 import {ActivatedRoute} from '@angular/router';
 import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
+import {WmMapControls} from '../controls/controls.map';
 
 @Component({
   selector: 'wm-map',
@@ -85,6 +86,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     new EventEmitter();
   @ViewChild('mapContainer') mapContainer: ElementRef;
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
+  @ViewChild(WmMapControls) wmMapControls: WmMapControls;
 
   customTrackEnabled$: Observable<boolean>;
   isInit$: BehaviorSubject<boolean> = new BehaviorSubject(false);

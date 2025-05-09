@@ -119,6 +119,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       if (this._selectedFeature.getId() === feature.getId()) {
         return;
       } else {
+        this.mapCmp?.wmMapControls?.reset();
         this._selectedFeature.setStyle(this.unselectedStyle.bind(this));
       }
     }
@@ -174,6 +175,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
 
   private _resetFeaturesStyle(): void {
     if (this._selectedFeature != null) {
+      this.mapCmp?.wmMapControls?.reset();
       this._selectedFeature?.setStyle(this.unselectedStyle.bind(this));
       this._selectedFeature = null;
       this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections: null}));
