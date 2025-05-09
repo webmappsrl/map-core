@@ -95,6 +95,11 @@ export class WmMapControls implements OnChanges, OnInit {
     }, 500);
   }
 
+  reset(): void {
+    this.currentOverlayIdx$.next(-1);
+    this.overlayEVT.emit(null);
+  }
+
   /**
    * Seleziona i dati e invia un evento.
    * @param {number} idx L'indice dei dati selezionati.
