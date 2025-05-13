@@ -1,4 +1,4 @@
-import {WmFeatureCollection} from '@wm-types/feature';
+import {UIEvent, WmFeatureCollection} from '@wm-types/feature';
 import {HttpClient} from '@angular/common/http';
 import {Directive, EventEmitter, Host, Input, Output} from '@angular/core';
 import {filter, switchMap, take} from 'rxjs/operators';
@@ -20,7 +20,7 @@ import {setHitMapFeatureCollections} from '../store/map-core.actions';
   selector: '[wmMapHitMapCollection]',
 })
 export class WmMapHitMapDirective extends WmMapBaseDirective {
-  private _hitMapLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _hitMapLayer: VectorLayer<VectorSource<Feature<Geometry>>> | undefined;
   private _tileLayer: TileLayer<XYZ> | undefined;
   private _selectedFeature: Feature | null = null;
 
@@ -72,7 +72,11 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   @Output()
   wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
+  constructor(
+    @Host() mapCmp: WmMapComponent,
+    private _http: HttpClient,
+    private _store: Store,
+  ) {
     super(mapCmp);
   }
 

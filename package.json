@@ -24,8 +24,8 @@
   "private": true,
   "dependencies": {
     "localforage": "^1.10.0",
-    "ol": "7.1.0",
-    "ol-ext": "^4.0.11",
+    "ol": "10.5.0",
+    "ol-ext": "^4.0.31",
     "rxjs": "~6.6.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.13.3"
@@ -48,7 +48,7 @@
     "@compodoc/compodoc": "^1.1.19",
     "@types/jasmine": "~3.8.0",
     "@types/node": "^12.11.1",
-    "@types/ol": "^6.5.3",
+    "@types/ol": "^7.0.0",
     "generate-changelog": "^1.8.0",
     "jasmine-core": "~3.8.0",
     "karma": "^6.3.17",

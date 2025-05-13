@@ -27,6 +27,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import {DEF_ZOOM_ON_CLICK, MAP_ZOOM_ON_CLICK_TRESHOLD} from '../readonly/constants';
+import {UIEvent} from '@wm-types/feature';
 
 @Directive({
   selector: '[wmMapLayer]',

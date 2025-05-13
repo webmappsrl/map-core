@@ -31,7 +31,7 @@ import {getLineStyle} from '../../src/utils/styles';
 import {WmMapComponent, WmMapPopover} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {stopPropagation} from 'ol/events/Event';
-import {WmFeature} from '@wm-types/feature';
+import {UIEvent, WmFeature} from '@wm-types/feature';
 import {LineString} from 'geojson';
 import {WmSlopeChartHoverElements} from '@wm-types/slope-chart';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
@@ -230,8 +230,8 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
                 res.paths[0].distance && res.paths[0].ascend
                   ? (res.paths[0].distance + res.paths[0].ascend * 10) / 3000
                   : res.paths[0].time
-                  ? res.paths[0].time / (1000 * 60 * 60)
-                  : undefined;
+                    ? res.paths[0].time / (1000 * 60 * 60)
+                    : undefined;
 
               if (time !== undefined)
                 this._customTrack.properties['duration:forward'] =

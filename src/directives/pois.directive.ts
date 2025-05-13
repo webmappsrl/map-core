@@ -27,7 +27,7 @@ import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {ILAYER} from '../types/layer';
-import {WmFeature} from '@wm-types/feature';
+import {UIEvent, WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
 const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 2;
@@ -64,7 +64,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   @Input() wmMapPoisPoi: number | 'reset' | null;
   @Output() currentPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
-  constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
+  constructor(
+    private _cdr: ChangeDetectorRef,
+    @Host() mapCmp: WmMapComponent,
+  ) {
     super(mapCmp);
     this.mapCmp.isInit$
       .pipe(
@@ -186,8 +189,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     const poiColor = poyType?.color
       ? poyType.color
       : properties.color
-      ? properties.color
-      : '#ff8c00';
+        ? properties.color
+        : '#ff8c00';
     const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
 
     if (properties.svgIcon) {
@@ -344,8 +347,8 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     return res?.length > 0
       ? res[0]
       : taxonomyIdentifiers != null && taxonomyIdentifiers.length > 0
-      ? taxonomyIdentifiers[0]
-      : null;
+        ? taxonomyIdentifiers[0]
+        : null;
   }
 
   /**

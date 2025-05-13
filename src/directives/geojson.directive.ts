@@ -16,7 +16,7 @@ import {Extent} from 'ol/extent';
   selector: '[wmMapGeojson]',
 })
 export class WmMapGeojsonDirective extends WmMapBaseDirective {
-  private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _featureCollectionLayer: VectorLayer<VectorSource<Feature<Geometry>>> | undefined;
   private _init = false;
 
   @Input('wmMapGeojson') set geojson(feature: WmFeatureCollection | WmFeature<geojsonGeometry>) {

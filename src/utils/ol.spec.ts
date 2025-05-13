@@ -287,7 +287,7 @@ describe('ol', () => {
     const layerSource = new VectorSource({features});
     const clusterSource = new Cluster({source: layerSource});
     const layer = new VectorLayer({source: clusterSource});
-    const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
+    const evt = new MapBrowserEvent('click', map, new PointerEvent('click'));
     evt.coordinate = [1, 1];
 
     expect(isCluster(layer, evt, map)).toBe(true);
@@ -304,7 +304,7 @@ describe('ol', () => {
     const layerSource = new VectorSource({features});
     const clusterSource = new Cluster({source: layerSource});
     const layer = new VectorLayer({source: clusterSource});
-    const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
+    const evt = new MapBrowserEvent('click', map, new PointerEvent('click'));
     evt.coordinate = [10, 10];
 
     expect(isCluster(layer, evt, map)).toBe(false);
@@ -332,7 +332,7 @@ describe('ol', () => {
         zoom: 5,
       }),
     });
-    const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
+    const evt = new MapBrowserEvent('click', map, new PointerEvent('click'));
     evt.coordinate = [0, 0];
     const cluster = getCluster(layer, evt, map);
 
@@ -407,7 +407,7 @@ describe('ol', () => {
         zoom: 1,
       }),
     });
-    const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
+    const evt = new MapBrowserEvent('click', map, new PointerEvent('click'));
     evt.coordinate = [10, 10];
     const nearestFeature = nearestFeatureOfLayer(layer, evt, map);
 
@@ -436,7 +436,7 @@ describe('ol', () => {
         zoom: 1,
       }),
     });
-    const evt = new MapBrowserEvent('click', map, new UIEvent('click'));
+    const evt = new MapBrowserEvent('click', map, new PointerEvent('click'));
     evt.coordinate = [10, 10];
     const nearestFeature = nearestFeatureOfCluster(layer, evt, map);
 

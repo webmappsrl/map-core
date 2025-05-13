@@ -158,7 +158,7 @@ export class WmMapCustomTracksDirective extends WmMapBaseDirective {
         (f, idx) => {
           const feature = new GeoJSON({
             featureProjection: 'EPSG:3857',
-          }).readFeature(f.geometry);
+          }).readFeature(f.geometry) as Feature<Geometry>;
           feature.setProperties(f.properties);
           feature.setId(`${f.properties.id}-${idx}`);
 

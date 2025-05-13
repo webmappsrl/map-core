@@ -9,7 +9,7 @@ import {BehaviorSubject} from 'rxjs';
 import {WmMapComponent} from '../components';
 import {UGC_TRACK_ZINDEX} from '../readonly';
 import {MapBrowserEvent} from 'ol';
-import {WmFeature} from '@wm-types/feature';
+import {UIEvent, WmFeature} from '@wm-types/feature';
 import {LineString} from 'geojson';
 
 @Directive({

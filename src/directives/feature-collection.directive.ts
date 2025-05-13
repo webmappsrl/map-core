@@ -20,14 +20,14 @@ import CircleStyle from 'ol/style/Circle';
 import {Type} from 'ol/geom/Geometry';
 import {Store} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
-import {WmFeatureCollection} from '@wm-types/feature';
+import {UIEvent, WmFeatureCollection} from '@wm-types/feature';
 
 @Directive({
   selector: '[wmMapFeatureCollection]',
 })
 export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private _featureCollectionLayer: VectorLayer<VectorSource<Geometry>> | undefined;
+  private _featureCollectionLayer: VectorLayer<VectorSource<Feature<Geometry>>> | undefined;
   private _overlay$: BehaviorSubject<any | null> = new BehaviorSubject<any>({
     fillColor: FEATURE_COLLECTION_FILL_COLOR,
     strokeColor: FEATURE_COLLECTION_STROKE_COLOR,
@@ -85,7 +85,11 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
 
   features: Feature<Geometry>[];
 
-  constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
+  constructor(
+    @Host() mapCmp: WmMapComponent,
+    private _http: HttpClient,
+    private _store: Store,
+  ) {
     super(mapCmp);
     this._enabled$
       .pipe(

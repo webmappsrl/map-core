@@ -27,7 +27,7 @@ import {Feature, MapBrowserEvent} from 'ol';
 import {Point as OlPoint} from 'ol/geom';
 import {Point} from 'geojson';
 import {fromLonLat} from 'ol/proj';
-import {WmFeature} from '@wm-types/feature';
+import {UIEvent, WmFeature} from '@wm-types/feature';
 import {Cluster} from 'ol/source';
 import Popup from 'ol-ext/overlay/Popup';
 import {createEmpty, extend} from 'ol/extent';
@@ -64,7 +64,10 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
 
   _ugcPoisClusterLayer: VectorLayer<Cluster>;
 
-  constructor(private _cdr: ChangeDetectorRef, @Host() mapCmp: WmMapComponent) {
+  constructor(
+    private _cdr: ChangeDetectorRef,
+    @Host() mapCmp: WmMapComponent,
+  ) {
     super(mapCmp);
     this.mapCmp.isInit$
       .pipe(

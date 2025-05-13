@@ -39,6 +39,7 @@ import {
 import {IMAP} from '../../types/model';
 import {ActivatedRoute} from '@angular/router';
 import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
+import {UIEvent} from '@wm-types/feature';
 
 @Component({
   selector: 'wm-map',

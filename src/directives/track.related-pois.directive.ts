@@ -27,7 +27,6 @@ import {WmMapBaseDirective} from '.';
 import {
   addFeatureToLayer,
   calculateNearestPoint,
-  createCanvasForHtml,
   createLayer,
   downloadBase64Img,
   fromHEXToColor,
@@ -38,7 +37,7 @@ import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, DEF_LINE_COLOR, ICN_PATH, logoBase64} from '../readonly';
 import {IGeojsonFeature, PoiMarker} from '../types/model';
 import GeoJSON from 'ol/format/GeoJSON';
-import {WmFeature} from '@wm-types/feature';
+import {UIEvent, WmFeature} from '@wm-types/feature';
 import {MapBrowserEvent} from 'ol';
 
 @Directive({
@@ -58,8 +57,8 @@ export class WmMapTrackRelatedPoisDirective
   private _relatedPois: WmFeature<Point>[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
-  private _wmMapPoisPois: BehaviorSubject<VectorSource<Geometry>> =
-    new BehaviorSubject<VectorSource<Geometry> | null>(null);
+  private _wmMapPoisPois: BehaviorSubject<VectorSource<Feature<Geometry>>> =
+    new BehaviorSubject<VectorSource<Feature<Geometry>> | null>(null);
 
   /**
    * @description
@@ -361,7 +360,7 @@ export class WmMapTrackRelatedPoisDirective
    */
   private async _createIconFeature(
     coordinates: number[],
-    img: HTMLImageElement,
+    src: string,
     size: number,
     transparent: boolean = false,
     anchor: number[] = [0.5, 0.5],
@@ -378,8 +377,8 @@ export class WmMapTrackRelatedPoisDirective
     const style = new Style({
       image: new Icon({
         anchor,
-        img,
-        imgSize: [size, size],
+        src,
+        size: [size, size],
         opacity: transparent ? 0.5 : 1,
       }),
     });
@@ -406,7 +405,7 @@ export class WmMapTrackRelatedPoisDirective
     geometry = null,
     selected = false,
   ): Promise<{marker: PoiMarker; style: Style}> {
-    const img = await this._createPoiCavasImage(poi, selected);
+    const src = await this._createPoiCavasImage(poi, selected);
     const poiTaxonomies: string[] =
       poi && poi.properties && poi.properties.taxonomyIdentifiers
         ? poi.properties.taxonomyIdentifiers.filter(p => p.indexOf('poi_type') > -1)
@@ -415,9 +414,10 @@ export class WmMapTrackRelatedPoisDirective
       geometry
         ? geometry
         : [poi.geometry.coordinates[0] as number, poi.geometry.coordinates[1] as number],
-      img,
+      src,
       46,
     );
+
     iconFeature.setId(poi.properties.id);
     if (poiTaxonomies.length === 1 && this._poiIcons[poiTaxonomies[0]] != null) {
       let svgIcon = this._poiIcons[poiTaxonomies[0]] as string;
@@ -439,7 +439,6 @@ export class WmMapTrackRelatedPoisDirective
         }),
       );
     }
-
     return {
       marker: {
         poi,
@@ -462,12 +461,9 @@ export class WmMapTrackRelatedPoisDirective
    * @param selected - Indicates whether the POI is selected (optional, default: false).
    * @returns The created POI canvas image as an HTMLImageElement.
    */
-  private async _createPoiCavasImage(
-    poi: IGeojsonFeature,
-    selected = false,
-  ): Promise<HTMLImageElement> {
+  private async _createPoiCavasImage(poi: IGeojsonFeature, selected = false): Promise<string> {
     const htmlTextCanvas = await this._createPoiMarkerHtmlForCanvas(poi, selected);
-    return createCanvasForHtml(htmlTextCanvas, 46);
+    return `data:image/svg+xml;utf8,${encodeURIComponent(htmlTextCanvas)}`;
   }
 
   private async _createPoiMarker(poi: WmFeature<Point>, selected = false) {
@@ -489,8 +485,8 @@ export class WmMapTrackRelatedPoisDirective
       const poiColor = poyType?.color
         ? poyType.color
         : properties.color
-        ? properties.color
-        : '#ff8c00';
+          ? properties.color
+          : '#ff8c00';
       const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
       let iconStyle = new Style({
         image: new Icon({
@@ -582,23 +578,21 @@ export class WmMapTrackRelatedPoisDirective
       img1b64 = await downloadBase64Img(url);
     }
 
-    let html = `
-    <div class="webmapp-map-poimarker-container" style="position: relative;width: 30px;height: 60px;">`;
+    let html = ``;
 
     html += `
         <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style=" position: absolute;  width: 46px;  height: 46px;  left: 0px;  top: 0px;">
           <circle opacity="${selected ? 1 : 0.2}" cx="23" cy="23" r="23" fill="${
-      this._defaultFeatureColor
-    }"/>
+            this._defaultFeatureColor
+          }"/>
           <rect x="5" y="5" width="36" height="36" rx="18" fill="url(#img)" stroke="white" stroke-width="2"/>
           <defs>
             <pattern height="100%" width="100%" patternContentUnits="objectBoundingBox" id="img">
-              <image height="1" width="1" preserveAspectRatio="xMidYMid slice" xlink:href="${img1b64}">
+              <image height="1" width="1" preserveAspectRatio="xMidYMid slice" href="${img1b64}">
               </image>
             </pattern>
           </defs>
         </svg>`;
-    html += ` </div>`;
 
     return html;
   }
@@ -641,8 +635,8 @@ export class WmMapTrackRelatedPoisDirective
     return res?.length > 0
       ? res[0]
       : taxonomyIdentifiers != null && taxonomyIdentifiers.length > 0
-      ? taxonomyIdentifiers[0]
-      : null;
+        ? taxonomyIdentifiers[0]
+        : null;
   }
 
   /**

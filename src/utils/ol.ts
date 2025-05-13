@@ -36,6 +36,7 @@ import {fromHEXToColor, getClusterStyle} from './styles';
 import TileLayer from 'ol/layer/Tile';
 import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../types/model';
 import GeoJSON from 'ol/format/GeoJSON';
+import {UIEvent} from '@wm-types/feature';
 
 // Sorgente tile personalizzata per gestire il caricamento delle tile offline
 class CustomTileSource extends XYZ {
@@ -82,7 +83,7 @@ export function activateInteractions(map: Map): void {
  * @param {Feature<Geometry>} feature
  */
 export function addFeatureToLayer(
-  layer: VectorLayer<VectorSource<Geometry>>,
+  layer: VectorLayer<VectorSource<Feature<Geometry>>>,
   feature: Feature<Geometry>,
 ): void {
   if (layer != null && layer.getSource() != null) {
@@ -191,7 +192,7 @@ export function calculateNearestPoint(
   layer: VectorLayer<VectorSource>,
   alertPoiRadius = ALERT_POI_RADIUS,
 ): Feature<Geometry> | null {
-  const feature: VectorSource<Geometry> = layer?.getSource();
+  const feature: VectorSource<Feature<Geometry>> = layer?.getSource();
   if (feature && location) {
     const coord: Coordinate = [location.longitude, location.latitude];
     const nFeature = feature.getClosestFeatureToCoordinate(coord);
@@ -487,7 +488,7 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
     image: new Icon({
       anchor: [0.5, 0.5],
       img: img,
-      imgSize: [32, 32],
+      size: [32, 32],
       opacity: 1,
       crossOrigin: 'anonymous',
     }),
@@ -506,7 +507,7 @@ export function createIconFeatureFromSrc(src: string, position: Coordinate): Fea
     image: new Icon({
       anchor: [0.5, 0.5],
       src: src,
-      imgSize: [32, 32],
+      size: [32, 32],
       opacity: 1,
       crossOrigin: 'anonymous',
     }),
@@ -551,7 +552,7 @@ export function createIconFromHtmlAndGeometry(html: string, position: Coordinate
     image: new Icon({
       anchor: [0.5, 0.5],
       img: img,
-      imgSize: [32, 32],
+      size: [32, 32],
       opacity: 1,
     }),
     zIndex: 999999999,
