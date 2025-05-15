@@ -172,7 +172,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
         const clickedFeature = features[0];
         const properties = clickedFeature?.getProperties() ?? {};
-        console.table(properties);
         const geometryType = clickedFeature.getGeometry()?.getType();
         // Controlla se la geometria è un Point e, in tal caso, non prosegue
         if (geometryType === 'Point') {
