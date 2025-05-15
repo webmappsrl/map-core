@@ -425,6 +425,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     if (currentPoi == null) {
       this._lastId = null;
       clearLayer(this._selectedPoiLayer);
+      return;
     }
     if (currentPoi.properties.id === this._lastId) {
       return;

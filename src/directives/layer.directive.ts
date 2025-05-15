@@ -174,7 +174,12 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         const properties = clickedFeature?.getProperties() ?? {};
         const geometryType = clickedFeature.getGeometry()?.getType();
         // Controlla se la geometria è un Point e, in tal caso, non prosegue
-        if (geometryType === 'Point') {
+        if (
+          geometryType === 'Point' ||
+          geometryType === 'MultiPoint' ||
+          geometryType === 'MultiPolygon' ||
+          geometryType === 'Polygon'
+        ) {
           return;
         }
 
