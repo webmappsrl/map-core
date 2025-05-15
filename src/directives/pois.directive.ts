@@ -25,12 +25,11 @@ import {WmMapBaseDirective} from '.';
 import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from '../../src/utils';
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
-import {CLUSTER_ZINDEX, DEF_MAP_MAX_PBF_ZOOM, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
+import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
 import {ILAYER} from '../types/layer';
 import {WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
 const PADDING = [80, 80, 80, 80];
-const TRESHOLD_ENABLE_FIT = 2;
 @Directive({
   selector: '[wmMapPois]',
 })

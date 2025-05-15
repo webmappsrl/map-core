@@ -164,15 +164,6 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
-    const features = [];
-    this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-      if (layer === this._vectorTileLayer) {
-        features.push(feature);
-      }
-    });
-    if (features.length === 0) {
-      return;
-    }
     const zoom = this.mapCmp.map.getView().getZoom();
     if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
       this._zoomOnClick(evt);
@@ -256,9 +247,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       );
 
       this.mapCmp.map.addLayer(this._vectorTileLayer);
-      this.mapCmp.map.addLayer(this._animatedVectorLayer);
-      this.mapCmp.registerDirective(this._vectorTileLayer['ol_uid'], this);
       this._vectorTileLayer.setVisible(!this._disabled);
+      this.mapCmp.map.on('click', (evt: any) => {
+        this.onClick(evt);
+      });
     }
   }
 
