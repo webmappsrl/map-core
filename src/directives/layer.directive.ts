@@ -169,6 +169,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       hitTolerance: 100,
       layerFilter: layer => layer === this._vectorTileLayer,
     });
+    if (features.length === 0) {
+      return;
+    }
     const otherFeatures = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
       hitTolerance: 10,
       layerFilter: layer => layer != this._vectorTileLayer,
