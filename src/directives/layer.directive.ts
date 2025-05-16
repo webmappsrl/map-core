@@ -164,30 +164,26 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
-    const features = [];
-    this.mapCmp.map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
-      if (layer === this._vectorTileLayer) {
-        features.push(feature);
-      }
+    const zoom = this.mapCmp.map.getView().getZoom();
+    const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+      hitTolerance: 100,
+      layerFilter: layer => layer === this._vectorTileLayer,
     });
-    if (features.length === 0) {
+    const otherFeatures = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+      hitTolerance: 10,
+      layerFilter: layer => layer != this._vectorTileLayer,
+    });
+    if (otherFeatures.length > 0) {
       return;
     }
-    const zoom = this.mapCmp.map.getView().getZoom();
+
+    const clickedFeature = features[0];
+    const properties = clickedFeature?.getProperties() ?? {};
+
     if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
       this._zoomOnClick(evt);
     } else {
       try {
-        const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
-        const clickedFeature = features[0];
-        const properties = clickedFeature?.getProperties() ?? {};
-        console.table(properties);
-        const geometryType = clickedFeature.getGeometry()?.getType();
-        // Controlla se la geometria è un Point e, in tal caso, non prosegue
-        if (geometryType === 'Point') {
-          return;
-        }
-
         const isPbfLayer = properties?.name == null;
         if (isPbfLayer) {
           this._zoomOnClick(evt);
@@ -256,9 +252,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       );
 
       this.mapCmp.map.addLayer(this._vectorTileLayer);
-      this.mapCmp.map.addLayer(this._animatedVectorLayer);
-      this.mapCmp.registerDirective(this._vectorTileLayer['ol_uid'], this);
       this._vectorTileLayer.setVisible(!this._disabled);
+      this.mapCmp.map.on('click', (evt: any) => {
+        this.onClick(evt);
+      });
     }
   }
 

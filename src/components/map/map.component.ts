@@ -406,7 +406,12 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
               console.warn('No directive or onClick method found for layer:', topLayer.olUID);
             }
           } else {
-            this.wmMapEmptyClickEVT$.next(evt);
+            const otherFeatures = this.map.getFeaturesAtPixel(evt.pixel, {
+              hitTolerance: 100,
+            });
+            if (otherFeatures.length === 0) {
+              this.wmMapEmptyClickEVT$.next(evt);
+            }
           }
         } catch (_) {
           console.log(_);

@@ -635,14 +635,7 @@ export function splitLineString(
         break;
       }
     } else {
-      let distanceToSplitPoint: number = currentSegmentLength - segmentLength;
-      let splitPointCoords: Coordinate = calculateSplitPointCoords(
-        startPoint,
-        nextPoint,
-        distanceBetweenPoints,
-        distanceToSplitPoint,
-      );
-      startPoint = splitPointCoords;
+      let splitPointCoords: Coordinate = nextPoint;
       if (!options.extent || containsCoordinate(options.extent, splitPointCoords)) {
         if (!options.vertices) {
           splitPointCoords.push(angle);
