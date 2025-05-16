@@ -408,7 +408,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
               hitTolerance: 100,
             });
             if (otherFeatures.length === 0) {
-              this.wmMapEmptyClickEVT$.emit(evt);
+              this.wmMapEmptyClickEVT$.next(evt);
             }
           }
         } catch (_) {
