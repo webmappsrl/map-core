@@ -165,24 +165,25 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
     const zoom = this.mapCmp.map.getView().getZoom();
+    const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+      hitTolerance: 100,
+      layerFilter: layer => layer === this._vectorTileLayer,
+    });
+    const otherFeatures = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
+      hitTolerance: 10,
+      layerFilter: layer => layer != this._vectorTileLayer,
+    });
+    if (otherFeatures.length > 0) {
+      return;
+    }
+
+    const clickedFeature = features[0];
+    const properties = clickedFeature?.getProperties() ?? {};
+
     if (zoom <= MAP_ZOOM_ON_CLICK_TRESHOLD) {
       this._zoomOnClick(evt);
     } else {
       try {
-        const features = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {hitTolerance: 100});
-        const clickedFeature = features[0];
-        const properties = clickedFeature?.getProperties() ?? {};
-        const geometryType = clickedFeature.getGeometry()?.getType();
-        // Controlla se la geometria è un Point e, in tal caso, non prosegue
-        if (
-          geometryType === 'Point' ||
-          geometryType === 'MultiPoint' ||
-          geometryType === 'MultiPolygon' ||
-          geometryType === 'Polygon'
-        ) {
-          return;
-        }
-
         const isPbfLayer = properties?.name == null;
         if (isPbfLayer) {
           this._zoomOnClick(evt);
