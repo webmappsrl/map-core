@@ -14,7 +14,7 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
-import {BehaviorSubject, Observable} from 'rxjs';
+import {BehaviorSubject, Observable, ReplaySubject} from 'rxjs';
 import {delay, filter, shareReplay, take} from 'rxjs/operators';
 
 import {MapBrowserEvent} from 'ol';
@@ -39,6 +39,7 @@ import {
 import {IMAP} from '../../types/model';
 import {ActivatedRoute} from '@angular/router';
 import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
+import {WmMapControls} from '../controls/controls.map';
 
 @Component({
   selector: 'wm-map',
@@ -78,13 +79,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     MapBrowserEvent<UIEvent>
   >();
   @Output() wmMapCloseTopRightBtnsEVT$: EventEmitter<string> = new EventEmitter();
-  @Output() wmMapEmptyClickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter();
+  @Output() wmMapEmptyClickEVT$ = new ReplaySubject<MapBrowserEvent<UIEvent>>(1);
   @Output() wmMapOverlayEVT$: EventEmitter<string | null> = new EventEmitter(null);
   @Output() wmMapRotateEVT$: EventEmitter<number> = new EventEmitter();
   @Output() wmMapToggleDataEVT$: EventEmitter<{type: 'layers' | 'pois' | 'ugc'; toggle: boolean}> =
     new EventEmitter();
   @ViewChild('mapContainer') mapContainer: ElementRef;
   @ViewChild('scaleLineContainer') scaleLineContainer: ElementRef;
+  @ViewChild(WmMapControls) wmMapControls: WmMapControls;
 
   customTrackEnabled$: Observable<boolean>;
   isInit$: BehaviorSubject<boolean> = new BehaviorSubject(false);

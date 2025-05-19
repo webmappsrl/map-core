@@ -4,6 +4,7 @@ import {
   padding,
   resetTogglePartition,
   setHitMapFeatureCollections,
+  setHitMapGeometry,
   setTogglePartition,
 } from './map-core.actions';
 
@@ -12,6 +13,7 @@ export interface IUIRootState {
   [featureKey]: {
     partitionToggleState: {[key: string | number]: any};
     hitMapfeatureCollections: {[sey: string]: string};
+    hitMapGeometry: any;
     padding: [number, number, number, number];
     leftPadding: number;
   };
@@ -43,6 +45,12 @@ export const MapCoreReducer = createReducer(
     return {
       ...state,
       ...{hitMapfeatureCollections},
+    };
+  }),
+  on(setHitMapGeometry, (state, {hitMapGeometry}) => {
+    return {
+      ...state,
+      ...{hitMapGeometry},
     };
   }),
   on(padding, (state, {padding}) => {

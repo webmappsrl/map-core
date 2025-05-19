@@ -8,14 +8,14 @@ import {Geometry} from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
-import TileGrid from 'ol/tilegrid/TileGrid';
 import {default as VectorSource} from 'ol/source/Vector';
 import {Fill, Stroke, Style, Text} from 'ol/style';
 import {WmMapComponent} from '../components';
 import {WmMapBaseDirective} from './base.directive';
 import {FEATURE_COLLECTION_ZINDEX} from '../readonly';
 import {Store} from '@ngrx/store';
-import {setHitMapFeatureCollections} from '../store/map-core.actions';
+import {setHitMapFeatureCollections, setHitMapGeometry} from '../store/map-core.actions';
+import {coordsFromLonLat, CustomTileSource, extentToLonLat} from '@map-core/utils';
 @Directive({
   selector: '[wmMapHitMapCollection]',
 })
@@ -72,13 +72,17 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   @Output()
   wmMapFeatureCollectionPopup: EventEmitter<any> = new EventEmitter<any>();
 
+  @Output()
+  wmMapHitMapfeatureClicked: EventEmitter<string> = new EventEmitter<string>();
+
   constructor(@Host() mapCmp: WmMapComponent, private _http: HttpClient, private _store: Store) {
     super(mapCmp);
+    this.mapCmp.wmMapEmptyClickEVT$.subscribe(() => {
+      this._resetFeaturesStyle();
+    });
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
-    this.mapCmp.wmMapEmptyClickEVT$.emit();
-
     const feats = this.mapCmp.map
       .getFeaturesAtPixel(evt.pixel, {hitTolerance: 30})
       .filter(f => f.getProperties().carg_code != null);
@@ -97,8 +101,9 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
 
     // Crea il nuovo TileLayer con zIndex subito dopo l'ultimo
     this._tileLayer = new TileLayer({
-      source: new XYZ({
+      source: new CustomTileSource({
         url: 'https://tiles.webmapp.it/carg/{z}/{x}/{y}.png',
+        cacheSize: 50000,
         projection: 'EPSG:3857',
       }),
       visible: true,
@@ -114,15 +119,25 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
       if (this._selectedFeature.getId() === feature.getId()) {
         return;
       } else {
+        this.mapCmp?.wmMapControls?.reset();
         this._selectedFeature.setStyle(this.unselectedStyle.bind(this));
       }
     }
     this._selectedFeature = feature;
     const prop = this._selectedFeature?.getProperties() ?? null;
-    const hitMapfeatureCollections = prop['featureCollections'];
-    this._selectedFeature.setStyle(this.selectedStyle());
+    const hitMapfeatureCollections =
+      prop && prop['featureCollections'] ? prop['featureCollections'] : null;
+    if (this._selectedFeature) {
+      this._selectedFeature.setStyle(this.selectedStyle());
+      this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
+    }
+    this.wmMapHitMapfeatureClicked.emit(this._selectedFeature.getProperties().id);
     this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections}));
-    this.mapCmp.map.getView().fit(this._selectedFeature.getGeometry().getExtent());
+    this._store.dispatch(
+      setHitMapGeometry({
+        hitMapGeometry: extentToLonLat(this._selectedFeature.getGeometry().getExtent()),
+      }),
+    );
   }
 
   private _buildGeojson(geojson: WmFeatureCollection): void {
@@ -159,13 +174,12 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
   }
 
   private _resetFeaturesStyle(): void {
-    if (this._hitMapLayer && this._hitMapLayer.getSource()) {
-      const features = this._hitMapLayer.getSource().getFeatures();
-      features
-        .filter(f => f != this._selectedFeature)
-        .forEach(feature => feature.setStyle(this.unselectedStyle.bind(this)));
+    if (this._selectedFeature != null) {
+      this.mapCmp?.wmMapControls?.reset();
+      this._selectedFeature?.setStyle(this.unselectedStyle.bind(this));
+      this._selectedFeature = null;
+      this._store.dispatch(setHitMapFeatureCollections({hitMapfeatureCollections: null}));
     }
-    this._selectedFeature = null;
   }
 
   private selectedStyle(): Style {
