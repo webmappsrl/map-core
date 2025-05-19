@@ -167,22 +167,22 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
     const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
     const geojson: any = this._getGeoJson(trackgeojson);
-
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
     const linestring = this._trackFeatures[0].getGeometry();
+    const styleFn = isFlowLine
+      ? getFlowStyle(orangeTreshold, redTreshold)
+      : drawTrack
+      ? getLineStyle.bind(this)(this.wmMapTrackColor, linestring)
+      : null;
+
     this._trackLayer = new VectorLayer({
       source: new VectorSource({
         format: new GeoJSON(),
         features: this._trackFeatures,
       }),
-      style: () =>
-        isFlowLine
-          ? getFlowStyle(orangeTreshold, redTreshold)
-          : drawTrack
-          ? getLineStyle.bind(this)(this.wmMapTrackColor, linestring)
-          : null,
+      style: () => styleFn,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: TRACK_DIRECTIVE_ZINDEX,
