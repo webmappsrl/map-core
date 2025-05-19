@@ -21,6 +21,7 @@ import {Type} from 'ol/geom/Geometry';
 import {Store} from '@ngrx/store';
 import {partitionToggleState} from '../store/map-core.selector';
 import {WmFeatureCollection} from '@wm-types/feature';
+import {getFeatureCollection} from '@map-core/utils';
 
 @Directive({
   selector: '[wmMapFeatureCollection]',
@@ -95,7 +96,7 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
         switchMap(_ => this._overlay$),
         filter(overlay => overlay != null && overlay.url != null),
         switchMap(overlay => {
-          return this._http.get(overlay.url);
+          return getFeatureCollection(overlay.url);
         }),
       )
       .subscribe((geojson: WmFeatureCollection) => {
@@ -367,87 +368,87 @@ export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {
     try {
       const geometryType: Type = feature?.getGeometry()?.getType();
       const properties = feature.getProperties();
-      const overlay = this._overlay$.value;
       let radius = MIN_RADIUS;
-
-      let strokeColor = overlay.strokeColor;
-      let fillColor = overlay.fillColor;
-
-      switch (geometryType) {
-        case 'Point':
-          radius = this._calculateRadiusForZoom();
-          return new Style({
-            image: new CircleStyle({
-              radius,
-              fill: new Fill({
-                color: fillColor.replace('0.3', '0'),
+      const overlay = this._overlay$.value;
+      if (overlay != null) {
+        let strokeColor = overlay.strokeColor;
+        let fillColor = overlay.fillColor;
+        switch (geometryType) {
+          case 'Point':
+            radius = this._calculateRadiusForZoom();
+            return new Style({
+              image: new CircleStyle({
+                radius,
+                fill: new Fill({
+                  color: fillColor.replace('0.3', '0'),
+                }),
+                stroke: new Stroke({
+                  color: strokeColor.replace('0.3', '0'),
+                  width: overlay.strokeWidth,
+                }),
               }),
+            });
+          case 'MultiLineString':
+            return new Style({
+              stroke: new Stroke({
+                color: strokeColor,
+                width: this._calculateRadiusForZoom(overlay.strokeWidth),
+              }),
+              fill: new Fill({
+                color: fillColor,
+              }),
+            });
+          default:
+            if (
+              overlay.distinctProperty != null &&
+              properties[overlay.distinctProperty] != null &&
+              overlay.partitionProperties != null
+            ) {
+              const hideStyle = new Style({
+                fill: new Fill({
+                  color: 'rgba(0, 0, 0, 0)',
+                }),
+                stroke: new Stroke({
+                  color: 'rgba(0, 0, 0, 0)',
+                  width: 1,
+                }),
+              });
+
+              const myProperties = overlay.partitionProperties.filter(
+                d => d.value === properties[overlay.distinctProperty],
+              );
+              if (properties[overlay.distinctProperty] != null) {
+                if (this._partitionToggleState[properties[overlay.distinctProperty]] === false) {
+                  return hideStyle;
+                }
+              }
+
+              if (myProperties.length > 0) {
+                const myProperty = myProperties[0];
+                return new Style({
+                  fill: new Fill({
+                    color: myProperty.fillColor.replace('0.3', '0'),
+                  }),
+                  stroke: new Stroke({
+                    color: myProperty.strokeColor.replace('0.3', '0'),
+                    width: myProperty.strokeWidth,
+                  }),
+                });
+              }
+            }
+            return new Style({
               stroke: new Stroke({
                 color: strokeColor.replace('0.3', '0'),
                 width: overlay.strokeWidth,
               }),
-            }),
-          });
-        case 'MultiLineString':
-          return new Style({
-            stroke: new Stroke({
-              color: strokeColor,
-              width: this._calculateRadiusForZoom(overlay.strokeWidth),
-            }),
-            fill: new Fill({
-              color: fillColor,
-            }),
-          });
-        default:
-          if (
-            overlay.distinctProperty != null &&
-            properties[overlay.distinctProperty] != null &&
-            overlay.partitionProperties != null
-          ) {
-            const hideStyle = new Style({
               fill: new Fill({
-                color: 'rgba(0, 0, 0, 0)',
-              }),
-              stroke: new Stroke({
-                color: 'rgba(0, 0, 0, 0)',
-                width: 1,
+                color: fillColor.replace('0.3', '0'),
               }),
             });
-
-            const myProperties = overlay.partitionProperties.filter(
-              d => d.value === properties[overlay.distinctProperty],
-            );
-            if (properties[overlay.distinctProperty] != null) {
-              if (this._partitionToggleState[properties[overlay.distinctProperty]] === false) {
-                return hideStyle;
-              }
-            }
-
-            if (myProperties.length > 0) {
-              const myProperty = myProperties[0];
-              return new Style({
-                fill: new Fill({
-                  color: myProperty.fillColor.replace('0.3', '0'),
-                }),
-                stroke: new Stroke({
-                  color: myProperty.strokeColor.replace('0.3', '0'),
-                  width: myProperty.strokeWidth,
-                }),
-              });
-            }
-          }
-          return new Style({
-            stroke: new Stroke({
-              color: strokeColor.replace('0.3', '0'),
-              width: overlay.strokeWidth,
-            }),
-            fill: new Fill({
-              color: fillColor.replace('0.3', '0'),
-            }),
-          });
+        }
       }
     } catch (error) {
-      console.log(feature);
+      console.log(error);
     }
   }
 }
