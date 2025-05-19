@@ -144,17 +144,15 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       )
       .subscribe(() => {
         const view = this.mapCmp.map.getView();
-        if(enable) {
-          this._moveEndSubject$.pipe(
-            debounceTime(100)
-          ).subscribe(() => {
+        if (enable) {
+          this._moveEndSubject$.pipe(debounceTime(100)).subscribe(() => {
             this._featuresInViewport();
           });
           this._moveEndListener = () => this._moveEndSubject$.next();
           view.on('change:resolution', this._enableFeaturesInViewportCallback);
         } else {
           this.wmMapLayerShowFeaturesInViewport = false;
-          this._enableFeaturesInViewportCallback()
+          this._enableFeaturesInViewportCallback();
           view.un('change:resolution', this._enableFeaturesInViewportCallback);
         }
       });
@@ -344,13 +342,22 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   private _enableFeaturesInViewportCallback = () => {
-    const view = this.mapCmp.map.getView();
-    const zoom = view.getZoom();
-    if (this.wmMapLayerShowFeaturesInViewport && zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN && zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX) {
-      this.mapCmp.map.on('moveend', this._moveEndListener);
-    } else {
-      this.mapCmp.map.un('moveend', this._moveEndListener);
+    try {
+      const view = this.mapCmp.map.getView();
+      const zoom = view.getZoom();
+      if (
+        this.wmMapLayerShowFeaturesInViewport &&
+        zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN &&
+        zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX
+      ) {
+        this.mapCmp.map.on('moveend', this._moveEndListener);
+      } else {
+        this.mapCmp.map.un('moveend', this._moveEndListener);
+        this.featuresInViewportEVT.emit([]);
+      }
+    } catch (e) {
+      console.log(e);
       this.featuresInViewportEVT.emit([]);
     }
-  }
+  };
 }
