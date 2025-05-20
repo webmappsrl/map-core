@@ -26,6 +26,7 @@ import {WmMapPopover} from '../components/popover/popover.map';
 
 import {WmMapBaseDirective} from '.';
 import {
+  clearLayer,
   coordsFromLonLat,
   createIconFeatureFromHtml,
   getFlowStyle,
@@ -145,6 +146,23 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
           this._trackLayer?.changed();
         }
       });
+  }
+
+  /**
+   * @description
+   * Esegue uno zoom out impercettibile sulla vista corrente della mappa
+   */
+  private _doSubtleZoomOut(): void {
+    if (this.mapCmp.map) {
+      const view = this.mapCmp.map.getView();
+      const currentZoom = view.getZoom();
+      if (currentZoom) {
+        view.animate({
+          zoom: currentZoom - 0.1, // zoom out di 0.1 livelli
+          duration: 300,
+        });
+      }
+    }
   }
 
   /**
@@ -450,5 +468,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._popoverRef != null) {
       this._popoverRef.instance.message$.next(null);
     }
+    clearLayer(this._trackLayer);
+    clearLayer(this._elevationChartLayer);
+    clearLayer(this._startEndLayer);
+    this._doSubtleZoomOut(); // TODO: rimuovere capire perche  la seconda selezione fa sparire  la track selezionata OC:5551
   }
 }
