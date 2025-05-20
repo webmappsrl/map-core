@@ -352,7 +352,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       ) {
         this.mapCmp.map.on('moveend', this._moveEndListener);
       } else {
-        this.mapCmp.map.un('moveend', this._moveEndListener);
+        const listeners = this.mapCmp.map.getListeners('moveend');
+        if (listeners && listeners.length > 0) {
+          this.mapCmp.map.un('moveend', this._moveEndListener);
+        }
         this.featuresInViewportEVT.emit([]);
       }
     } catch (e) {
