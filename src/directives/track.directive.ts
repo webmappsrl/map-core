@@ -26,6 +26,7 @@ import {WmMapPopover} from '../components/popover/popover.map';
 
 import {WmMapBaseDirective} from '.';
 import {
+  clearLayer,
   coordsFromLonLat,
   createIconFeatureFromHtml,
   getFlowStyle,
@@ -149,6 +150,23 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
 
   /**
    * @description
+   * Esegue uno zoom out impercettibile sulla vista corrente della mappa
+   */
+  private _doSubtleZoomOut(): void {
+    if (this.mapCmp.map) {
+      const view = this.mapCmp.map.getView();
+      const currentZoom = view.getZoom();
+      if (currentZoom) {
+        view.animate({
+          zoom: currentZoom - 0.1, // zoom out di 0.1 livelli
+          duration: 300,
+        });
+      }
+    }
+  }
+
+  /**
+   * @description
    * This function draws a track on the map.
    * The function reads the trackgeojson data and converts it to a feature vector,
    * which is then added as a layer to the map. The style of the layer is determined
@@ -167,22 +185,22 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     const orangeTreshold = this.wmMapConf.flow_line_quote_orange || 800;
     const redTreshold = this.wmMapConf.flow_line_quote_red || 1500;
     const geojson: any = this._getGeoJson(trackgeojson);
-
     this._trackFeatures = new GeoJSON({
       featureProjection: 'EPSG:3857',
     }).readFeatures(geojson);
     const linestring = this._trackFeatures[0].getGeometry();
+    const styleFn = isFlowLine
+      ? getFlowStyle(orangeTreshold, redTreshold)
+      : drawTrack
+      ? getLineStyle.bind(this)(this.wmMapTrackColor, linestring)
+      : null;
+
     this._trackLayer = new VectorLayer({
       source: new VectorSource({
         format: new GeoJSON(),
         features: this._trackFeatures,
       }),
-      style: () =>
-        isFlowLine
-          ? getFlowStyle(orangeTreshold, redTreshold)
-          : drawTrack
-          ? getLineStyle.bind(this)(this.wmMapTrackColor, linestring)
-          : null,
+      style: () => styleFn,
       updateWhileAnimating: true,
       updateWhileInteracting: true,
       zIndex: TRACK_DIRECTIVE_ZINDEX,
@@ -450,5 +468,9 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
     if (this._popoverRef != null) {
       this._popoverRef.instance.message$.next(null);
     }
+    clearLayer(this._trackLayer);
+    clearLayer(this._elevationChartLayer);
+    clearLayer(this._startEndLayer);
+    this._doSubtleZoomOut(); // TODO: rimuovere capire perche  la seconda selezione fa sparire  la track selezionata OC:5551
   }
 }
