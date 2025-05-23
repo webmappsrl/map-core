@@ -100,8 +100,10 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     }
   }
 
-  @Input() set reloadCustomTracks(val) {
-    if (val != null) this._clear();
+  @Input() set reloadCustomTracks(val: boolean) {
+    if (val && this._customTrackLayer?.getSource()) {
+      this._clear();
+    }
   }
 
   @Input() customTracks: any[];
