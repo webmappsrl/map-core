@@ -29,7 +29,7 @@ import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
-import {buildTileLayers, extentFromLonLat} from '../../../src/utils/ol';
+import {buildTileLayers, CustomTileSource, extentFromLonLat} from '../../../src/utils/ol';
 import {
   DEF_MAP_ROTATION_DURATION,
   initExtent,
@@ -232,6 +232,22 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
 
   setCustomDrawDirective(directive: wmMapCustomTrackDrawTrackDirective): void {
     this._customDrawDirective = directive;
+  }
+
+  addTileLayer(tile: string): TileLayer<CustomTileSource> {
+    const tileLayer = new TileLayer({
+      source: new CustomTileSource({
+        url: tile,
+        cacheSize: 50000,
+        projection: 'EPSG:3857',
+      }),
+      visible: true,
+      opacity: 1,
+      zIndex: 1,
+    });
+    this.map.addLayer(tileLayer);
+    this._updateMap();
+    return tileLayer;
   }
 
   /**
