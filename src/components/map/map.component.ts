@@ -373,6 +373,9 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
       target: this.mapContainer.nativeElement,
     });
 
+    this.map.once('rendercomplete', () => {
+      document.body.setAttribute('e2e-map-ready', 'true');
+    });
     this.map.on('postrender', () => {
       this._updateDegrees();
     });
