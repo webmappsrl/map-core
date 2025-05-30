@@ -788,7 +788,7 @@ export function initInteractions(opt?: DefaultsOptions): Collection<Interaction>
  * @param url the URL of the vector tile server
  * @param styleFn the style function to apply to the features
  * @param tileLoadFn the function to load the vector tile data
- * @param preload if true, preloads all tiles in the viewport at the current resolution
+ * @param maxZoom the maximum zoom level for tiles (default: 13)
  *
  * @returns the initialized vector tile layer
  */
@@ -796,6 +796,7 @@ export function initVectorTileLayer(
   url: any,
   styleFn: (feature: FeatureLike) => [Style] | Style,
   tileLoadFn: LoadFunction,
+  maxZoom: number = 13,
 ): VectorTileLayer {
   if (!url) {
     return;
@@ -810,6 +811,7 @@ export function initVectorTileLayer(
       format: new MVT(),
       url: url,
       overlaps: false,
+      maxZoom,
       //  tileLoadFunction: tileLoadFn,
     }),
     style: styleFn,
