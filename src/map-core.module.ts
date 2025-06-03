@@ -22,8 +22,9 @@ import {WmMapControlsModule} from './components/controls/controls.module';
 import {WmMapGeojsonDirective} from './directives/geojson.directive';
 import {StoreModule} from '@ngrx/store';
 import {featureKey, MapCoreReducer} from './store/map-core.reducer';
-import { WmMapUcgTracksDirective } from './directives/ugc-tracks.directive';
-import { WmUgcPoisDirective } from './directives/ugc-pois.directive';
+import {WmMapUcgTracksDirective} from './directives/ugc-tracks.directive';
+import {WmUgcPoisDirective} from './directives/ugc-pois.directive';
+import {WmMapDrawUgcPoiDirective} from './directives/draw-ugc-poi.directive';
 
 const directives = [
   WmMapTrackDirective,
@@ -39,7 +40,8 @@ const directives = [
   WmMapFeatureCollectionDirective,
   WmMapHitMapDirective,
   WmMapGeojsonDirective,
-  WmUgcPoisDirective
+  WmUgcPoisDirective,
+  WmMapDrawUgcPoiDirective,
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 

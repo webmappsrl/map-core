@@ -58,7 +58,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._wmMapUgcPois.next(ugcPois);
   }
 
-  @Input() wmMapUgcPoi: number | string | null;
+  @Input() wmMapUgcPoi: WmFeature<Point> | null;
   @Input() wmMapUgcUnselectedPoi: boolean;
   @Output() currentUgcPoiEvt: EventEmitter<any> = new EventEmitter<any>();
 
@@ -95,7 +95,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
       .subscribe(() => {
         if (changes.wmMapUgcPoi) {
           this.mapCmp.map.once('rendercomplete', () => {
-            this._setPoi(this.wmMapUgcPoi);
+            this._selectIcon(this.wmMapUgcPoi);
           });
         }
         if (changes.wmMapUgcUnselectedPoi != null) {
@@ -105,7 +105,8 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
           changes.wmMapUgcPois &&
           changes.wmMapUgcPois.previousValue != null &&
           changes.wmMapUgcPois.currentValue != null &&
-          changes.wmMapUgcPois.previousValue.length != changes.wmMapUgcPois.currentValue.length
+          JSON.stringify(changes.wmMapUgcPois.previousValue) !=
+            JSON.stringify(changes.wmMapUgcPois.currentValue)
         ) {
           this._addPoisLayer(changes.wmMapUgcPois.currentValue);
         }
@@ -153,7 +154,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         const coordinates = [
           poi.geometry.coordinates[0] as number,
           poi.geometry.coordinates[1] as number,
-        ] || [0, 0];
+        ];
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         const iconFeature = new Feature({
           type: 'icon',
@@ -215,7 +216,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.registerDirective(this._ugcPoisClusterLayer['ol_uid'], this);
   }
 
-  private _selectIcon(currentPoi: any): void {
+  private _selectIcon(currentPoi: WmFeature<Point>): void {
     clearLayer(this._selectedUgcPoiLayer);
     if (currentPoi != null) {
       const selectedUgcPoiLayerSource = this._selectedUgcPoiLayer.getSource();
@@ -225,7 +226,7 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         const coordinates = [
           currentPoi.geometry.coordinates[0] as number,
           currentPoi.geometry.coordinates[1] as number,
-        ] || [0, 0];
+        ];
         const position = fromLonLat([coordinates[0] as number, coordinates[1] as number]);
         geometry = new OlPoint([position[0], position[1]]);
       } else {
@@ -276,21 +277,5 @@ export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges 
         this.mapCmp.map.removeInteraction(this._selectCluster);
       });
     }
-  }
-
-  private _setPoi(id: number | string | null): void {
-    if (id == null) {
-      this._selectIcon(null);
-      return;
-    }
-    this._wmMapUgcPois
-      .pipe(
-        filter(p => !!p),
-        take(1),
-      )
-      .subscribe(pois => {
-        const currentPoi = pois.find(p => +p.properties.id == +id || p.properties.uuid == id);
-        this._selectIcon(currentPoi);
-      });
   }
 }

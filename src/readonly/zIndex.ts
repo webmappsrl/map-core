@@ -11,3 +11,4 @@ export const TRACK_DIRECTIVE_ZINDEX = 500;
 export const ITINERARY_ZINDEX = 600;
 export const UGC_TRACK_ZINDEX = 490;
 export const UGC_POI_ZINDEX = 500;
+export const UGC_POI_DRAWN_ZINDEX = 610;
