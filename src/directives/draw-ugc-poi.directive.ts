@@ -18,16 +18,31 @@ import {Icon, Style} from 'ol/style';
   selector: '[wmMapDrawUgcPoi]',
 })
 export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
+  private _ugcPoidrawn: WmFeature<Point>;
   private _drawUgcPoiLayer: VectorLayer<VectorSource>;
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  @Output() ugcPoiDrawnEvt: EventEmitter<WmFeature<Point>> = new EventEmitter<WmFeature<Point>>();
+  @Output() wmMapDrawUgcPoiEvt: EventEmitter<WmFeature<Point>> = new EventEmitter<
+    WmFeature<Point>
+  >();
 
-  @Input() wmMapDrawUgcPoiPoi: WmFeature<Point> | null;
+  @Input() set wmMapDrawUgcPoiPoi(ugcPoi: WmFeature<Point> | null) {
+    this._ugcPoidrawn = ugcPoi;
+    this._drawUgcPoiIcon(this._ugcPoidrawn);
+  }
   @Input('wmMapDrawUgcPoiEnabled') set enabled(val: boolean) {
     this._enabled$.next(val);
     this._drawUgcPoiLayer?.setVisible(val);
-    //TODO: gestione del messaggio popover
+
+    if (this._enabled$.value) {
+      this.mapCmp.map.on('click', this._onClick);
+    } else {
+      try {
+        this.mapCmp.map.un('click', this._onClick);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   constructor(@Host() mapCmp: WmMapComponent) {
@@ -42,38 +57,25 @@ export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
       });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.wmMapDrawUgcPoiPoi) {
-      this._drawUgcPoiIcon(this.wmMapDrawUgcPoiPoi);
-    }
-  }
-
   private _init(): void {
     this._drawUgcPoiLayer = createLayer(this._drawUgcPoiLayer, UGC_POI_DRAWN_ZINDEX);
-    this._drawUgcPoiLayer.setVisible(this._enabled$.value);
     this.mapCmp.map.addLayer(this._drawUgcPoiLayer);
-
-    this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
-      this._onClick(evt);
-    });
   }
 
-  private _onClick(evt: MapBrowserEvent<UIEvent>): void {
-    if (this._enabled$.value) {
-      const coordinates = toLonLat(evt.coordinate);
-      if (this.wmMapDrawUgcPoiPoi?.geometry?.coordinates != null) {
-        const newPoi = {
-          ...this.wmMapDrawUgcPoiPoi,
-          geometry: {
-            ...this.wmMapDrawUgcPoiPoi.geometry,
-            coordinates: coordinates,
-          },
-        };
-        this._drawUgcPoiIcon(newPoi);
-        this.ugcPoiDrawnEvt.emit(newPoi);
-      }
+  private _onClick = (evt: MapBrowserEvent<UIEvent>): void => {
+    const coordinates = toLonLat(evt.coordinate);
+    if (this._ugcPoidrawn?.geometry?.coordinates != null) {
+      const newPoi = {
+        ...this._ugcPoidrawn,
+        geometry: {
+          ...this._ugcPoidrawn.geometry,
+          coordinates: coordinates,
+        },
+      };
+      this._drawUgcPoiIcon(newPoi);
+      this.wmMapDrawUgcPoiEvt.emit(newPoi);
     }
-  }
+  };
 
   private _drawUgcPoiIcon(ugcPoi: WmFeature<Point>): void {
     clearLayer(this._drawUgcPoiLayer);
