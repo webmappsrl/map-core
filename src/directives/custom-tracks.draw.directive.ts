@@ -1,5 +1,4 @@
 import {
-  ComponentRef,
   Directive,
   ElementRef,
   EventEmitter,
@@ -28,18 +27,18 @@ import VectorSource from 'ol/source/Vector';
 import {filter, take} from 'rxjs/operators';
 import {createIconFeatureFromSrc} from '../../src/utils/ol';
 import {getLineStyle} from '../../src/utils/styles';
-import {WmMapComponent, WmMapPopover} from '../components';
-import {WmMapBaseDirective} from './base.directive';
+import {WmMapComponent} from '../components';
 import {stopPropagation} from 'ol/events/Event';
 import {WmFeature} from '@wm-types/feature';
 import {LineString} from 'geojson';
 import {WmSlopeChartHoverElements} from '@wm-types/slope-chart';
+import {WmMapPopoverBaseDirective} from './popover-base.directive';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
   selector: '[wmMapCustomTrackDrawTrack]',
 })
-export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
+export class wmMapCustomTrackDrawTrackDirective extends WmMapPopoverBaseDirective {
   /**
    * @description
    * A private instance variable that represents a vector layer for custom points of interest (POI) on the map.
@@ -85,18 +84,15 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    * An array of `Coordinate` objects that define a path or shape on the map.
    */
   private _points: Coordinate[] = [];
-  private _popoverMsg: string = 'Clicca sulla mappa per avviare la creazione di un percorso';
-  private _popoverRef: ComponentRef<WmMapPopover> = null;
+  protected _popoverMsg: string = 'Clicca sulla mappa per avviare la creazione di un percorso';
 
   @Input('wmMapCustomTrackDrawTrack') set enabled(val: boolean) {
     this._enabled$.next(val);
     this._customTrackLayer?.setVisible(val);
-    if (this._popoverRef != null && this._popoverRef.instance != null) {
-      if (val) {
-        this._popoverRef.instance.message$.next(this.translationCallback(this._popoverMsg));
-      } else {
-        this._popoverRef.instance.message$.next(null);
-      }
+    if (val) {
+      this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
+    } else {
+      this._updatePopoverMessage(null);
     }
   }
 
@@ -125,11 +121,11 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
    */
   constructor(
     private _toastCtrl: ToastController,
-    private _viewContainerRef: ViewContainerRef,
-    private _element: ElementRef,
+    protected _viewContainerRef: ViewContainerRef,
+    protected _element: ElementRef,
     @Host() mapCmp: WmMapComponent,
   ) {
-    super(mapCmp);
+    super(mapCmp, _viewContainerRef, _element);
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
@@ -181,13 +177,6 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this.mapCmp.map.on('click', (evt: MapBrowserEvent<UIEvent>) => {
       this.onClick(evt);
     });
-  }
-
-  _initPopover(): void {
-    this._popoverRef = this._viewContainerRef.createComponent(WmMapPopover);
-    this._popoverRef.setInput('cssClass', 'draw-path-alert');
-    const host = this._element.nativeElement;
-    host.insertBefore(this._popoverRef.location.nativeElement, host.firstChild);
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
@@ -282,8 +271,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapBaseDirective {
     this._customTrackLayer.getSource().clear();
     this._customPoiLayer.getSource().clear();
     this._points = [];
-
-    this._popoverRef?.instance?.message$.next(this.translationCallback(this._popoverMsg));
+    this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
   }
 
   /**
