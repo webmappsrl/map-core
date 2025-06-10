@@ -181,7 +181,7 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapPopoverBaseDirectiv
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
     if (this._enabled$.value) {
-      this._popoverRef.instance.message$.next(null);
+      this._updatePopoverMessage(null);
       let featuresAvailableInClick = null;
       try {
         featuresAvailableInClick = this.mapCmp.map.getFeaturesAtPixel(evt.pixel, {
@@ -271,7 +271,12 @@ export class wmMapCustomTrackDrawTrackDirective extends WmMapPopoverBaseDirectiv
     this._customTrackLayer.getSource().clear();
     this._customPoiLayer.getSource().clear();
     this._points = [];
-    this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
+    const countFeatures = this._customTrackLayer?.getSource()?.getFeatures()?.length;
+    if (countFeatures === 0 && this._enabled$.value) {
+      this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
+    } else {
+      this._updatePopoverMessage(null);
+    }
   }
 
   /**

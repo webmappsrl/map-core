@@ -37,8 +37,12 @@ export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {
 
   @Input() set wmMapDrawUgcPoiPoi(ugcPoi: WmFeature<Point> | null) {
     this._ugcPoidrawn = ugcPoi;
-    this._updatePopoverMessage(null);
     this._drawUgcPoiIcon(this._ugcPoidrawn);
+    if (ugcPoi == null && this._enabled$.value) {
+      this._updatePopoverMessage(this._popoverMsg);
+    } else {
+      this._updatePopoverMessage(null);
+    }
   }
 
   @Input('wmMapDrawUgcPoiEnabled') set enabled(val: boolean) {
