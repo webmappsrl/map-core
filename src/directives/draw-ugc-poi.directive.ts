@@ -105,7 +105,6 @@ export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {
         },
       };
     }
-    this._drawUgcPoiIcon(newPoi);
     this.wmMapDrawUgcPoiEvt.emit(newPoi);
   };
 
