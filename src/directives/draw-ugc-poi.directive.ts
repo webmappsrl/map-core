@@ -1,5 +1,12 @@
-import {Directive, EventEmitter, Host, Input, Output, SimpleChanges} from '@angular/core';
-import {WmMapBaseDirective} from './base.directive';
+import {
+  Directive,
+  ElementRef,
+  EventEmitter,
+  Host,
+  Input,
+  Output,
+  ViewContainerRef,
+} from '@angular/core';
 import {WmMapComponent} from '../components';
 import {WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
@@ -13,14 +20,16 @@ import {fromLonLat, toLonLat} from 'ol/proj';
 import {Point as OlPoint} from 'ol/geom';
 import {Feature, MapBrowserEvent} from 'ol';
 import {Icon, Style} from 'ol/style';
+import {WmMapPopoverBaseDirective} from './popover-base.directive';
 
 @Directive({
   selector: '[wmMapDrawUgcPoi]',
 })
-export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
+export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {
   private _ugcPoidrawn: WmFeature<Point>;
   private _drawUgcPoiLayer: VectorLayer<VectorSource>;
   private _enabled$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  protected _popoverMsg: string = 'Clicca sulla mappa per avviare la creazione di un POI';
 
   @Output() wmMapDrawUgcPoiEvt: EventEmitter<WmFeature<Point>> = new EventEmitter<
     WmFeature<Point>
@@ -28,8 +37,10 @@ export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
 
   @Input() set wmMapDrawUgcPoiPoi(ugcPoi: WmFeature<Point> | null) {
     this._ugcPoidrawn = ugcPoi;
+    this._updatePopoverMessage(null);
     this._drawUgcPoiIcon(this._ugcPoidrawn);
   }
+
   @Input('wmMapDrawUgcPoiEnabled') set enabled(val: boolean) {
     this._enabled$.next(val);
     this._drawUgcPoiLayer?.setVisible(val);
@@ -43,10 +54,20 @@ export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
         console.error(e);
       }
     }
+
+    if (val) {
+      this._updatePopoverMessage(this._popoverMsg);
+    } else {
+      this._updatePopoverMessage(null);
+    }
   }
 
-  constructor(@Host() mapCmp: WmMapComponent) {
-    super(mapCmp);
+  constructor(
+    @Host() mapCmp: WmMapComponent,
+    protected _viewContainerRef: ViewContainerRef,
+    protected _element: ElementRef,
+  ) {
+    super(mapCmp, _viewContainerRef, _element);
     this.mapCmp.isInit$
       .pipe(
         filter(f => f === true),
@@ -60,21 +81,32 @@ export class WmMapDrawUgcPoiDirective extends WmMapBaseDirective {
   private _init(): void {
     this._drawUgcPoiLayer = createLayer(this._drawUgcPoiLayer, UGC_POI_DRAWN_ZINDEX);
     this.mapCmp.map.addLayer(this._drawUgcPoiLayer);
+    this._initPopover();
   }
 
   private _onClick = (evt: MapBrowserEvent<UIEvent>): void => {
     const coordinates = toLonLat(evt.coordinate);
-    if (this._ugcPoidrawn?.geometry?.coordinates != null) {
-      const newPoi = {
+    let newPoi: WmFeature<Point>;
+    if (!this._ugcPoidrawn) {
+      newPoi = {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: coordinates,
+        },
+        properties: {},
+      };
+    } else {
+      newPoi = {
         ...this._ugcPoidrawn,
         geometry: {
           ...this._ugcPoidrawn.geometry,
           coordinates: coordinates,
         },
       };
-      this._drawUgcPoiIcon(newPoi);
-      this.wmMapDrawUgcPoiEvt.emit(newPoi);
     }
+    this._drawUgcPoiIcon(newPoi);
+    this.wmMapDrawUgcPoiEvt.emit(newPoi);
   };
 
   private _drawUgcPoiIcon(ugcPoi: WmFeature<Point>): void {
