@@ -25,7 +25,7 @@ import {
   initInteractions,
   initVectorTileLayer,
   lowTileLoadFn,
-  styleHighFn,
+  styleFn,
 } from '@map-core/utils';
 import {WmMapComponent} from '@map-core/components';
 import {IDATALAYER, ILAYER} from '@map-core/types/layer';
@@ -278,7 +278,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this._vectorTileLayer = initVectorTileLayer(
         this._dataLayerUrls.low,
         f =>
-          styleHighFn.bind({
+          styleFn.bind({
             currentLayer: this._currentLayer,
             conf: this.wmMapConf,
             map: this.mapCmp.map,

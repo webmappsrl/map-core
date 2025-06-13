@@ -668,10 +668,11 @@ export function splitLineString(
  * const feature = new Feature(new LineString([[0, 0], [1, 1], [2, 0]]));
  * const styles = styleCoreFn(feature);
  */
-export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean) {
+export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
+  this.TRACK_ZINDEX = TRACK_ZINDEX;
   const properties = feature.getProperties();
   let maxWidth = this.conf.maxStrokeWidth;
-  let minStrokeWidth = this.minStrokeWidth;
+  let minStrokeWidth = this.conf.minStrokeWidth + 1;
   let enableRouting = false;
   const geometry: any = (feature.getGeometry() as any).getFlatCoordinates();
   const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
@@ -847,84 +848,6 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
 
 /**
  * @description
- * Generates a style for a given feature object.
- * This function generates a new Style object for a given feature object with a stroke style based on the current layer configuration
- * and a zIndex value of TRACK_ZINDEX + 1. This is useful for displaying a consistent visual style for features on a map based on
- * the current layer configuration.
- *
- * Note that this function is intended to be bound to a `this` context object that contains properties for the current layer, the
- * default feature color, the configuration settings, and the current map view. It is not intended to be used standalone.
- *
- * @param feature - The feature object to generate a style for.
- * @returns A new Style object for the given feature object with a stroke style based on the current layer configuration and a zIndex value of TRACK_ZINDEX + 1.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * const style = styleFn.bind(this)(feature);
- * // style will contain a new Style object with a stroke style based on the current layer configuration and a zIndex value of TRACK_ZINDEX + 1.
- */
-export function styleFn(this: any, feature: FeatureLike) {
-  const properties = feature.getProperties();
-  const layers: number[] = JSON.parse(properties['layers']);
-  let strokeStyle: StrokeStyle = new StrokeStyle();
-
-  if (this.currentLayer != null) {
-    const currentIDLayer = +this.currentLayer.id;
-    if (layers.indexOf(currentIDLayer) >= 0) {
-      strokeStyle.setColor(this.currentLayer.style.color ?? this._defaultFeatureColor);
-    } else {
-      strokeStyle.setColor('rgba(0,0,0,0)');
-    }
-  } else {
-    const layerId = +layers[0];
-    strokeStyle.setColor(getColorFromLayer(layerId, this.conf.layers));
-  }
-  const opt: handlingStrokeStyleWidthOptions = {
-    strokeStyle,
-    minZoom: this.conf.minZoom,
-    maxZoom: this.conf.maxZoom,
-    minStrokeWidth: this.conf.minStrokeWidth,
-    maxStrokeWidth: this.conf.maxStrokeWidth,
-    currentZoom: this.map.getView().getZoom(),
-  };
-  handlingStrokeStyleWidth(opt);
-
-  let styles = [
-    new Style({
-      stroke: strokeStyle,
-      zIndex: TRACK_ZINDEX + 1,
-    }),
-  ];
-
-  return styles;
-}
-
-/**
- * @description
- * Generates a high style for a given feature object.
- * This function generates a new Style object for a given feature object with a higher zIndex value and a slightly increased
- * stroke width value. This is useful for displaying high-priority features on a map with a different visual style than lower
- * priority features.
- *
- * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
- * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
- *
- * @param feature - The feature object to generate a style for.
- * @returns A new Style object for the given feature object with a higher zIndex and a slightly increased stroke width.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * const highStyle = styleHighFn.bind(this)(feature);
- * // highStyle will contain a new Style object with a higher zIndex and slightly increased stroke width.
- */
-export function styleHighFn(this: any, feature: FeatureLike) {
-  this.TRACK_ZINDEX = TRACK_ZINDEX;
-  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  return styleCoreFn.bind(this)(feature, true);
-}
-
-/**
- * @description
  * Generates a Mapbox Style JSON object to style vector layers in OpenLayers.
  * This style JSON object includes layer styles for different CAI scales ('EEA', 'EE', 'E', 'T').
  * It also includes a text label layer to display the 'ref' property of each feature.
@@ -1039,30 +962,6 @@ export function styleJsonFn(vectorLayerUrl: string) {
     ],
     id: '63fa0rhhq',
   };
-}
-
-/**
- * @description
- * Generates a low style for a given feature object.
- * This function generates a new Style object for a given feature object with a lower zIndex value and a slightly increased
- * stroke width value. This is useful for displaying low-priority features on a map with a different visual style than higher
- * priority features.
- *
- * Note that this function is intended to be bound to a `this` context object that contains properties for the TRACK_ZINDEX,
- * the minimum stroke width, and configuration settings. It is not intended to be used standalone.
- *
- * @param feature - The feature object to generate a style for.
- * @returns A new Style object for the given feature object with a lower zIndex and a slightly increased stroke width.
- *
- * @example
- * const feature = new Feature(new Point([0, 0]));
- * const lowStyle = styleLowFn.bind(this)(feature);
- * // lowStyle will contain a new Style object with a lower zIndex and slightly increased stroke width.
- */
-export function styleLowFn(this: any, feature: FeatureLike) {
-  this.TRACK_ZINDEX = TRACK_ZINDEX + 1;
-  this.minStrokeWidth = this.conf.minStrokeWidth + 1;
-  return styleCoreFn.bind(this)(feature);
 }
 
 export var currentTrackID = null;
