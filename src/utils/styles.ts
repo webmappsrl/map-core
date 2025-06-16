@@ -831,7 +831,8 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
       lineString.setProperties(feature.getProperties());
       styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
-    if (currentZoom > 11 && enableRouting === false) {
+    const showTrackDirectionArrow = this.conf?.show_track_direction_arrow ?? true;
+    if (showTrackDirectionArrow && currentZoom > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
       styles = [
