@@ -7,11 +7,8 @@ import {
   getFlowStyle,
   getLineStyle,
   setCurrentCluster,
-  styleCoreFn,
   styleFn,
-  styleHighFn,
   styleJsonFn,
-  styleLowFn,
 } from './styles';
 import FlowLine from 'ol-ext/style/FlowLine';
 import {ILAYER} from '../types/layer';
@@ -262,7 +259,7 @@ describe('styles', () => {
     expect(style).toBeUndefined();
   });
 
-  it('styleCoreFn: should return an array of Style objects for the given feature', () => {
+  it('styleFn: should return an array of Style objects for the given feature', () => {
     const mockContext = {
       currentLayer: null,
       conf: {
@@ -286,7 +283,7 @@ describe('styles', () => {
     );
     feature.setProperties({layers: JSON.stringify([1])});
 
-    const styles = styleCoreFn.call(mockContext, feature as FeatureLike);
+    const styles = styleFn.call(mockContext, feature as FeatureLike);
 
     expect(styles).toBeInstanceOf(Array);
     expect(styles.length).toBeGreaterThan(0);
@@ -347,73 +344,6 @@ describe('styles', () => {
     expect(endPoint).toBeInstanceOf(Point);
     expect(startImage).toBeInstanceOf(RegularShape);
     expect(endImage).toBeInstanceOf(RegularShape);
-  });
-
-  it('styleLowFn: should return a Style object for the given feature object with a lower zIndex', () => {
-    const TRACK_ZINDEX = 490;
-    const context = {
-      conf: {
-        minZoom: 0,
-        maxZoom: 20,
-        minStrokeWidth: 5,
-        maxStrokeWidth: 6,
-      },
-      map: {
-        getView: () => ({
-          getZoom: () => 10,
-        }),
-      },
-    };
-    const feature = new Feature(
-      new LineString([
-        [0, 0],
-        [1, 1],
-        [2, 0],
-      ]),
-    );
-    feature.setProperties({
-      layers: JSON.stringify([1]),
-    });
-    const lowStyle = styleLowFn.bind(context)(feature);
-
-    expect(lowStyle[0].getZIndex()).toBe(TRACK_ZINDEX + 1);
-
-    const strokeWidth = lowStyle[0].getStroke().getWidth();
-    expect(strokeWidth).toBe(context.conf.minStrokeWidth + 1);
-  });
-
-  it('styleHighFn: should return a Style object for the given feature object with a higher zIndex', () => {
-    const TRACK_ZINDEX = 491;
-    const context = {
-      conf: {
-        minZoom: 0,
-        maxZoom: 20,
-        minStrokeWidth: 5,
-        maxStrokeWidth: 6,
-      },
-      map: {
-        getView: () => ({
-          getZoom: () => 10,
-        }),
-      },
-    };
-    const feature = new Feature(
-      new LineString([
-        [0, 0],
-        [1, 1],
-        [2, 0],
-      ]),
-    );
-    feature.setProperties({
-      layers: JSON.stringify([1]),
-    });
-
-    const highStyle = styleHighFn.bind(context)(feature);
-
-    expect(highStyle[0].getZIndex()).toBe(TRACK_ZINDEX);
-
-    const strokeWidth = highStyle[0].getStroke().getWidth();
-    expect(strokeWidth).toBe(context.conf.minStrokeWidth + 1);
   });
 
   it('styleFn: should return a Style object for the given feature object with the stroke style based on the current layer configuration and a zIndex value of TRACK_ZINDEX + 1', () => {

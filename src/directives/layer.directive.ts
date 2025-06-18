@@ -274,7 +274,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   /**
    * @description
    * This code is used to initialize data layers on a map.
-   * It creates two vector tile layers, one low and one high, using the functions initVectorTileLayer and styleLowFn/styleHighFn.
+   * It creates two vector tile layers, one low and one high, using the functions initVectorTileLayer and styleFn.
    * The low layer is given the property 'high' set to false, while the high layer is given the property 'high' set to true.
    * Finally, both layers are added to the map and the resolution layer switcher is called.
    * @private
