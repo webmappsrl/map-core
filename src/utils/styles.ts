@@ -666,7 +666,7 @@ export function splitLineString(
  * @returns An array of new Style objects for the given feature.
  * @example
  * const feature = new Feature(new LineString([[0, 0], [1, 1], [2, 0]]));
- * const styles = styleCoreFn(feature);
+ * const styles = styleFn(feature);
  */
 export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
