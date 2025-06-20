@@ -115,7 +115,7 @@ export function buildArrowStyle(
         image: new Icon({
           src: 'map-core/assets/line-icon-arrow.png',
           scale: scale,
-          rotation: point[2],
+          rotation: point[point.length - 1],
           color: opt.featureStrokeColor,
           rotateWithView: true,
         }),
