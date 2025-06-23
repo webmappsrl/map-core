@@ -74,6 +74,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   };
   @Input() wmMapFullscreen: boolean = false;
   @Input() wmMapOnly: boolean = false;
+  @Input() wmMapEnableMapControls: boolean = false;
   @Input() wmMapPadding: number[] | null;
   @Output() clickEVT$: EventEmitter<MapBrowserEvent<UIEvent>> = new EventEmitter<
     MapBrowserEvent<UIEvent>
