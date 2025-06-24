@@ -33,6 +33,7 @@
     </div>
     <div class="top-right">
       <wm-map-controls
+        *ngIf="wmMapEnableMapControls"
         [conf]="(wmMapConf$|async)?.controls"
         [tileLayers]="tileLayers"
         [wmMapTranslationCallback]="translationCallback"
