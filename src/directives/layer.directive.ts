@@ -36,6 +36,7 @@ import {
   FEATURES_IN_VIEWPORT_ZOOM_MIN,
   FEATURES_IN_VIEWPORT_ZOOM_MAX,
 } from '@map-core/readonly/constants';
+import {ZoomFeaturesInViewport} from '@wm-types/config';
 
 @Directive({
   selector: '[wmMapLayer]',
@@ -53,6 +54,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _dataLayerUrls: IDATALAYER;
   private _disabled = false;
   private _opacity = 1;
+  private _minZoomFeaturesInViewport: number;
+  private _maxZoomFeaturesInViewport: number;
   private _vectorTileLayer: VectorTileLayer;
   private _moveEndSubject$: Subject<void> = new Subject<void>();
   private _moveEndListener: () => void;
@@ -113,6 +116,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       });
     }
     this._updateMap();
+  }
+
+  @Input() set wmMapLayerZoomFeaturesInViewport(zoom: ZoomFeaturesInViewport) {
+    this._minZoomFeaturesInViewport = zoom.minZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MIN;
+    this._maxZoomFeaturesInViewport = zoom.maxZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MAX;
   }
 
   /**
@@ -266,7 +274,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   /**
    * @description
    * This code is used to initialize data layers on a map.
-   * It creates two vector tile layers, one low and one high, using the functions initVectorTileLayer and styleLowFn/styleHighFn.
+   * It creates two vector tile layers, one low and one high, using the functions initVectorTileLayer and styleFn.
    * The low layer is given the property 'high' set to false, while the high layer is given the property 'high' set to true.
    * Finally, both layers are added to the map and the resolution layer switcher is called.
    * @private
@@ -347,8 +355,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       const zoom = view.getZoom();
       if (
         this.wmMapLayerShowFeaturesInViewport &&
-        zoom >= FEATURES_IN_VIEWPORT_ZOOM_MIN &&
-        zoom <= FEATURES_IN_VIEWPORT_ZOOM_MAX
+        zoom >= this._minZoomFeaturesInViewport &&
+        zoom <= this._maxZoomFeaturesInViewport
       ) {
         this.mapCmp.map.on('moveend', this._moveEndListener);
       } else {

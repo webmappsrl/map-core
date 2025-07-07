@@ -115,7 +115,7 @@ export function buildArrowStyle(
         image: new Icon({
           src: 'map-core/assets/line-icon-arrow.png',
           scale: scale,
-          rotation: point[2],
+          rotation: point[point.length - 1],
           color: opt.featureStrokeColor,
           rotateWithView: true,
         }),
@@ -666,7 +666,7 @@ export function splitLineString(
  * @returns An array of new Style objects for the given feature.
  * @example
  * const feature = new Feature(new LineString([[0, 0], [1, 1], [2, 0]]));
- * const styles = styleCoreFn(feature);
+ * const styles = styleFn(feature);
  */
 export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   this.TRACK_ZINDEX = TRACK_ZINDEX;
@@ -831,7 +831,8 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
       lineString.setProperties(feature.getProperties());
       styles = [...styles, ...buildRefStyle.bind(this)(lineString, {map: this.map})];
     }
-    if (currentZoom > 11 && enableRouting === false) {
+    const showTrackDirectionArrow = this.conf?.show_track_direction_arrow ?? true;
+    if (showTrackDirectionArrow && currentZoom > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
       styles = [
