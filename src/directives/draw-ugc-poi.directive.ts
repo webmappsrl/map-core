@@ -39,12 +39,13 @@ export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {
     this._ugcPoidrawn = ugcPoi;
     this._drawUgcPoiIcon(this._ugcPoidrawn);
     if (ugcPoi == null && this._enabled$.value) {
-      this._updatePopoverMessage(this._popoverMsg);
+      this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
     } else {
       this._updatePopoverMessage(null);
     }
   }
 
+  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => value;
   @Input('wmMapDrawUgcPoiEnabled') set enabled(val: boolean) {
     this._enabled$.next(val);
     this._drawUgcPoiLayer?.setVisible(val);
@@ -60,7 +61,7 @@ export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {
     }
 
     if (val) {
-      this._updatePopoverMessage(this._popoverMsg);
+      this._updatePopoverMessage(this.translationCallback(this._popoverMsg));
     } else {
       this._updatePopoverMessage(null);
     }
