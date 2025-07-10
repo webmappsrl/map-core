@@ -13,6 +13,8 @@ import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {Coordinate} from 'ol/coordinate';
 import {containsCoordinate} from 'ol/extent';
 import {ILAYER} from '@map-core/types/layer';
+import {calculateDistance, getClosestPoint} from './geometry';
+import {transform} from 'ol/proj';
 
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
@@ -816,12 +818,13 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   };
   handlingStrokeStyleWidth(opt);
 
-  let styles = [
+  let styles: Style[] = [
     new Style({
       stroke: strokeStyle,
       zIndex: TRACK_ZINDEX + 1,
     }),
   ];
+  let arrowStyle: Style[] = [];
   if (strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
     if (this.conf.start_end_icons_show && currentZoom > this.conf.start_end_icons_min_zoom) {
       styles = [...styles, ...buildStartEndIcons(geometry)];
@@ -835,16 +838,49 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
     if (showTrackDirectionArrow && currentZoom > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
-      styles = [
-        ...styles,
-        ...buildArrowStyle.bind(this)(lineString, {
-          map: this.map,
-          width: strokeStyle.getWidth() - 1,
-        }),
-      ];
+
+      // Pre-calcola le frecce
+      const allArrowStyles = buildArrowStyle.bind(this)(lineString, {
+        map: this.map,
+        width: strokeStyle.getWidth() - 1,
+      });
+
+      // Ottimizzazione del filtro per currentTrack
+      if (this.currentTrack && this.currentTrack.geometry) {
+        const resolution = this.map.getView().getResolution();
+        const threshold = resolution * 5;
+
+        // Filtra gli stili delle frecce che ricadono nella geometria di currentTrack
+        arrowStyle = allArrowStyles.filter(style => {
+          const pointGeometry = style.getGeometry();
+          if (!(pointGeometry instanceof Point)) {
+            return true; // Mantieni stili non-punto
+          }
+
+          const pointCoords = pointGeometry.getCoordinates();
+
+          // Trasforma pointCoords dal sistema di coordinate della mappa (EPSG:3857) a WGS84 (EPSG:4326)
+          const pointCoordsWGS84 = transform(pointCoords, 'EPSG:3857', 'EPSG:4326');
+
+          // Usa la funzione helper per calcolare il punto più vicino (che lavora in WGS84)
+          const closestPoint = getClosestPoint(this.currentTrack, pointCoordsWGS84);
+          if (!closestPoint) {
+            return true; // Se currentTrack non è presente, mantieni il punto
+          }
+          // Trasforma il punto più vicino da WGS84 al sistema di coordinate della mappa
+          const closestPointMap = transform(closestPoint, 'EPSG:4326', 'EPSG:3857');
+
+          const distance = calculateDistance(pointCoords, closestPointMap);
+
+          // Rimuovi i punti che sono troppo vicini a currentTrack
+          return distance > threshold;
+        });
+      } else {
+        arrowStyle = allArrowStyles;
+      }
     }
   }
-  return styles;
+  return [...styles, ...arrowStyle];
 }
 
 /**

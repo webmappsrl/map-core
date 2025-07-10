@@ -12,3 +12,10 @@ export function getClosestPoint(feature: WmFeature<LineString>, coordinates: Coo
 
   return geometryOl.getClosestPoint(coordinates);
 }
+
+export function calculateDistance(point1: Coordinate, point2: Coordinate): number {
+  const dx = point1[0] - point2[0];
+  const dy = point1[1] - point2[1];
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
