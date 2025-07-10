@@ -19,3 +19,21 @@ export function calculateDistance(point1: Coordinate, point2: Coordinate): numbe
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+export function convertFeatureToWebMercator(feature: WmFeature<LineString>): WmFeature<LineString> | null {
+  const geometry = feature?.geometry;
+  if(!geometry) return null;
+
+  const format = new GeoJSON();
+  const geometryOl = format.readGeometry(geometry);
+
+  // Trasforma da EPSG:4326 (WGS84) a EPSG:3857 (Web Mercator)
+  geometryOl.transform('EPSG:4326', 'EPSG:3857');
+
+  // Crea una nuova feature per evitare mutazioni
+  const newFeature: WmFeature<LineString> = {
+    ...feature,
+    geometry: format.writeGeometryObject(geometryOl) as LineString
+  };
+
+  return newFeature;
+}

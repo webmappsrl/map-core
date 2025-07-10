@@ -14,7 +14,6 @@ import {Coordinate} from 'ol/coordinate';
 import {containsCoordinate} from 'ol/extent';
 import {ILAYER} from '@map-core/types/layer';
 import {calculateDistance, getClosestPoint} from './geometry';
-import {transform} from 'ol/proj';
 
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
@@ -857,20 +856,15 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
             return true; // Mantieni stili non-punto
           }
 
-          const pointCoords = pointGeometry.getCoordinates();
+          const pointCoords = pointGeometry.getCoordinates(); // Già in EPSG:3857
 
-          // Trasforma pointCoords dal sistema di coordinate della mappa (EPSG:3857) a WGS84 (EPSG:4326)
-          const pointCoordsWGS84 = transform(pointCoords, 'EPSG:3857', 'EPSG:4326');
-
-          // Usa la funzione helper per calcolare il punto più vicino (che lavora in WGS84)
-          const closestPoint = getClosestPoint(this.currentTrack, pointCoordsWGS84);
+          // Usa la funzione helper per calcolare il punto più vicino
+          const closestPoint = getClosestPoint(this.currentTrack, pointCoords);
           if (!closestPoint) {
             return true; // Se currentTrack non è presente, mantieni il punto
           }
-          // Trasforma il punto più vicino da WGS84 al sistema di coordinate della mappa
-          const closestPointMap = transform(closestPoint, 'EPSG:4326', 'EPSG:3857');
 
-          const distance = calculateDistance(pointCoords, closestPointMap);
+          const distance = calculateDistance(pointCoords, closestPoint); // Entrambi in EPSG:3857
 
           // Rimuovi i punti che sono troppo vicini a currentTrack
           return distance > threshold;
