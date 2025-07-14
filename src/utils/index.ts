@@ -5,3 +5,4 @@ export * from './httpRequest';
 export * from './performance';
 export * from './logger';
 export * from './localForage';
+export * from './geometry'
