@@ -13,13 +13,13 @@ export function getClosestPoint(feature: WmFeature<LineString>, coordinates: Coo
   return geometryOl.getClosestPoint(coordinates);
 }
 
-export function calculateDistance(point1: Coordinate, point2: Coordinate): number {
-  const dx = point1[0] - point2[0];
-  const dy = point1[1] - point2[1];
+export function calculatePointsDistance (coord1: Coordinate, coord2: Coordinate): number {
+  let dx: number = coord1[0] - coord2[0];
+  let dy: number = coord1[1] - coord2[1];
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-export function convertFeatureToWebMercator(feature: WmFeature<LineString>): WmFeature<LineString> | null {
+export function convertFeatureToEpsg3857(feature: WmFeature<LineString>): WmFeature<LineString> | null {
   const geometry = feature?.geometry;
   if(!geometry) return null;
 
