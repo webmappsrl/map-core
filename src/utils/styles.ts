@@ -13,6 +13,7 @@ import RenderFeature, {toFeature} from 'ol/render/Feature';
 import {Coordinate} from 'ol/coordinate';
 import {containsCoordinate} from 'ol/extent';
 import {ILAYER} from '@map-core/types/layer';
+import {calculatePointsDistance, getClosestPoint} from './geometry';
 
 export interface handlingStrokeStyleWidthOptions {
   currentZoom: number;
@@ -554,11 +555,6 @@ export function splitLineString(
   minSegmentLength: number,
   options: any,
 ): Array<any> {
-  let calculatePointsDistance = (coord1: Coordinate, coord2: Coordinate): number => {
-    let dx: number = coord1[0] - coord2[0];
-    let dy: number = coord1[1] - coord2[1];
-    return Math.sqrt(dx * dx + dy * dy);
-  };
 
   let calculateSplitPointCoords = (
     startNode: Coordinate,
@@ -815,12 +811,13 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
   };
   handlingStrokeStyleWidth(opt);
 
-  let styles = [
+  let styles: Style[] = [
     new Style({
       stroke: strokeStyle,
       zIndex: TRACK_ZINDEX + 1,
     }),
   ];
+  let arrowStyle: Style[] = [];
   if (strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
     if (this.conf.start_end_icons_show && currentZoom > this.conf.start_end_icons_min_zoom) {
       styles = [...styles, ...buildStartEndIcons(geometry)];
@@ -833,16 +830,16 @@ export function styleCoreFn(this: any, feature: RenderFeature, routing?: boolean
     if (currentZoom > 11 && enableRouting === false) {
       const lineString = getLineStringFromRenderFeature(feature);
       lineString.setProperties(feature.getProperties());
-      styles = [
-        ...styles,
-        ...buildArrowStyle.bind(this)(lineString, {
-          map: this.map,
-          width: strokeStyle.getWidth() - 1,
-        }),
-      ];
+
+      arrowStyle = getFilteredDirectionArrows.bind(this)(
+        lineString,
+        strokeStyle.getWidth() - 1,
+        this.currentTrack,
+        this.map
+      );
     }
   }
-  return styles;
+  return [...styles, ...arrowStyle];
 }
 
 /**
@@ -1039,6 +1036,58 @@ export function styleJsonFn(vectorLayerUrl: string) {
     ],
     id: '63fa0rhhq',
   };
+}
+
+/**
+ * @description
+ * Genera e filtra gli stili delle frecce di direzione per un track.
+ * Questa funzione crea le frecce di direzione e le filtra per rimuovere
+ * quelle troppo vicine al track corrente selezionato.
+ *
+ * @param lineString - La geometria LineString del track
+ * @param strokeWidth - La larghezza del tratto per le frecce
+ * @param currentTrack - Il track attualmente selezionato
+ * @param map - L'istanza della mappa
+ * @returns Array di stili delle frecce filtrati
+ */
+function getFilteredDirectionArrows(
+  lineString: LineString,
+  strokeWidth: number,
+  currentTrack: any,
+  map: any
+): Style[] {
+  // Pre-calcola le frecce
+  const allArrowStyles = buildArrowStyle.bind(this)(lineString, {
+    map: map,
+    width: strokeWidth,
+  });
+
+  if (!currentTrack || !currentTrack.geometry) {
+    return allArrowStyles;
+  }
+
+  const resolution = map.getView().getResolution();
+  const threshold = resolution * 5;
+
+  return allArrowStyles.filter(style => {
+    const pointGeometry = style.getGeometry();
+    if (!(pointGeometry instanceof Point)) {
+      return true; // Mantieni stili non-punto
+    }
+
+    const pointCoords = pointGeometry.getCoordinates(); // Già in EPSG:3857
+
+    // Usa la funzione helper per calcolare il punto più vicino
+    const closestPoint = getClosestPoint(currentTrack, pointCoords);
+    if (!closestPoint) {
+      return true; // Se currentTrack non è presente, mantieni il punto
+    }
+
+    const distance = calculatePointsDistance(pointCoords, closestPoint);
+
+    // Rimuovi i punti che sono troppo vicini a currentTrack
+    return distance > threshold;
+  });
 }
 
 /**
