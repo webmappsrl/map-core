@@ -20,6 +20,7 @@ import {Subject} from 'rxjs';
 import {WmMapBaseDirective} from '@map-core/directives';
 import {
   clearPbfDB,
+  convertFeatureToEpsg3857,
   fromNameToHEX,
   getColorFromLayer,
   initInteractions,
@@ -294,7 +295,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
             filters: this.mapCmp.filters,
             tileLayer: this._vectorTileLayer,
             inputTyped: this.wmMapInputTyped,
-            currentTrack: this.track,
+            currentTrack: convertFeatureToEpsg3857(this.track),
           })(f),
         lowTileLoadFn,
       );
