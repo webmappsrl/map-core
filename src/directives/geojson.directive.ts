@@ -85,11 +85,8 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
         this._init = true;
       }
     } else {
-      if (this._featureCollectionLayer != null) {
-        this.mapCmp.map.removeLayer(this._featureCollectionLayer);
-        this._featureCollectionLayer = null;
-        this._init = false;
-      }
+      this._featureCollectionLayer?.getSource()?.clear();
+      this._init = false;
     }
   }
 
