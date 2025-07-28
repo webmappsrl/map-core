@@ -15,6 +15,7 @@ import {IMAP} from '../types/model';
 export class WmMapBaseDirective {
   @Input() wmMapConf: IMAP;
   @Input() wmMapPadding: number[];
+  @Input() wmMapDisableFitView: boolean;
   @Output() wmMapStateEvt: EventEmitter<string> = new EventEmitter<string>();
 
   constructor(@Host() public mapCmp: WmMapComponent) {}
@@ -47,6 +48,7 @@ export class WmMapBaseDirective {
         (keys.length > 1 && keys.includes('poi'));
 
       if (!shouldFit) return;
+      if(this.wmMapDisableFitView) {return;}
 
       const view = this.mapCmp.map.getView();
       if (view == null) return;
