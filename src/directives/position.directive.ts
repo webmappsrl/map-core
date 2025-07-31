@@ -71,6 +71,13 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
    * It represents the coordinates [longitude, latitude] of the desired center position.
    */
   @Input() wmMapPositionCenter;
+
+  /**
+   * @description
+   * This input property controls whether the map should zoom in on the user's current location.
+   * When set to `true`, the map will automatically zoom to focus on the current location.
+   */
+  @Input() wmMapPositionZoomCurrentLocation;
   /**
    * @description
    * The input property for the current location of the user.
@@ -139,6 +146,13 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     if (changes.wmMapPositionCenter && changes.wmMapPositionCenter.currentValue != null) {
       this._centerPosition();
     }
+    if (
+      changes.wmMapPositionZoomCurrentLocation &&
+      changes.wmMapPositionZoomCurrentLocation.currentValue != null &&
+      changes.wmMapPositionZoomCurrentLocation.currentValue === true
+    ) {
+      this._zoomInPosition(this._currentLocation);
+    }
     if (changes.wmMapPositionfocus && changes.wmMapPositionfocus.currentValue != null) {
       const val = changes.wmMapPositionfocus.currentValue;
       this._focus$.next(val);
@@ -185,6 +199,16 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     const point = this._updateGeometry(this._currentLocation);
     if (point != null) {
       this._followLocation(point);
+    }
+  }
+
+  private _zoomInPosition(location: Location): void {
+    const point = this._updateGeometry(location);
+    if (point != null) {
+      this._fitView(point, {
+        maxZoom: this.wmMapConf.maxZoom - 1,
+        duration: 500,
+      });
     }
   }
 
