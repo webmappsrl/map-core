@@ -3,6 +3,10 @@ import {downloadFile} from './httpRequest';
 import {WmFeature, WmFeatureCollection} from '@wm-types/feature';
 import {getTilesByGeometry} from './ol';
 import {MultiPolygon} from 'geojson';
+import {
+  GET_TILES_BY_GEOMETRY_MAX_ZOOM,
+  GET_TILES_BY_GEOMETRY_MIN_ZOOM,
+} from '@map-core/readonly/constants';
 /**
  * Clears the storage by removing all items with a key containing 'geohub'
  * in the localStorage and clearing the entire localforage storage.
@@ -190,12 +194,51 @@ export async function saveTile(
   }
 }
 
+export async function downloadTilesByBoundingBox(
+  boundingBox: WmFeature<MultiPolygon>,
+  overlayXYZ: string = `https://api.webmapp.it/tiles`,
+  callBackStatusFn = updateStatus,
+): Promise<void> {
+  const uuid = generateUUID();
+  const geometry = boundingBox.geometry;
+  const tiles = getTilesByGeometry(
+    geometry,
+    GET_TILES_BY_GEOMETRY_MIN_ZOOM,
+    GET_TILES_BY_GEOMETRY_MAX_ZOOM,
+  );
+  const totalTiles = tiles.length;
+  for (let i = 0; i < totalTiles; i++) {
+    const tile = tiles[i];
+    const wmTilesAPI = `${overlayXYZ}/${tile}.png`;
+    const tileData = await downloadFile(wmTilesAPI);
+    await saveTile(tile, tileData, uuid);
+    callBackStatusFn({
+      finish: false,
+      map: (i + 1) / totalTiles, // percentuale avanzamento
+    });
+  }
+
+  const boundingBoxWithIdsTiles = {
+    ...boundingBox,
+    properties: {
+      ...boundingBox.properties,
+      idsTiles: tiles,
+      uuid,
+    },
+  };
+  await saveBoundingBox(boundingBoxWithIdsTiles);
+
+  callBackStatusFn({
+    finish: true,
+    data: 1,
+  });
+}
+
 export async function downloadOverlay(
   feature: WmFeature<MultiPolygon>,
   overlayXYZ: string = `https://api.webmapp.it/tiles`,
   callBackStatusFn = updateStatus,
 ): Promise<void> {
-  console.log('downloadOverlay', overlayXYZ);
   const properties = feature.properties;
   const id = properties.id;
   const geometry = feature.geometry;
@@ -203,7 +246,11 @@ export async function downloadOverlay(
   saveHitmapFeature(id, feature);
 
   const urls = Object.values(overlayUrls);
-  const tiles = getTilesByGeometry(geometry, 5, 14);
+  const tiles = getTilesByGeometry(
+    geometry,
+    GET_TILES_BY_GEOMETRY_MIN_ZOOM,
+    GET_TILES_BY_GEOMETRY_MAX_ZOOM,
+  );
 
   const totalUrls = urls.length;
   for (let i = 0; i < totalUrls; i++) {
@@ -300,6 +347,64 @@ export async function updateTileHandlerLocalForage(tileId, prefix) {
   }
 }
 
+export async function saveBoundingBox(boundingBox: WmFeature<MultiPolygon>): Promise<void> {
+  try {
+    const boundingBoxId = boundingBox.properties.uuid;
+    await boundingBoxLocalForage.setItem(boundingBoxId, boundingBox);
+  } catch (error) {
+    console.error('Failed to save bounding box:', error);
+  }
+}
+
+export async function deleteBoundingBox(boundingBoxId: string): Promise<void> {
+  try {
+    const boundingBox = await getBoundingBox(boundingBoxId);
+    const properties = boundingBox?.properties;
+    const idsTiles = properties?.idsTiles;
+    for (const idTile of idsTiles) {
+      await removeTile(idTile, boundingBoxId);
+    }
+    await boundingBoxLocalForage.removeItem(boundingBoxId);
+  } catch (error) {
+    console.error('Failed to delete bounding box:', error);
+  }
+}
+
+export async function getBoundingBox(
+  boundingBoxId: string,
+): Promise<WmFeature<MultiPolygon> | null> {
+  try {
+    return await boundingBoxLocalForage.getItem<WmFeature<MultiPolygon>>(boundingBoxId);
+  } catch (error) {
+    console.error('Failed to get bounding box:', error);
+    return null;
+  }
+}
+export async function getAllBoundingBoxes(): Promise<WmFeature<MultiPolygon>[]> {
+  const keys = await boundingBoxLocalForage.keys();
+  return keys ? await Promise.all(keys.map(key => getBoundingBox(key))) : [];
+}
+
+export function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export async function clearMapCoreData(): Promise<void> {
+  await Promise.all([
+    tileLocalForage.clear(),
+    tileHandlerLocalForage.clear(),
+    pbfLocalForage.clear(),
+    featureCollectionLocalForage.clear(),
+    featureCollectionHandlerLocalForage.clear(),
+    hitMapFeaturesLocalForage.clear(),
+    boundingBoxLocalForage.clear(),
+  ]);
+}
+
 export const tileLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'tiles',
@@ -323,4 +428,8 @@ export const featureCollectionHandlerLocalForage = localforage.createInstance({
 export const hitMapFeaturesLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'hitmapFeatureCollection',
+});
+export const boundingBoxLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'boundingBox',
 });

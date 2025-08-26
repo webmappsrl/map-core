@@ -17,6 +17,7 @@ import {
   WmMapTrackDirective,
   WmMapTrackHighLightDirective,
   WmMapTrackRelatedPoisDirective,
+  WmMapTilesDownloadDirective,
 } from './directives';
 import {WmMapControlsModule} from './components/controls/controls.module';
 import {WmMapGeojsonDirective} from './directives/geojson.directive';
@@ -25,6 +26,8 @@ import {featureKey, MapCoreReducer} from './store/map-core.reducer';
 import {WmMapUcgTracksDirective} from './directives/ugc-tracks.directive';
 import {WmUgcPoisDirective} from './directives/ugc-pois.directive';
 import {WmMapDrawUgcPoiDirective} from './directives/draw-ugc-poi.directive';
+import {EffectsModule} from '@ngrx/effects';
+import {MapCoreEffects} from './store/map-core.effects';
 
 const directives = [
   WmMapTrackDirective,
@@ -42,6 +45,7 @@ const directives = [
   WmMapGeojsonDirective,
   WmUgcPoisDirective,
   WmMapDrawUgcPoiDirective,
+  WmMapTilesDownloadDirective,
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
@@ -52,6 +56,7 @@ const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
     IonicModule,
     WmMapControlsModule,
     StoreModule.forFeature(featureKey, MapCoreReducer),
+    EffectsModule.forFeature([MapCoreEffects]),
   ],
   exports: [...components, ...directives],
 })
