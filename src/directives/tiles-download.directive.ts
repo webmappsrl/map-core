@@ -87,7 +87,6 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
     const map = this.mapCmp.map;
-
     const features = map.getFeaturesAtPixel(evt.pixel, {
       layerFilter: layer => layer === this._boundingBoxesLayer,
     });
@@ -124,7 +123,6 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
     const boxSize = BOX_SIZE_VMIN * vmin;
     const centerX = mapWidth / 2;
     const centerY = mapHeight / 2;
-
     const topLeft = [centerX - boxSize / 2, centerY - boxSize / 2];
     const topRight = [centerX + boxSize / 2, centerY - boxSize / 2];
     const bottomRight = [centerX + boxSize / 2, centerY + boxSize / 2];
@@ -170,6 +168,7 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
 
   private _updateTargetAreaOverlayPosition = () => {
     const mapSize = this.mapCmp.map.getSize();
+
     if (mapSize) {
       const [mapWidth, mapHeight] = mapSize;
       const centerPixel = [mapWidth / 2, mapHeight / 2];
@@ -188,7 +187,7 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
           type: 'MultiPolygon',
           coordinates: [coordinates],
         },
-        properties: {}, // Aggiungi qui le proprietà necessarie
+        properties: {},
       };
 
       // Aggiorna l'output

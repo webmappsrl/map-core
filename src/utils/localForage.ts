@@ -207,6 +207,7 @@ export async function downloadTilesByBoundingBox(
     GET_TILES_BY_GEOMETRY_MAX_ZOOM,
   );
   const totalTiles = tiles.length;
+
   for (let i = 0; i < totalTiles; i++) {
     const tile = tiles[i];
     const wmTilesAPI = `${overlayXYZ}/${tile}.png`;
@@ -380,6 +381,7 @@ export async function getBoundingBox(
     return null;
   }
 }
+
 export async function getAllBoundingBoxes(): Promise<WmFeature<MultiPolygon>[]> {
   const keys = await boundingBoxLocalForage.keys();
   return keys ? await Promise.all(keys.map(key => getBoundingBox(key))) : [];
@@ -409,26 +411,32 @@ export const tileLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'tiles',
 });
+
 export const tileHandlerLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'handler',
 });
+
 export const pbfLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'pbf',
 });
+
 export const featureCollectionLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'feature-collection',
 });
+
 export const featureCollectionHandlerLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'featureCollectionHandler',
 });
+
 export const hitMapFeaturesLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'hitmapFeatureCollection',
 });
+
 export const boundingBoxLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'boundingBox',
