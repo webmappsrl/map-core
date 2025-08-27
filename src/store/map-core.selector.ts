@@ -19,3 +19,4 @@ export const padding = createSelector(feature, state =>
 export const leftPadding = createSelector(feature, state =>
   state && state.leftPadding ? state.leftPadding : 10,
 );
+export const boundingBoxes = createSelector(feature, state => state?.boundingBoxes || null);

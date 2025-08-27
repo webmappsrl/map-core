@@ -124,6 +124,16 @@ wm-map {
         margin-left: 10px;
       }
     }
+    .wm-map-delete-bounding-box-button {
+      width: 40px;
+      height: 40px;
+      margin: 0;
+      --background: var(--wm-color-light);
+      --border-radius: 20px;
+      --padding-start: 10px;
+      --padding-end: 10px;
+      animation: slideIn 0.3s ease-out;
+    }
     .ol-zoom {
       position: absolute;
       top: 50%;
@@ -179,5 +189,16 @@ wm-map {
   }
   canvas {
     position: absolute;
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateY(15px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
   }
 }

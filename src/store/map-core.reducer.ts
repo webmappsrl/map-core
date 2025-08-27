@@ -6,7 +6,10 @@ import {
   setHitMapFeatureCollections,
   setHitMapGeometry,
   setTogglePartition,
+  loadBoundingBoxesSuccess,
 } from './map-core.actions';
+import {WmFeature} from '@wm-types/feature';
+import {MultiPolygon} from 'geojson';
 
 export const featureKey = 'map-core';
 export interface IUIRootState {
@@ -16,6 +19,7 @@ export interface IUIRootState {
     hitMapGeometry: any;
     padding: [number, number, number, number];
     leftPadding: number;
+    boundingBoxes?: WmFeature<MultiPolygon>[];
   };
 }
 const initialUIState: any = {
@@ -63,6 +67,12 @@ export const MapCoreReducer = createReducer(
     return {
       ...state,
       ...{leftPadding},
+    };
+  }),
+  on(loadBoundingBoxesSuccess, (state, {boundingBoxes}) => {
+    return {
+      ...state,
+      boundingBoxes,
     };
   }),
 );
