@@ -27,6 +27,7 @@ import {
   FEATURE_COLLECTION_ZINDEX,
   TILES_DOWNLOAD_ZOOM_MIN,
 } from '@map-core/readonly';
+import {Text} from 'ol/style';
 
 @Directive({
   selector: '[wmMapTilesDownload]',
@@ -285,6 +286,9 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
   }
 
   private _boundingBoxStyle(feature: Feature): Style {
+    const size = feature.get('size');
+    const sizeText =
+      size > 1000000 ? `${Math.round(size / 1000000)} MB` : `${Math.round(size / 1000)} KB`;
     const baseStyle = {
       stroke: new Stroke({
         color: 'rgba(231, 67, 58,0.5)',
@@ -292,6 +296,19 @@ export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements O
       }),
       fill: new Fill({
         color: 'rgba(231, 240, 58,0.5)',
+      }),
+      text: new Text({
+        text: sizeText,
+        font: '12px Calibri,sans-serif',
+        textAlign: 'center',
+        textBaseline: 'middle',
+        fill: new Fill({
+          color: '#000',
+        }),
+        stroke: new Stroke({
+          color: '#fff',
+          width: 3,
+        }),
       }),
     };
     return new Style(baseStyle);
