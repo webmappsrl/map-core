@@ -207,15 +207,18 @@ export async function downloadTilesByBoundingBox(
     GET_TILES_BY_GEOMETRY_MAX_ZOOM,
   );
   const totalTiles = tiles.length;
+  let totalSize = 0;
 
   for (let i = 0; i < totalTiles; i++) {
     const tile = tiles[i];
     const wmTilesAPI = `${overlayXYZ}/${tile}.png`;
     const tileData = await downloadFile(wmTilesAPI);
+    totalSize += tileData?.byteLength ?? 0;
     await saveTile(tile, tileData, uuid);
     callBackStatusFn({
       finish: false,
       map: (i + 1) / totalTiles, // percentuale avanzamento
+      size: totalSize,
     });
   }
 
@@ -225,6 +228,7 @@ export async function downloadTilesByBoundingBox(
       ...boundingBox.properties,
       idsTiles: tiles,
       uuid,
+      size: totalSize,
     },
   };
   await saveBoundingBox(boundingBoxWithIdsTiles);
@@ -334,6 +338,7 @@ export function updateStatus(status: {
   map?: number;
   media?: number;
   data?: number;
+  size?: number;
 }): void {
   console.log('Status update:', status);
 }
