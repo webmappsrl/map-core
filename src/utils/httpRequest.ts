@@ -34,9 +34,67 @@ export async function downloadFile(
       return response.json();
     }
   } catch (e) {
-    console.warn(`Failed to fetch ${url}`);
+    // Controlla se è un errore CORS
+    if (isCorsError(e)) {
+      console.warn(`CORS error detected for ${url}, trying proxy fallback...`);
+      return await fetchWithCorsProxy(url, responseType);
+    }
+
+    console.warn(`Failed to fetch ${url}:`, e);
     return null;
   }
+}
+
+/**
+ * Gestisce le richieste che falliscono per problemi CORS usando un proxy pubblico
+ */
+async function fetchWithCorsProxy(
+  url: string,
+  responseType: 'arraybuffer' | 'json',
+): Promise<ArrayBuffer | null | any> {
+  try {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    console.log(`Using CORS proxy: ${proxyUrl}`);
+
+    const proxyResponse = await fetch(proxyUrl);
+
+    if (!proxyResponse.ok) {
+      console.warn(`CORS proxy failed for ${url}: ${proxyResponse.status}`);
+      return null;
+    }
+
+    if (responseType === 'arraybuffer') {
+      return proxyResponse.arrayBuffer();
+    } else if (responseType === 'json') {
+      return proxyResponse.json();
+    }
+  } catch (proxyError) {
+    console.warn(`CORS proxy fallback failed for ${url}:`, proxyError);
+    return null;
+  }
+}
+
+/**
+ * Verifica se un errore è dovuto a problemi CORS
+ */
+function isCorsError(error: any): boolean {
+  if (!error) return false;
+
+  const corsErrorMessages = [
+    'CORS',
+    'blocked',
+    'cross-origin',
+    'Access-Control-Allow-Origin',
+    'has been blocked by CORS policy',
+    'Failed to fetch',
+  ];
+
+  const errorMessage = error.message?.toLowerCase() || '';
+  const errorName = error.name?.toLowerCase() || '';
+
+  return corsErrorMessages.some(
+    msg => errorMessage.includes(msg.toLowerCase()) || errorName.includes(msg.toLowerCase()),
+  );
 }
 
 export function isValidUrl(url: string): boolean {
