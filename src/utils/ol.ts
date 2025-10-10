@@ -399,8 +399,8 @@ export function createHull(): any {
   const selectCluster = new SelectCluster({
     // Point radius: to calculate distance between the features
     pointRadius: 34,
-    circleMaxObjects: 4,
-    maxObjects: 4,
+    circleMaxObjects: 20,
+    maxObjects: 20,
     spiral: false,
     autoClose: true,
     animate: true,

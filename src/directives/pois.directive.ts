@@ -131,18 +131,27 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           }
         });
         const clusterMembers = features[0].get('features');
-        if (clusterMembers.length > 4) {
-          setTimeout(() => {
-            // Zoom to the extent of the cluster members.
-            const view = this.mapCmp.map.getView();
-            const extent = createEmpty();
-            clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
-            view.fit(extent, {duration: 500, padding: PADDING});
-          }, 400);
-        }
+
         if (clusterMembers.length === 1) {
+          // Se c'è un solo POI, selezionalo direttamente
           const poi = clusterMembers[0].getProperties();
           this._selectIcon(poi);
+        } else {
+          // Se ci sono più POI nel cluster
+          const currentZoom = this.mapCmp.map.getView().getZoom();
+          const maxZoom = this.mapCmp.map.getView().getMaxZoom();
+          const isAtMaxZoom = currentZoom >= maxZoom - 1; // Considera maxZoom-1 come zoom massimo pratico
+
+          if (!isAtMaxZoom) {
+            // Se non siamo al zoom massimo, fai zoom per mostrare l'estensione
+            setTimeout(() => {
+              const view = this.mapCmp.map.getView();
+              const extent = createEmpty();
+              clusterMembers.forEach(feature => extend(extent, feature.getGeometry().getExtent()));
+              view.fit(extent, {duration: 500, padding: PADDING});
+            }, 400);
+          }
+          // Se siamo al zoom massimo, il SelectCluster mostrerà tutti i POI (fino a 20)
         }
       }
     });
