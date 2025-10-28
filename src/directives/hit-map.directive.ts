@@ -102,7 +102,7 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     // Crea il nuovo TileLayer con zIndex subito dopo l'ultimo
     this._tileLayer = new TileLayer({
       source: new CustomTileSource({
-        url: 'https://tiles.webmapp.it/carg/{z}/{x}/{y}.png',
+        url: 'https://carg.geosciences-ir.it/storage/cargmap/{z}/{x}/{y}.png',
         cacheSize: 50000,
         projection: 'EPSG:3857',
       }),
