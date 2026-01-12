@@ -11,3 +11,4 @@ export * from './position.directive';
 export * from './feature-collection.directive';
 export * from './hit-map.directive';
 export * from './tiles-download.directive';
+export * from './track.record.directive';

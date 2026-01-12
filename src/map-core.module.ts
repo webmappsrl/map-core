@@ -26,6 +26,7 @@ import {featureKey, MapCoreReducer} from './store/map-core.reducer';
 import {WmMapUcgTracksDirective} from './directives/ugc-tracks.directive';
 import {WmUgcPoisDirective} from './directives/ugc-pois.directive';
 import {WmMapDrawUgcPoiDirective} from './directives/draw-ugc-poi.directive';
+import {WmMapTrackRecordDirective} from './directives/track.record.directive';
 import {EffectsModule} from '@ngrx/effects';
 import {MapCoreEffects} from './store/map-core.effects';
 
@@ -46,6 +47,7 @@ const directives = [
   WmUgcPoisDirective,
   WmMapDrawUgcPoiDirective,
   WmMapTilesDownloadDirective,
+  WmMapTrackRecordDirective,
 ];
 const components = [WmMapComponent, WmMapPopover, WmMapSaveCustomTrackControls];
 
