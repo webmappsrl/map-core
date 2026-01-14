@@ -7,7 +7,7 @@ import {getLineStyle} from '../utils';
 import Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import {fromLonLat} from 'ol/proj';
-import {Location} from '../types/location';
+import {Location} from '@capacitor-community/background-geolocation';
 import {RENDER_BUFFER, TRACK_RECORD_ZINDEX} from '@map-core/readonly';
 
 @Directive({
@@ -26,6 +26,7 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
 
   @Input() WmMapTrackRecord = false;
   @Input() WmMapTrackRecordLocation: Location | null = null;
+  @Input() WmMapTrackRecordInitLocations: Location[] | null = null;
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -65,14 +66,23 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
   }
 
   /**
-   * Inizializza il layer vettoriale per la traccia con ottimizzazioni memoria
+   * Inizializza il layer vettoriale per la traccia con ottimizzazioni memoria.
+   * Se WmMapTrackRecordInitLocations è presente, inizializza la feature con quelle locations.
    */
   private _initLayer(): void {
     if (this._featureLayer || !this.mapCmp.map || !this.WmMapTrackRecord) {
       return;
     }
 
-    this._feature = new Feature(new LineString([]));
+    // Inizializza la geometry: se ci sono locations iniziali, le usa, altrimenti parte vuota
+    const initialCoordinates =
+      this.WmMapTrackRecordInitLocations && this.WmMapTrackRecordInitLocations.length > 0
+        ? this.WmMapTrackRecordInitLocations.filter(loc => this._isValidLocation(loc)).map(loc =>
+            fromLonLat([loc.longitude, loc.latitude]),
+          )
+        : [];
+
+    this._feature = new Feature(new LineString(initialCoordinates));
 
     // Crea source con opzioni ottimizzate
     const source = new VectorSource({
