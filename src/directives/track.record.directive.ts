@@ -7,7 +7,7 @@ import {getLineStyle} from '../utils';
 import Feature from 'ol/Feature';
 import LineString from 'ol/geom/LineString';
 import {fromLonLat} from 'ol/proj';
-import {Location} from '../types/location';
+import {Location} from '@capacitor-community/background-geolocation';
 import {RENDER_BUFFER, TRACK_RECORD_ZINDEX} from '@map-core/readonly';
 
 @Directive({
@@ -25,7 +25,7 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
   private readonly _BUFFER_TIMEOUT_MS = 1000; // O ogni secondo
 
   @Input() WmMapTrackRecord = false;
-  @Input() WmMapTrackRecordLocation: Location | null = null;
+  @Input() WmMapTrackRecordLocation: Location | Location[] | null = null;
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -144,10 +144,11 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
   }
 
   /**
-   * Aggiunge una location alla traccia ottimizzando memoria e re-render.
-   * Usa un buffer per accumulare coordinate e ridurre le chiamate a changed().
+   * Gestisce l'aggiunta di location(s) alla traccia.
+   * Se è un array, imposta tutte le coordinate in un'unica operazione efficiente.
+   * Se è una singola location, usa il buffer per ottimizzare i re-render.
    */
-  private _addLocation(location: Location): void {
+  private _addLocation(locationOrArray: Location | Location[]): void {
     if (!this.WmMapTrackRecord) {
       return;
     }
@@ -162,6 +163,40 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       return;
     }
 
+    if (Array.isArray(locationOrArray)) {
+      this._setLocationsArray(locationOrArray, geometry);
+    } else {
+      this._addSingleLocation(locationOrArray, geometry);
+    }
+  }
+
+  /**
+   * Imposta un array di locations sulla geometry in un'unica operazione.
+   * Efficiente per il resume di una registrazione salvata.
+   */
+  private _setLocationsArray(locations: Location[], geometry: LineString): void {
+    // Pulisce il buffer esistente
+    this._clearBuffer();
+
+    // Filtra solo le locations valide e converte in coordinate
+    const coordinates = locations
+      .filter(loc => this._isValidLocation(loc))
+      .map(loc => fromLonLat([loc.longitude, loc.latitude]));
+
+    if (coordinates.length === 0) {
+      return;
+    }
+
+    // Imposta tutte le coordinate in un'unica operazione
+    geometry.setCoordinates(coordinates);
+    geometry.changed();
+  }
+
+  /**
+   * Aggiunge una singola location alla traccia ottimizzando memoria e re-render.
+   * Usa un buffer per accumulare coordinate e ridurre le chiamate a changed().
+   */
+  private _addSingleLocation(location: Location, geometry: LineString): void {
     if (!this._isValidLocation(location)) {
       return;
     }
