@@ -42,6 +42,7 @@ import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
 import {WmMapControls} from '../controls/controls.map';
 
 @Component({
+  standalone: false,
   selector: 'wm-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss'],

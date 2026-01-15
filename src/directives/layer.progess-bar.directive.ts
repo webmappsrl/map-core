@@ -15,6 +15,7 @@ import VectorTileLayer from 'ol/layer/VectorTile';
 import {WmMapBaseDirective} from '.';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapLayerProgessBar]',
 })
 export class WmMapLayerProgressBarDirective

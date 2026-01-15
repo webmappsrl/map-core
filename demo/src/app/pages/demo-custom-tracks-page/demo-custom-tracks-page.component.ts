@@ -5,6 +5,7 @@ import {BehaviorSubject, Observable, of} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'custom-tracks-page',
   templateUrl: './demo-custom-tracks-page.component.html',
   styleUrls: ['./demo-custom-tracks-page.component.scss'],

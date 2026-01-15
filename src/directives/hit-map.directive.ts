@@ -17,6 +17,7 @@ import {Store} from '@ngrx/store';
 import {setHitMapFeatureCollections, setHitMapGeometry} from '../store/map-core.actions';
 import {coordsFromLonLat, CustomTileSource, extentToLonLat} from '@map-core/utils';
 @Directive({
+  standalone: false,
   selector: '[wmMapHitMapCollection]',
 })
 export class WmMapHitMapDirective extends WmMapBaseDirective {

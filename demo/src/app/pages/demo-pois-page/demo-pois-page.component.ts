@@ -4,6 +4,7 @@ import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'pois-page',
   templateUrl: './demo-pois-page.component.html',
   styleUrls: ['./demo-pois-page.component.scss'],

@@ -31,6 +31,7 @@ import {WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
 const PADDING = [80, 80, 80, 80];
 @Directive({
+  standalone: false,
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {

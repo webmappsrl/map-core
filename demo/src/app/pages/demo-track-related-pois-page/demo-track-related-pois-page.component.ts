@@ -4,6 +4,7 @@ import {BehaviorSubject, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'track-related-pois-page',
   templateUrl: './demo-track-related-pois-page.component.html',
   styleUrls: ['./demo-track-related-pois-page.component.scss'],

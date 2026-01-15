@@ -19,6 +19,7 @@ import {getLineStyle} from '../../src/utils';
 import {WmMapComponent} from '../components';
 import {SELECTED_TRACK_ZINDEX} from '../readonly';
 @Directive({
+  standalone: false,
   selector: '[wmMapTrackHighLight]',
 })
 export class WmMapTrackHighLightDirective extends WmMapBaseDirective implements OnChanges, OnInit {

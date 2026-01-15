@@ -14,6 +14,7 @@ import {Store} from '@ngrx/store';
 import {resetTogglePartition, setTogglePartition} from '../../../store/map-core.actions';
 
 @Component({
+  standalone: false,
   selector: 'wm-map-button-control',
   template: `
     <ng-container *ngIf="control.type==='title'">

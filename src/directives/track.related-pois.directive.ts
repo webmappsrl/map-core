@@ -42,6 +42,7 @@ import {WmFeature} from '@wm-types/feature';
 import {MapBrowserEvent} from 'ol';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapTrackRelatedPois]',
 })
 export class WmMapTrackRelatedPoisDirective

@@ -42,6 +42,7 @@ import {
 import {ZoomFeaturesInViewport} from '@wm-types/config';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapLayer]',
 })
 export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges {

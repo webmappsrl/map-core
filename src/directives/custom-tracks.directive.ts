@@ -17,6 +17,7 @@ import {WmMapComponent} from '../components';
 import {endIconHtml, startIconHtml} from '../readonly';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapCustomTracks]',
 })
 export class WmMapCustomTracksDirective extends WmMapBaseDirective {

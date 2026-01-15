@@ -24,6 +24,7 @@ import {WmFeatureCollection} from '@wm-types/feature';
 import {getFeatureCollection} from '@map-core/utils';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapFeatureCollection]',
 })
 export class WmMapFeatureCollectionDirective extends WmMapBaseDirective {

@@ -13,6 +13,7 @@ import {Icon, Style} from 'ol/style';
 import {Feature} from 'ol';
 import {Extent} from 'ol/extent';
 @Directive({
+  standalone: false,
   selector: '[wmMapGeojson]',
 })
 export class WmMapGeojsonDirective extends WmMapBaseDirective {

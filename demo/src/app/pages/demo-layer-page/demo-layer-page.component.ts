@@ -5,6 +5,7 @@ import {filter, map} from 'rxjs/operators';
 import {IDATALAYER} from 'src/types/layer';
 
 @Component({
+  standalone: false,
   selector: 'layer-page',
   templateUrl: './demo-layer-page.component.html',
   styleUrls: ['./demo-layer-page.component.scss'],

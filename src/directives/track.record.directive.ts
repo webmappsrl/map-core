@@ -11,6 +11,7 @@ import {Location} from '../types/location';
 import {RENDER_BUFFER, TRACK_RECORD_ZINDEX} from '@map-core/readonly';
 
 @Directive({
+  standalone: false,
   selector: '[WmMapTrackRecord]',
 })
 export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {

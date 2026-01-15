@@ -29,6 +29,7 @@ interface Location {
   runningAvg?: number;
 }
 @Directive({
+  standalone: false,
   selector: '[wmMapPosition]',
 })
 export class WmMapPositionDirective extends WmMapBaseDirective implements OnDestroy, OnChanges {

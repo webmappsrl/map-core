@@ -44,6 +44,7 @@ const POINTER_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 1;
 const FLAG_TRACK_ZINDEX = TRACK_DIRECTIVE_ZINDEX + 2;
 
 @Directive({
+  standalone: false,
   selector: '[wmMapTrack]',
 })
 export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges {

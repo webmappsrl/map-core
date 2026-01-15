@@ -23,6 +23,7 @@ import {Icon, Style} from 'ol/style';
 import {WmMapPopoverBaseDirective} from './popover-base.directive';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapDrawUgcPoi]',
 })
 export class WmMapDrawUgcPoiDirective extends WmMapPopoverBaseDirective {

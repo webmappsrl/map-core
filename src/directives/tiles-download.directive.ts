@@ -30,6 +30,7 @@ import {
 import {Text} from 'ol/style';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapTilesDownload]',
 })
 export class WmMapTilesDownloadDirective extends WmMapBaseDirective implements OnChanges {

@@ -11,6 +11,7 @@ import {BehaviorSubject} from 'rxjs';
 import TileLayer from 'ol/layer/Tile';
 
 @Component({
+  standalone: false,
   selector: 'wm-map-save-custom-track-controls',
   template: `
   <div class="layer-button">

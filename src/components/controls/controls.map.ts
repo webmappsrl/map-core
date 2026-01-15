@@ -18,6 +18,7 @@ import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
  * @description Gestisce i controlli della mappa, permettendo agli utenti di interagire con diversi aspetti della mappa.
  */
 @Component({
+  standalone: false,
   selector: 'wm-map-controls',
   templateUrl: 'controls.map.html',
   styleUrls: ['controls.map.scss'],

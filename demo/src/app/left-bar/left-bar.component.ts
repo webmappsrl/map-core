@@ -2,6 +2,7 @@ import {Component, ViewEncapsulation, ChangeDetectionStrategy} from '@angular/co
 import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
+  standalone: false,
   selector: 'left-bar',
   templateUrl: './left-bar.component.html',
   styleUrls: ['./left-bar.component.scss'],
