@@ -96,6 +96,11 @@ export class WmMapControls implements OnChanges, OnInit {
     }, 500);
   }
 
+  toggleControls(): void {
+    console.log('toggleControls', this.toggle$.value);
+    this.toggle$.next(!this.toggle$.value);
+  }
+
   reset(): void {
     this.currentOverlayIdx$.next(-1);
     this.overlayEVT.emit(null);
