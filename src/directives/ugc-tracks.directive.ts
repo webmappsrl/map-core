@@ -78,7 +78,7 @@ export class WmMapUcgTracksDirective extends WmMapBaseDirective {
       if (features.length > 0) {
         const clickedFeature = features[0];
         const clickedUgcTracProperties = clickedFeature?.getProperties();
-        const clickedUgcTrackId: string = clickedUgcTracProperties?.id ?? undefined;
+        const clickedUgcTrackId: string = clickedUgcTracProperties?.id ?? clickedUgcTracProperties?.uuid ?? undefined;
         if (clickedUgcTrackId && clickedUgcTracProperties.uuid) {
           this.ugcTrackSelectedFromMapEVT.emit(clickedUgcTrackId);
         }
