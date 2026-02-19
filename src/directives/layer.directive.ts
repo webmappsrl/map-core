@@ -13,6 +13,7 @@ import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
+import RenderFeature, {toFeature} from 'ol/render/Feature';
 
 import {debounceTime, filter, take} from 'rxjs/operators';
 import {Subject} from 'rxjs';
@@ -60,6 +61,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _vectorTileLayer: VectorTileLayer;
   private _moveEndSubject$: Subject<void> = new Subject<void>();
   private _moveEndListener: () => void;
+  private _hoveredFeatureId: number | null = null;
+  private _hoverHandlerInitialized = false;
 
   /**
    * @description
@@ -284,27 +287,38 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
    */
   private _initializeDataLayers(map: IMAP): void {
     if (this._dataLayerUrls != null) {
+      // Crea un oggetto wrapper per mantenere il riferimento alla direttiva
+      // così styleFn può accedere a _hoveredFeatureId aggiornato
+      const directiveRef = this;
+      const styleFnContext = {
+        currentLayer: this._currentLayer,
+        conf: this.wmMapConf,
+        map: this.mapCmp.map,
+        opacity: this.wmMapLayerOpacity,
+        filters: this.mapCmp.filters,
+        tileLayer: null as VectorTileLayer, // Verrà aggiornato dopo
+        inputTyped: this.wmMapInputTyped,
+        currentTrack: convertFeatureToEpsg3857(this.track),
+        get hoveredFeatureId() {
+          return directiveRef._hoveredFeatureId;
+        },
+      };
+
       this._vectorTileLayer = initVectorTileLayer(
         this._dataLayerUrls.low,
-        f =>
-          styleFn.bind({
-            currentLayer: this._currentLayer,
-            conf: this.wmMapConf,
-            map: this.mapCmp.map,
-            opacity: this.wmMapLayerOpacity,
-            filters: this.mapCmp.filters,
-            tileLayer: this._vectorTileLayer,
-            inputTyped: this.wmMapInputTyped,
-            currentTrack: convertFeatureToEpsg3857(this.track),
-          })(f),
+        f => styleFn.bind(styleFnContext)(f),
         lowTileLoadFn,
       );
+
+      // Aggiorna il riferimento al tileLayer nel contesto
+      styleFnContext.tileLayer = this._vectorTileLayer;
 
       this.mapCmp.map.addLayer(this._vectorTileLayer);
       this._vectorTileLayer.setVisible(!this._disabled);
       this.mapCmp.map.on('click', (evt: any) => {
         this.onClick(evt);
       });
+      this._initHoverHandler();
     }
   }
 
@@ -372,4 +386,83 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       this.featuresInViewportEVT.emit([]);
     }
   };
+
+  /**
+   * @description
+   * Inizializza il gestore del mouseover per le tracce.
+   * Rileva quando il mouse è sopra una traccia e aggiorna _hoveredFeatureId per attivare il bordo bianco.
+   * Ottimizzato per evitare listener duplicati e chiamate inutili a changed().
+   * @private
+   * @memberof WmMapLayerDirective
+   */
+  private _initHoverHandler(): void {
+    if (!this._vectorTileLayer || this._hoverHandlerInitialized) {
+      return;
+    }
+
+    this._hoverHandlerInitialized = true;
+    const viewport = this.mapCmp.map.getViewport();
+
+    this.mapCmp.map.on('pointermove', (e: any) => {
+      if (!this._vectorTileLayer) {
+        return;
+      }
+
+      let foundFeatureId: number | null = null;
+
+      // Cerca la feature sotto il pixel del mouse
+      this.mapCmp.map.forEachFeatureAtPixel(
+        e.pixel,
+        (f: RenderFeature, l: VectorTileLayer) => {
+          // Verifica che la feature appartenga al layer delle tracce
+          if (l === this._vectorTileLayer && f.getType != null) {
+            try {
+              const feature = toFeature(f);
+              const properties = feature.getProperties();
+              const featureId: number = properties?.id ?? undefined;
+              const geometryType = feature.getGeometry()?.getType();
+
+              // Applica l'highlight alle LineString e MultiLineString (tracce)
+              if (
+                (geometryType === 'LineString' || geometryType === 'MultiLineString') &&
+                featureId != null &&
+                featureId > -1
+              ) {
+                foundFeatureId = featureId;
+                return true;
+              }
+            } catch (_) {
+              // Ignora errori nella conversione della feature
+            }
+          }
+        },
+        {
+          hitTolerance: 10,
+          layerFilter: layer => layer === this._vectorTileLayer,
+        },
+      );
+
+      // Aggiorna lo stato solo se è cambiato
+      if (foundFeatureId !== null) {
+        // Feature trovata
+        if (this._hoveredFeatureId !== foundFeatureId) {
+          this._hoveredFeatureId = foundFeatureId;
+          this._vectorTileLayer.changed();
+        }
+        if (viewport.style.cursor !== 'pointer') {
+          viewport.style.cursor = 'pointer';
+        }
+      } else {
+        // Nessuna feature trovata
+        if (this._hoveredFeatureId !== null) {
+          this._hoveredFeatureId = null;
+          this._vectorTileLayer.changed();
+        }
+        if (viewport.style.cursor !== '') {
+          viewport.style.cursor = '';
+        }
+      }
+    });
+  }
+
 }

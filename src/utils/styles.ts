@@ -812,12 +812,63 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   };
   handlingStrokeStyleWidth(opt);
 
-  let styles: Style[] = [
-    new Style({
-      stroke: strokeStyle,
-      zIndex: TRACK_ZINDEX + 1,
-    }),
-  ];
+  let styles: Style[] = [];
+
+  // Aggiungi bordo bianco esterno se la feature è in hover
+  const featureId: number = properties?.id ?? undefined;
+  const geometryType = feature.getGeometry().getType();
+  const isHovered =
+    this.hoveredFeatureId != null &&
+    featureId != null &&
+    featureId === this.hoveredFeatureId &&
+    (geometryType === 'LineString' || geometryType === 'MultiLineString');
+
+  if (isHovered && strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
+    // Ottieni la larghezza della traccia originale
+    const originalWidth = strokeStyle.getWidth() ?? minStrokeWidth;
+    const originalColor = strokeStyle.getColor() as string;
+    const mainLineWidth = originalWidth + 2;
+    const borderWidth = mainLineWidth + 4;
+
+    // 1. Bordo esterno (disegnato per primo, zIndex più basso)
+    styles.push(
+      new Style({
+        stroke: new Stroke({
+          color: '#ffffff',
+          width: borderWidth,
+          lineCap: strokeStyle.getLineCap() ?? 'round',
+          lineJoin: strokeStyle.getLineJoin() ?? 'round',
+          lineDash: strokeStyle.getLineDash() ?? [],
+        }),
+        zIndex: TRACK_ZINDEX + 1,
+      }),
+    );
+
+    // 2. Linea principale (disegnata sopra, zIndex più alto)
+    // Crea un nuovo StrokeStyle con la larghezza aumentata
+    const mainLineStroke = new Stroke({
+      color: originalColor,
+      width: mainLineWidth,
+      lineCap: strokeStyle.getLineCap() ?? 'round',
+      lineJoin: strokeStyle.getLineJoin() ?? 'round',
+      lineDash: strokeStyle.getLineDash() ?? [],
+    });
+
+    styles.push(
+      new Style({
+        stroke: mainLineStroke,
+        zIndex: TRACK_ZINDEX + 2,
+      }),
+    );
+  } else {
+    // Se non è in hover, usa la traccia originale normale
+    styles.push(
+      new Style({
+        stroke: strokeStyle,
+        zIndex: TRACK_ZINDEX + 1,
+      }),
+    );
+  }
   let arrowStyle: Style[] = [];
   if (strokeStyle?.getColor() != 'rgba(0,0,0,0)') {
     if (this.conf.start_end_icons_show && currentZoom > this.conf.start_end_icons_min_zoom) {
