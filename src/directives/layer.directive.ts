@@ -37,6 +37,7 @@ import {
   MAP_ZOOM_ON_CLICK_TRESHOLD,
   FEATURES_IN_VIEWPORT_ZOOM_MIN,
   FEATURES_IN_VIEWPORT_ZOOM_MAX,
+  MIN_ZOOM_FOR_HOVER,
 } from '@map-core/readonly/constants';
 import {ZoomFeaturesInViewport} from '@wm-types/config';
 
@@ -63,6 +64,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _moveEndListener: () => void;
   private _hoveredFeatureId: number | null = null;
   private _hoverHandlerInitialized = false;
+  private _pointerMoveListener: (e: any) => void;
+  private _resolutionChangeListenerInitialized = false;
 
   /**
    * @description
@@ -155,17 +158,14 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         take(1),
       )
       .subscribe(() => {
-        const view = this.mapCmp.map.getView();
         if (enable) {
           this._moveEndSubject$.pipe(debounceTime(100)).subscribe(() => {
             this._featuresInViewport();
           });
           this._moveEndListener = () => this._moveEndSubject$.next();
-          view.on('change:resolution', this._enableFeaturesInViewportCallback);
+          this._initResolutionChangeListener();
         } else {
-          this.wmMapLayerShowFeaturesInViewport = false;
-          this._enableFeaturesInViewportCallback();
-          view.un('change:resolution', this._enableFeaturesInViewportCallback);
+          this._removeMoveEndListenerIfExists();
         }
       });
   }
@@ -319,6 +319,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         this.onClick(evt);
       });
       this._initHoverHandler();
+
+      // Inizializza il listener unificato per i cambiamenti di zoom
+      this._initResolutionChangeListener();
+      // Controlla lo zoom iniziale
+      this._onResolutionChange();
     }
   }
 
@@ -364,6 +369,43 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this.featuresInViewportEVT.emit(features);
   }
 
+  /**
+   * @description
+   * Inizializza il listener unificato per i cambiamenti di risoluzione (zoom).
+   * Questo listener gestisce sia il features in viewport che l'hover handler.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
+  private _initResolutionChangeListener(): void {
+    if (this._resolutionChangeListenerInitialized) {
+      return;
+    }
+
+    const view = this.mapCmp.map.getView();
+    view.on('change:resolution', this._onResolutionChange);
+    this._resolutionChangeListenerInitialized = true;
+  }
+
+  /**
+   * @description
+   * Callback unificato chiamato quando cambia la risoluzione (zoom).
+   * Gestisce sia il features in viewport che l'hover handler.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
+  private _onResolutionChange = () => {
+    // Gestisce il features in viewport
+    this._enableFeaturesInViewportCallback();
+    // Gestisce l'hover handler
+    this._enableHoverHandlerCallback();
+  };
+
+  /**
+   * @description
+   * Callback che abilita/disabilita il features in viewport in base allo zoom.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
   private _enableFeaturesInViewportCallback = () => {
     try {
       const view = this.mapCmp.map.getView();
@@ -375,11 +417,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       ) {
         this.mapCmp.map.on('moveend', this._moveEndListener);
       } else {
-        const listeners = this.mapCmp.map.getListeners('moveend');
-        if (listeners && listeners.length > 0) {
-          this.mapCmp.map.un('moveend', this._moveEndListener);
-        }
-        this.featuresInViewportEVT.emit([]);
+        this._removeMoveEndListenerIfExists();
       }
     } catch (e) {
       console.log(e);
@@ -387,6 +425,51 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   };
 
+  /**
+   * @description
+   * Callback che abilita/disabilita il gestore del mouseover in base allo zoom.
+   * Il hover handler è attivo solo quando lo zoom è >= 8.
+   * @private
+   * @memberof WmMapLayerDirective
+   */
+  private _enableHoverHandlerCallback = () => {
+    if (!this._vectorTileLayer) {
+      return;
+    }
+
+    const view = this.mapCmp.map.getView();
+    const zoom = view.getZoom();
+
+    if (zoom >= MIN_ZOOM_FOR_HOVER) {
+      // Zoom sufficiente: aggiungi il listener se non è già presente
+      if (!this._hoverHandlerInitialized) {
+        this._initHoverHandler();
+      }
+    } else {
+      // Zoom insufficiente: rimuovi il listener se presente
+      if (this._hoverHandlerInitialized && this._pointerMoveListener) {
+        this.mapCmp.map.un('pointermove', this._pointerMoveListener);
+        this._hoverHandlerInitialized = false;
+        // Reset dello stato hover
+        if (this._hoveredFeatureId !== null) {
+          this._hoveredFeatureId = null;
+          this._vectorTileLayer.changed();
+        }
+        const viewport = this.mapCmp.map.getViewport();
+        if (viewport.style.cursor !== '') {
+          viewport.style.cursor = '';
+        }
+      }
+    }
+  };
+
+  private _removeMoveEndListenerIfExists(): void {
+    const listeners = this.mapCmp.map.getListeners('moveend');
+    if (listeners && listeners.length > 0) {
+      this.mapCmp.map.un('moveend', this._moveEndListener);
+    }
+    this.featuresInViewportEVT.emit([]);
+  }
   /**
    * @description
    * Inizializza il gestore del mouseover per le tracce.
@@ -403,8 +486,15 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     this._hoverHandlerInitialized = true;
     const viewport = this.mapCmp.map.getViewport();
 
-    this.mapCmp.map.on('pointermove', (e: any) => {
+    this._pointerMoveListener = (e: any) => {
       if (!this._vectorTileLayer) {
+        return;
+      }
+
+      // Verifica che lo zoom sia ancora sufficiente
+      const view = this.mapCmp.map.getView();
+      const zoom = view.getZoom();
+      if (zoom < MIN_ZOOM_FOR_HOVER) {
         return;
       }
 
@@ -462,7 +552,9 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           viewport.style.cursor = '';
         }
       }
-    });
+    };
+
+    this.mapCmp.map.on('pointermove', this._pointerMoveListener);
   }
 
 }
