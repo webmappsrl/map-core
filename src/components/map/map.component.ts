@@ -26,7 +26,7 @@ import SimpleGeometry from 'ol/geom/SimpleGeometry';
 import {Interaction} from 'ol/interaction';
 import {defaults as defaultInteractions} from 'ol/interaction.js';
 import TileLayer from 'ol/layer/Tile';
-import Map from 'ol/Map';
+import OlMap from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
 import {buildTileLayers, CustomTileSource, extentFromLonLat} from '../../../src/utils/ol';
@@ -91,8 +91,8 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
 
   customTrackEnabled$: Observable<boolean>;
   isInit$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  map: Map;
-  map$: BehaviorSubject<Map> = new BehaviorSubject<Map>(null as Map);
+  map: OlMap;
+  map$: BehaviorSubject<OlMap> = new BehaviorSubject<OlMap>(null as OlMap);
   mapDegrees: number;
   queryParams$ = this._route.queryParams.pipe(shareReplay(1));
   tileLayers: TileLayer<XYZ>[] = [];
@@ -361,7 +361,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
 
     const confTiles = conf?.controls?.tiles || null;
     this.tileLayers = buildTileLayers(confTiles);
-    this.map = new Map({
+    this.map = new OlMap({
       view: this._view,
       controls: defaultControls({
         rotate: false,
