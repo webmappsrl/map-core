@@ -288,17 +288,31 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _initializeDataLayers(map: IMAP): void {
     if (this._dataLayerUrls != null) {
       // Crea un oggetto wrapper per mantenere il riferimento alla direttiva
-      // così styleFn può accedere a _hoveredFeatureId aggiornato
+      // così styleFn può accedere sempre allo stato aggiornato (hover, filtri, ecc.)
       const directiveRef = this;
       const styleFnContext = {
-        currentLayer: this._currentLayer,
-        conf: this.wmMapConf,
-        map: this.mapCmp.map,
-        opacity: this.wmMapLayerOpacity,
-        filters: this.mapCmp.filters,
+        get currentLayer() {
+          return directiveRef._currentLayer;
+        },
+        get conf() {
+          return directiveRef.wmMapConf;
+        },
+        get map() {
+          return directiveRef.mapCmp.map;
+        },
+        get opacity() {
+          return directiveRef.wmMapLayerOpacity;
+        },
+        get filters() {
+          return directiveRef.mapCmp.filters;
+        },
         tileLayer: null as VectorTileLayer, // Verrà aggiornato dopo
-        inputTyped: this.wmMapInputTyped,
-        currentTrack: convertFeatureToEpsg3857(this.track),
+        get inputTyped() {
+          return directiveRef.wmMapInputTyped;
+        },
+        get currentTrack() {
+          return convertFeatureToEpsg3857(directiveRef.track);
+        },
         get hoveredFeatureId() {
           return directiveRef._hoveredFeatureId;
         },
