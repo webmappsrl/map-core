@@ -337,9 +337,15 @@ export class WmMapTrackRelatedPoisDirective
     }
     if (poiCollection) {
       for (const poi of poiCollection) {
-        const marker = await this._createPoiMarker(poi);
-        this._poiMarkers.push(marker);
-        addFeatureToLayer(this._poisLayer, marker.icon);
+        try {
+          const marker = await this._createPoiMarker(poi);
+          if (marker != null && marker.icon != null) {
+            this._poiMarkers.push(marker);
+            addFeatureToLayer(this._poisLayer, marker.icon);
+          }
+        } catch (e) {
+          // swallow marker creation errors to avoid breaking other POIs
+        }
       }
     }
     this._initPois$.next(true);
@@ -478,28 +484,65 @@ export class WmMapTrackRelatedPoisDirective
     const svgIcon = properties?.taxonomy?.poi_type?.icon ?? null;
     const poiFromPois = this._wmMapPoisPois?.value?.getFeatureById(properties.id) ?? null;
     if (properties?.feature_image?.sizes?.['108x137'] != null) {
-      const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
-      return marker;
-    } else if (poiFromPois != null) {
-      const properties = poiFromPois.getProperties() || null;
+      try {
+        const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
+        if (marker != null) {
+          return marker;
+        }
+      } catch {
+        // se la foto è rotta, proseguiamo usando l'icona
+      }
+    }
+    if (poiFromPois != null || properties?.taxonomy != null) {
+      const properties = poiFromPois?.getProperties() || poi.properties;
       const taxonomy = properties.taxonomy || null;
-      const poyType = taxonomy?.poi_type || null;
-      const icn = this._getIcnFromTaxonomies(properties.taxonomyIdentifiers);
+      const poiType = taxonomy?.poi_type || null;
+      const svgFromIcons =
+        poiType?.icon_name && this._poiIcons[poiType.icon_name]
+          ? this._poiIcons[poiType.icon_name]
+          : null;
+      let icn = this._getIcnFromTaxonomies(
+        (properties as any).taxonomyIdentifiers || poiType?.identifier,
+      );
+      if (!icn && poiType?.icon_name) {
+        icn = poiType.icon_name;
+      }
 
-      const poiColor = poyType?.color
-        ? poyType.color
+      const poiColor = poiType?.color
+        ? poiType.color
         : properties.color
-        ? properties.color
-        : '#ff8c00';
+          ? properties.color
+          : '#ff8c00';
       const namedPoiColor = fromHEXToColor[poiColor] || 'darkorange';
-      let iconStyle = new Style({
-        image: new Icon({
-          anchor: [0.5, 0.5],
-          scale: 0.5,
-          src: `${ICN_PATH}/${icn}.png`,
-        }),
-      });
-      if (properties != null && properties.svgIcon != null) {
+      let iconStyle: Style;
+      if (svgFromIcons) {
+        let processedSvg = svgFromIcons.split('darkorange').join(namedPoiColor);
+        if (selected) {
+          processedSvg = processedSvg
+            .replace(/<circle fill="darkorange"/g, '<circle fill="white" ')
+            .replace(
+              /<g fill="white"/g,
+              `<g fill="${namedPoiColor || 'darkorange'}" `,
+            );
+        }
+        const src = `data:image/svg+xml;utf8,${processedSvg}`;
+        iconStyle = new Style({
+          image: new Icon({
+            anchor: [0.5, 0.5],
+            scale: 1,
+            src,
+          }),
+        });
+      } else {
+        iconStyle = new Style({
+          image: new Icon({
+            anchor: [0.5, 0.5],
+            scale: 0.5,
+            src: `${ICN_PATH}/${icn}.png`,
+          }),
+        });
+      }
+      if (properties != null && properties.svgIcon != null && !svgFromIcons) {
         let src = `data:image/svg+xml;utf8,${properties.svgIcon.replaceAll(
           'darkorange',
           namedPoiColor,
@@ -517,10 +560,25 @@ export class WmMapTrackRelatedPoisDirective
           }),
         });
       }
-      poiFromPois.setStyle(iconStyle);
+      let poiFeature: Feature<Geometry>;
+      if (poiFromPois != null) {
+        poiFeature = poiFromPois;
+      } else {
+        const coordinates = [
+          poi.geometry.coordinates[0] as number,
+          poi.geometry.coordinates[1] as number,
+        ];
+        const position = fromLonLat([coordinates[0], coordinates[1]]);
+        poiFeature = new Feature({
+          type: 'icon',
+          geometry: new OlPoint([position[0], position[1]]),
+        });
+        poiFeature.setId(properties.id);
+      }
+      poiFeature.setStyle(iconStyle);
       const marker: any = {
         poi: poi,
-        icon: poiFromPois,
+        icon: poiFeature,
         id: properties.id,
       };
       return marker;
@@ -588,8 +646,8 @@ export class WmMapTrackRelatedPoisDirective
     html += `
         <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style=" position: absolute;  width: 46px;  height: 46px;  left: 0px;  top: 0px;">
           <circle opacity="${selected ? 1 : 0.2}" cx="23" cy="23" r="23" fill="${
-      this._defaultFeatureColor
-    }"/>
+            this._defaultFeatureColor
+          }"/>
           <rect x="5" y="5" width="36" height="36" rx="18" fill="url(#img)" stroke="white" stroke-width="2"/>
           <defs>
             <pattern height="100%" width="100%" patternContentUnits="objectBoundingBox" id="img">
@@ -633,16 +691,26 @@ export class WmMapTrackRelatedPoisDirective
     this.mapCmp.fitView(geometryOrExtent, optOptions);
   }
 
-  private _getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
+  private _getIcnFromTaxonomies(
+    taxonomyIdentifiers: string[] | string | null | undefined,
+  ): string {
+    if (taxonomyIdentifiers == null) {
+      return null;
+    }
+    const identifiers: string[] = Array.isArray(taxonomyIdentifiers)
+      ? taxonomyIdentifiers
+      : typeof taxonomyIdentifiers === 'string' && taxonomyIdentifiers.length > 0
+        ? [taxonomyIdentifiers]
+        : [];
     const excludedIcn = ['theme_ucvs'];
-    const res = taxonomyIdentifiers?.filter(
+    const res = identifiers.filter(
       p => p != null && excludedIcn.indexOf(p) === -1 && p.indexOf('poi_type') > -1,
     );
     return res?.length > 0
       ? res[0]
-      : taxonomyIdentifiers != null && taxonomyIdentifiers.length > 0
-      ? taxonomyIdentifiers[0]
-      : null;
+      : identifiers.length > 0
+        ? identifiers[0]
+        : null;
   }
 
   /**

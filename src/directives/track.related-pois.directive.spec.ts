@@ -403,6 +403,51 @@ describe('wmMapTrackRelatedPoisDirective', () => {
     expect(poi).toEqual(poiWithId);
   });
 
+  it('_getIcnFromTaxonomies: should handle both arrays and single string identifiers', () => {
+    const anyDirective = wmMapTrackRelatedPoisDirective as any;
+
+    const fromArray = anyDirective._getIcnFromTaxonomies([
+      'where_toscana',
+      'poi_type_beach',
+    ]);
+    expect(fromArray).toBe('poi_type_beach');
+
+    const fromString = anyDirective._getIcnFromTaxonomies('poi_type_beach');
+    expect(fromString).toBe('poi_type_beach');
+
+    const fromEmpty = anyDirective._getIcnFromTaxonomies(null);
+    expect(fromEmpty).toBeNull();
+  });
+
+  it('_createPoiMarker: should build marker for related poi with only taxonomy.poi_type.identifier/icon_name', async () => {
+    const relatedPoi = {
+      type: 'Feature',
+      properties: {
+        id: 16212,
+        taxonomy: {
+          poi_type: {
+            identifier: 'water-monitoring',
+            icon_name: 'txn-water',
+            color: '#F39C19',
+          },
+        },
+      },
+      geometry: {
+        type: EGeojsonGeometryTypes.POINT,
+        coordinates: [11.0311187, 43.9970796],
+      },
+    } as IGeojsonFeature;
+
+    const marker = await (wmMapTrackRelatedPoisDirective as any)._createPoiMarker(
+      relatedPoi,
+      false,
+    );
+
+    expect(marker).toBeDefined();
+    expect(marker.id).toBe(16212);
+    expect(marker.icon).toBeDefined();
+  });
+
   xit('_resetView: should reset the view', () => {
     //TODO: fix Error: <spyOn> : _poisLayer() method does not exist
     const fitViewSpy = spyOn(wmMapTrackRelatedPoisDirective.mapCmp, 'fitView');
