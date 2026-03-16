@@ -321,7 +321,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
       this._vectorTileLayer = initVectorTileLayer(
         this._dataLayerUrls.low,
-        f => styleFn.bind(styleFnContext)(f),
+        f => styleFn.bind(styleFnContext)(f, true),
         lowTileLoadFn,
       );
 
