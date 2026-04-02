@@ -28,13 +28,12 @@ import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
 export class WmMapControls implements OnChanges, OnInit {
   /**
    * @input wmMapControlClose
-   * @description Permette di chiudere i controlli della mappa dall'esterno.
-   * @param {string} selector Il selettore dell'elemento da chiudere.
+   * @description Chiude il pannello livelli dall'esterno senza cambiare l'overlay selezionato.
+   * @param {string} selector Se diverso da `wm-map-controls`, collassa il pannello.
    */
   @Input() set wmMapControlClose(selector: string) {
     if (selector !== 'wm-map-controls') {
       this.toggle$.next(false);
-      this.currentOverlayIdx$.next(null);
     }
   }
 
