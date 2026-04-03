@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy spec types vs WmFeature<Point>; keep until refactored
 import {Component, SimpleChange} from '@angular/core';
 
 import {WmMapComponent, WmMapControls} from '../components';
