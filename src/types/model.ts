@@ -30,6 +30,7 @@ export interface ICONTROLSBUTTON extends ICONTROL {
   id?: number;
   type: 'button';
   url?: string;
+  link?: string;
 }
 
 export interface ICONTROLSTITLE extends ICONTROL {

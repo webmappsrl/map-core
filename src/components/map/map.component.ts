@@ -12,6 +12,8 @@ import {
   SimpleChanges,
   ViewChild,
   ViewEncapsulation,
+  computed,
+  signal,
 } from '@angular/core';
 import View, {FitOptions} from 'ol/View';
 import {BehaviorSubject, Observable, ReplaySubject} from 'rxjs';
@@ -36,7 +38,7 @@ import {
   scaleMinWidth,
   scaleUnits,
 } from '../../readonly/constants';
-import {IMAP} from '../../types/model';
+import {ICONTROLSBUTTON, IMAP} from '../../types/model';
 import {ActivatedRoute} from '@angular/router';
 import {wmMapCustomTrackDrawTrackDirective} from '@map-core/directives';
 import {WmMapControls} from '../controls/controls.map';
@@ -64,7 +66,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   }
 
   @Input('wmMapFilters') filters: any;
-  @Input('wmMapTranslationCallback') translationCallback: (any) => string = value => {
+  private _translationCallbackSig = signal<(any) => string>(value => {
     if (value == null) return '';
     if (typeof value === 'string') return value;
     for (const val in value) {
@@ -72,7 +74,16 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
         return value[val];
       }
     }
-  };
+  });
+
+  @Input('wmMapTranslationCallback')
+  set translationCallback(value: (any) => string) {
+    this._translationCallbackSig.set(value ?? (v => v));
+  }
+
+  get translationCallback(): (any) => string {
+    return this._translationCallbackSig();
+  }
   @Input() wmMapFullscreen: boolean = false;
   @Input() wmMapOnly: boolean = false;
   @Input() wmMapEnableMapControls: boolean = false;
@@ -97,6 +108,18 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   mapDegrees: number;
   queryParams$ = this._route.queryParams.pipe(shareReplay(1));
   tileLayers: TileLayer<XYZ>[] = [];
+  private _selectedTileSig = signal<ICONTROLSBUTTON | null>(null);
+
+  currentTileLabel = computed(() => {
+    const tile = this._selectedTileSig();
+    const translated = this._translationCallbackSig()(tile?.label ?? null);
+    return translated || 'Webmapp';
+  });
+
+  currentTileLink = computed(() => {
+    const tile = this._selectedTileSig();
+    return tile?.link ?? null;
+  });
   wmMapConf$: BehaviorSubject<IMAP | null> = new BehaviorSubject<IMAP>(null);
 
   constructor(private _route: ActivatedRoute) {}
@@ -268,6 +291,10 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     this.wmMapToggleDataEVT$.emit(data);
   }
 
+  setTileLayerLabel(tile: ICONTROLSBUTTON | null): void {
+    this._selectedTileSig.set(tile);
+  }
+
   private _disableInteractions(): Collection<Interaction> {
     return defaultInteractions({
       doubleClickZoom: false,
@@ -362,6 +389,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
 
     const confTiles = conf?.controls?.tiles || null;
     this.tileLayers = buildTileLayers(confTiles);
+    this._setCurrentTileLabelFromLayers();
     this.map = new OlMap({
       view: this._view,
       controls: defaultControls({
@@ -446,6 +474,14 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
     this.map.changed();
     this.map.updateSize();
     this.isInit$.next(true);
+  }
+
+  private _setCurrentTileLabelFromLayers(): void {
+    const selected = this.tileLayers.find(l => l?.getVisible?.() === true) ?? null;
+    const props = selected?.getProperties?.() ?? null;
+    const tileFromProps: ICONTROLSBUTTON | null =
+      props != null ? ({...props, type: 'button'} as ICONTROLSBUTTON) : null;
+    this._selectedTileSig.set(tileFromProps);
   }
 
   /**

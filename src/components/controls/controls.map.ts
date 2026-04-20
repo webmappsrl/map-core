@@ -60,6 +60,10 @@ export class WmMapControls implements OnChanges, OnInit {
    * Evento emesso quando si seleziona un overlay.
    */
   @Output('wmMapControlOverlay') overlayEVT = new EventEmitter<ICONTROLSBUTTON | null>(null);
+  /**
+   * Evento emesso quando si seleziona un tile layer (base layer).
+   */
+  @Output('wmMapControlTileLayer') tileLayerEVT = new EventEmitter<ICONTROLSBUTTON | null>(null);
 
   /**
    * Stato interno per tracciare i dati selezionati.
@@ -143,6 +147,11 @@ export class WmMapControls implements OnChanges, OnInit {
       const visibility = idx === tile.getProperties().id;
       tile.setVisible(visibility);
     });
+    const selected =
+      (this.conf?.tiles || [])
+        .filter(t => t.type === 'button')
+        .find((t: ICONTROLSBUTTON) => t.id === idx) ?? null;
+    this.tileLayerEVT.emit(selected);
   }
 
   /**
