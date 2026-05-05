@@ -1,7 +1,7 @@
 import * as localforage from 'localforage';
 import {downloadFile} from './httpRequest';
 import {WmFeature, WmFeatureCollection} from '@wm-types/feature';
-import {getTilesByGeometry} from './ol';
+import {buildTileUrl, getTilesByGeometry} from './ol';
 import {MultiPolygon} from 'geojson';
 import {
   GET_TILES_BY_GEOMETRY_MAX_ZOOM,
@@ -30,7 +30,12 @@ export async function downloadTiles(
   tilesIDs: string[],
   prefix: number | string | undefined = undefined,
   callBackStatusFn = updateStatus,
+  tileUrlTemplate?: string,
 ): Promise<number> {
+  if (!tileUrlTemplate) {
+    console.error('downloadTiles: missing tileUrlTemplate, aborting');
+    return 0;
+  }
   if (!tilesIDs || tilesIDs.length === 0) {
     callBackStatusFn({
       finish: false,
@@ -48,7 +53,7 @@ export async function downloadTiles(
     if (!existingTile) {
       try {
         let tileData: ArrayBuffer;
-        const wmTilesAPI = `https://api.webmapp.it/tiles/${tilesId}.png`;
+        const wmTilesAPI = buildTileUrl(tileUrlTemplate, tilesId);
 
         try {
           tileData = await downloadFile(wmTilesAPI);
@@ -196,9 +201,13 @@ export async function saveTile(
 
 export async function downloadTilesByBoundingBox(
   boundingBox: WmFeature<MultiPolygon>,
-  overlayXYZ: string = `https://api.webmapp.it/tiles`,
+  tileUrlTemplate: string,
   callBackStatusFn = updateStatus,
 ): Promise<void> {
+  if (!tileUrlTemplate) {
+    console.error('downloadTilesByBoundingBox: missing tileUrlTemplate, aborting');
+    return;
+  }
   const uuid = generateUUID();
   const geometry = boundingBox.geometry;
   const tiles = getTilesByGeometry(
@@ -211,7 +220,7 @@ export async function downloadTilesByBoundingBox(
 
   for (let i = 0; i < totalTiles; i++) {
     const tile = tiles[i];
-    const wmTilesAPI = `${overlayXYZ}/${tile}.png`;
+    const wmTilesAPI = buildTileUrl(tileUrlTemplate, tile);
     const tileData = await downloadFile(wmTilesAPI);
     totalSize += tileData?.byteLength ?? 0;
     await saveTile(tile, tileData, uuid);

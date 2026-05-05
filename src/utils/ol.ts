@@ -725,6 +725,11 @@ export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
 
+export function buildTileUrl(template: string, tileId: string): string {
+  const [z, x, y] = tileId.split('/');
+  return template.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+}
+
 export function getTilesByGeometry(geometry, min = 5, max = 16): string[] {
   const res = [];
   const feature = new GeoJSON({
