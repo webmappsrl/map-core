@@ -181,6 +181,7 @@ wm-map {
         display: inline-block;
         font-size: var(--font-sm);
         .webmapp-map-attribution-link {
+          --ion-margin: 6px;
           color: var(--wm-color-dark);
           text-decoration: none;
         }

@@ -113,7 +113,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
   currentTileLabel = computed(() => {
     const tile = this._selectedTileSig();
     const translated = this._translationCallbackSig()(tile?.label ?? null);
-    return translated || 'Webmapp';
+    return translated || null;
   });
 
   currentTileLink = computed(() => {
