@@ -23,7 +23,7 @@ export async function downloadFile(
     return null;
   }
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {cache: 'no-store'});
     if (!response.ok) {
       console.warn(`Failed to fetch ${url}`);
       return null;
