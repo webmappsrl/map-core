@@ -674,6 +674,11 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   const layers: number[] = properties['layers'] ? JSON.parse(properties['layers']) : [];
   const currentZoom = this.map.getView().getZoom();
   let strokeStyle = cacheStyle['noColor'];
+  const getCachedStrokeStyle = (colorKey: string): StrokeStyle => {
+    if (cacheStyle[colorKey] != null) return cacheStyle[colorKey] as StrokeStyle;
+    cacheStyle[colorKey] = new StrokeStyle({color: colorKey});
+    return cacheStyle[colorKey] as StrokeStyle;
+  };
   let featureStrokeColor =
     properties.stroke_color && properties.stroke_color != '' ? properties.stroke_color : null;
   // TODO: da eliminare quando tutte le app sono rigenerate
@@ -737,17 +742,17 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
         minStrokeWidth += 2;
         if (nextIndex > -1) {
           const nextColor = nextColors[nextIndex % nextColors.length];
-          strokeStyle.setColor(nextColor);
+          strokeStyle = getCachedStrokeStyle(nextColor);
           animateFeatureFn(this, toFeature(feature), nextColor);
         }
         const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
         if (prevIndex > -1) {
           const prevColor = prevColors[prevIndex % prevColors.length];
-          strokeStyle.setColor(prevColor);
+          strokeStyle = getCachedStrokeStyle(prevColor);
           animateFeatureFn(this, toFeature(feature), prevColor, false);
         }
         if (currentTrackOfLayer === currentTrackID) {
-          strokeStyle = cacheStyle['red'];
+          strokeStyle = getCachedStrokeStyle('red');
         }
       }
     } else {
