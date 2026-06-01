@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import {WmFeature} from '@wm-types/feature';
+import {WmImage} from '@wm-types/image';
 import {Point} from 'geojson';
 import {Feature} from 'ol';
 import Geometry from 'ol/geom/Geometry';
@@ -125,13 +126,13 @@ export interface IGeojsonProperties {
   ele_min?: number;
   ele_to?: number;
   excerpt?: ILocaleString;
-  feature_image?: IWmImage;
+  feature_image?: WmImage;
   geojson_url?: string;
   gpx_url?: string;
   // allow to work with custom properties when needed
   id: number;
-  image?: IWmImage;
-  image_gallery?: IWmImage[];
+  image?: WmImage;
+  image_gallery?: WmImage[];
   import_method?: string;
   kml_url?: string;
   mbtiles?: string[];
@@ -192,25 +193,6 @@ export interface IPOI {
   poi_interaction: 'no_interaction' | 'tooltip' | 'popup' | 'tooltip_popup';
   skipRouteIndexDownload: boolean;
   taxonomies: any;
-}
-
-export interface IWmImage {
-  api_url: string;
-  caption: string;
-  id: number;
-  sizes: {
-    '108x148': string;
-    '108x137': string;
-    '225x100': string;
-    '250x150': string;
-    '118x138': string;
-    '108x139': string;
-    '118x117': string;
-    '335x250': string;
-    '400x200': string;
-    '1440x500': string;
-  };
-  url: string;
 }
 
 /**
