@@ -484,7 +484,12 @@ export class WmMapTrackRelatedPoisDirective
     }
     const svgIcon = properties?.taxonomy?.poi_type?.icon ?? null;
     const poiFromPois = this._wmMapPoisPois?.value?.getFeatureById(properties.id) ?? null;
-    if (properties?.feature_image?.sizes?.['108x137'] != null) {
+    const showImageOnMap = properties?.feature_image?.show_image_on_map;
+    const useImage =
+      showImageOnMap === true ||
+      (showImageOnMap == null && properties?.feature_image?.sizes?.['108x137'] != null);
+
+    if (useImage) {
       try {
         const {marker} = await this._createPoiCanvasIcon(poi, null, selected);
         if (marker != null) {

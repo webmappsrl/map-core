@@ -490,4 +490,76 @@ describe('wmMapTrackRelatedPoisDirective', () => {
       true,
     );
   });
+
+  describe('_createPoiMarker: show_image_on_map', () => {
+    it('should use icon when show_image_on_map is false even if image exists', async () => {
+      spyOn<any>(wmMapTrackRelatedPoisDirective, '_createPoiCanvasIcon').and.callThrough();
+      const poi: any = {
+        type: 'Feature',
+        geometry: {type: EGeojsonGeometryTypes.POINT, coordinates: [7.044635, 40.528745]},
+        properties: {
+          id: 99,
+          feature_image: {
+            id: 1,
+            url: 'http://example.com/img.jpg',
+            api_url: '',
+            caption: '',
+            show_image_on_map: false,
+            sizes: {'108x137': 'http://example.com/img_108x137.jpg'},
+          },
+          taxonomy: {poi_type: {color: '#ff8c00', icon_name: null}},
+          taxonomyIdentifiers: [],
+        },
+      };
+      await wmMapTrackRelatedPoisDirective['_createPoiMarker'](poi);
+      expect(wmMapTrackRelatedPoisDirective['_createPoiCanvasIcon']).not.toHaveBeenCalled();
+    });
+
+    it('should use image when show_image_on_map is true', async () => {
+      spyOn<any>(wmMapTrackRelatedPoisDirective, '_createPoiCanvasIcon').and.returnValue(
+        Promise.resolve({marker: {poi, icon: new Feature()}, style: {}}),
+      );
+      const poi: any = {
+        type: 'Feature',
+        geometry: {type: EGeojsonGeometryTypes.POINT, coordinates: [7.044635, 40.528745]},
+        properties: {
+          id: 100,
+          feature_image: {
+            id: 2,
+            url: 'http://example.com/img.jpg',
+            api_url: '',
+            caption: '',
+            show_image_on_map: true,
+            sizes: {'108x137': 'http://example.com/img_108x137.jpg'},
+          },
+          taxonomyIdentifiers: [],
+        },
+      };
+      await wmMapTrackRelatedPoisDirective['_createPoiMarker'](poi);
+      expect(wmMapTrackRelatedPoisDirective['_createPoiCanvasIcon']).toHaveBeenCalled();
+    });
+
+    it('should use legacy behavior (image) when show_image_on_map is absent', async () => {
+      spyOn<any>(wmMapTrackRelatedPoisDirective, '_createPoiCanvasIcon').and.returnValue(
+        Promise.resolve({marker: {poi, icon: new Feature()}, style: {}}),
+      );
+      const poi: any = {
+        type: 'Feature',
+        geometry: {type: EGeojsonGeometryTypes.POINT, coordinates: [7.044635, 40.528745]},
+        properties: {
+          id: 101,
+          feature_image: {
+            id: 3,
+            url: 'http://example.com/img.jpg',
+            api_url: '',
+            caption: '',
+            sizes: {'108x137': 'http://example.com/img_108x137.jpg'},
+          },
+          taxonomyIdentifiers: [],
+        },
+      };
+      await wmMapTrackRelatedPoisDirective['_createPoiMarker'](poi);
+      expect(wmMapTrackRelatedPoisDirective['_createPoiCanvasIcon']).toHaveBeenCalled();
+    });
+  });
 });
