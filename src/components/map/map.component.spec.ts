@@ -37,16 +37,13 @@ describe('WmMapComponent', () => {
         }),
       }),
     ];
-    const mockMapTarget = 'ol-map';
     const mockWmMapPadding: number[] = [10, 20, 30, 40];
 
     component.wmMapConf = mockMapConf;
     component.tileLayers = mockTileLayers;
-    component.wmMapTarget = mockMapTarget;
     component.wmMapPadding = mockWmMapPadding;
 
     expect(component.tileLayers).toEqual(mockTileLayers);
-    expect(component.wmMapTarget).toEqual(mockMapTarget);
     expect(component.wmMapPadding).toEqual(mockWmMapPadding);
   });
 

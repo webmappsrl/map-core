@@ -9,18 +9,26 @@
       </ng-container>
       <ng-template #defaultAttribution>
         <div class="webmapp-map-attribution">
+          <ng-container *ngIf="currentTileLabel();">
+            <ng-container *ngIf="currentTileLink(); else noTileLink">
+              <a
+                class="wm-clickable webmapp-map-attribution-link"
+                [href]="currentTileLink()"
+                target="blank"
+                rel="noopener noreferrer"
+              >
+                © {{ currentTileLabel() }}
+              </a>
+            </ng-container>
+            <ng-template #noTileLink>
+              <span>© {{ currentTileLabel() }}</span>
+            </ng-template>
+          </ng-container>
           <a
-            class="wm-clickable webmapp-map-attribution-link"
-            href="http://webmapp.it"
-            target="blank"
-          >
-            © Webmapp
-          </a>
-          <a
-            class="wm-clickable webmapp-map-attribution-link"
+            class="wm-clickable webmapp-map-attribution-link ion-margin-start"
             href="https://www.openstreetmap.org/about/"
             target="blank"
-            >© OpenStreetMap
+            > © OpenStreetMap
           </a>
         </div>
       </ng-template>
@@ -40,6 +48,7 @@
         [wmMapControlClose]="wmMapCloseTopRightBtnsEVT$|async"
         (wmMapControlOverlay)="setOverlay($event)"
         (wmMapControlData)="toggleData($event)"
+        (wmMapControlTileLayer)="setTileLayerLabel($event)"
         (click)="wmMapCloseTopRightBtns = 'wm-map-controls'"
       ></wm-map-controls>
       <ng-content select="[top-right]"></ng-content>

@@ -4,6 +4,7 @@ import {BehaviorSubject, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'position-page',
   templateUrl: './demo-position-page.component.html',
   styleUrls: ['./demo-position-page.component.scss'],

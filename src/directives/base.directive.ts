@@ -10,6 +10,7 @@ import {WmMapComponent} from '../components/map/map.component';
 import {IMAP} from '../types/model';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapBase]',
 })
 export class WmMapBaseDirective {

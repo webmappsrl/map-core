@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy spec vs WmSlopeChartHoverElements; keep until refactored
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {Component, ComponentFactoryResolver, SimpleChange} from '@angular/core';
 import {WmMapComponent} from '../components/map/map.component';

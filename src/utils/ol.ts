@@ -725,6 +725,11 @@ export function getIcnFromTaxonomies(taxonomyIdentifiers: string[]): string {
   return res?.length > 0 ? res[0] : taxonomyIdentifiers[0];
 }
 
+export function buildTileUrl(template: string, tileId: string): string {
+  const [z, x, y] = tileId.split('/');
+  return template.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+}
+
 export function getTilesByGeometry(geometry, min = 5, max = 16): string[] {
   const res = [];
   const feature = new GeoJSON({
@@ -1107,4 +1112,13 @@ export function toDegrees(angleInRadians) {
  */
 export function toRadians(angleInDegrees) {
   return (angleInDegrees * Math.PI) / 180;
+}
+
+/**
+ * Returns true if every element of needle is present in haystack.
+ * An empty needle always returns true.
+ */
+export function isArrayContained(needle: any[], haystack: any[]): boolean {
+  if (needle.length > haystack.length) return false;
+  return needle.every(element => haystack.includes(element));
 }

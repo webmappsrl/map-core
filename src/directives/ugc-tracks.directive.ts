@@ -13,6 +13,7 @@ import {WmFeature} from '@wm-types/feature';
 import {LineString} from 'geojson';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapUgcTracks]',
 })
 export class WmMapUcgTracksDirective extends WmMapBaseDirective {

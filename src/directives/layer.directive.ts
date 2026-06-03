@@ -42,6 +42,7 @@ import {
 import {ZoomFeaturesInViewport} from '@wm-types/config';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapLayer]',
 })
 export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges {
@@ -320,7 +321,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
       this._vectorTileLayer = initVectorTileLayer(
         this._dataLayerUrls.low,
-        f => styleFn.bind(styleFnContext)(f),
+        f => styleFn.bind(styleFnContext)(f, true),
         lowTileLoadFn,
       );
 

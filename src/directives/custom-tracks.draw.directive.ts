@@ -36,6 +36,7 @@ import {WmMapPopoverBaseDirective} from './popover-base.directive';
 export const RECORD_TRACK_ID: string = 'wm-current_record_track';
 
 @Directive({
+  standalone: false,
   selector: '[wmMapCustomTrackDrawTrack]',
 })
 export class wmMapCustomTrackDrawTrackDirective extends WmMapPopoverBaseDirective {

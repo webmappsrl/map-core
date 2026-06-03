@@ -4,6 +4,7 @@ import {HttpClient} from '@angular/common/http';
 import {map} from 'rxjs/operators';
 
 @Component({
+  standalone: false,
   selector: 'track-page',
   templateUrl: './demo-track-page.component.html',
   styleUrls: ['./demo-track-page.component.scss'],

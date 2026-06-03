@@ -681,23 +681,17 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
     featureStrokeColor = properties.strokecolor;
   }
   if (featureStrokeColor) {
-    if (cacheStyle[featureStrokeColor] != null) {
-      strokeStyle = cacheStyle[featureStrokeColor];
-    } else if (featureStrokeColor != null) {
-      cacheStyle[featureStrokeColor] = new StrokeStyle();
-      cacheStyle[featureStrokeColor].setColor(featureStrokeColor);
-      strokeStyle = cacheStyle[featureStrokeColor];
-    }
+    strokeStyle = getCachedStrokeStyle(featureStrokeColor);
   }
   if (this.currentLayer != null) {
     const currentIDLayer = +this.currentLayer.id;
     if (layers.indexOf(currentIDLayer) >= 0) {
       const color = this.currentLayer?.style?.color;
       if (color != null) {
-        cacheStyle[currentIDLayer] = new StrokeStyle();
-        cacheStyle[currentIDLayer].setColor(color);
-        strokeStyle = cacheStyle[featureStrokeColor] ?? cacheStyle[currentIDLayer];
-      } else if (strokeStyle == cacheStyle['noColor']) {
+        strokeStyle = featureStrokeColor
+          ? getCachedStrokeStyle(featureStrokeColor)
+          : getCachedStrokeStyle(color);
+      } else if (strokeStyle === cacheStyle['noColor']) {
         strokeStyle = cacheStyle['red'];
       }
     } else {
@@ -737,17 +731,17 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
         minStrokeWidth += 2;
         if (nextIndex > -1) {
           const nextColor = nextColors[nextIndex % nextColors.length];
-          strokeStyle.setColor(nextColor);
+          strokeStyle = getCachedStrokeStyle(nextColor);
           animateFeatureFn(this, toFeature(feature), nextColor);
         }
         const prevIndex = edgesOfCurrentTrack.prev.indexOf(currentTrackOfLayer);
         if (prevIndex > -1) {
           const prevColor = prevColors[prevIndex % prevColors.length];
-          strokeStyle.setColor(prevColor);
+          strokeStyle = getCachedStrokeStyle(prevColor);
           animateFeatureFn(this, toFeature(feature), prevColor, false);
         }
         if (currentTrackOfLayer === currentTrackID) {
-          strokeStyle = cacheStyle['red'];
+          strokeStyle = getCachedStrokeStyle('red');
         }
       }
     } else {
@@ -759,12 +753,7 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
   } else if (featureStrokeColor == null) {
     const layerId = +layers[0];
     const color = getColorFromLayer(layerId, this.conf.layers);
-    if (cacheStyle[color] != null) {
-      strokeStyle = cacheStyle[color];
-    } else {
-      cacheStyle[color] = new StrokeStyle({color});
-      strokeStyle = cacheStyle[color];
-    }
+    strokeStyle = getCachedStrokeStyle(color);
   }
 
   if (this.filters != null && this.filters.filterTracks.length > 0) {
@@ -1069,6 +1058,20 @@ export var currentTrackID = null;
 export const cacheStyle = {
   'noColor': new StrokeStyle({color: 'rgba(0,0,0,0)'}),
   'red': new StrokeStyle({color: 'red'}),
+};
+
+/**
+ * Restituisce uno `StrokeStyle` dalla cache `cacheStyle` per la chiave colore data.
+ * Se la chiave non è presente, crea un nuovo `StrokeStyle` con quel colore,
+ * lo memorizza in cache e lo restituisce.
+ *
+ * @param colorKey chiave di colore (es. valore hex o nome) usata sia come indice di cache sia come colore dello stroke
+ * @returns istanza `StrokeStyle` corrispondente alla chiave
+ */
+export const getCachedStrokeStyle = (colorKey: string): StrokeStyle => {
+  if (cacheStyle[colorKey] != null) return cacheStyle[colorKey] as StrokeStyle;
+  cacheStyle[colorKey] = new StrokeStyle({color: colorKey});
+  return cacheStyle[colorKey] as StrokeStyle;
 };
 export let currentCluster = null;
 export const fromNameToHEX = {

@@ -18,6 +18,7 @@ import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
  * @description Gestisce i controlli della mappa, permettendo agli utenti di interagire con diversi aspetti della mappa.
  */
 @Component({
+  standalone: false,
   selector: 'wm-map-controls',
   templateUrl: 'controls.map.html',
   styleUrls: ['controls.map.scss'],
@@ -27,13 +28,12 @@ import {ICONTROLS, ICONTROLSBUTTON} from '../../types/model';
 export class WmMapControls implements OnChanges, OnInit {
   /**
    * @input wmMapControlClose
-   * @description Permette di chiudere i controlli della mappa dall'esterno.
-   * @param {string} selector Il selettore dell'elemento da chiudere.
+   * @description Chiude il pannello livelli dall'esterno senza cambiare l'overlay selezionato.
+   * @param {string} selector Se diverso da `wm-map-controls`, collassa il pannello.
    */
   @Input() set wmMapControlClose(selector: string) {
     if (selector !== 'wm-map-controls') {
       this.toggle$.next(false);
-      this.currentOverlayIdx$.next(null);
     }
   }
 
@@ -60,6 +60,10 @@ export class WmMapControls implements OnChanges, OnInit {
    * Evento emesso quando si seleziona un overlay.
    */
   @Output('wmMapControlOverlay') overlayEVT = new EventEmitter<ICONTROLSBUTTON | null>(null);
+  /**
+   * Evento emesso quando si seleziona un tile layer (base layer).
+   */
+  @Output('wmMapControlTileLayer') tileLayerEVT = new EventEmitter<ICONTROLSBUTTON | null>(null);
 
   /**
    * Stato interno per tracciare i dati selezionati.
@@ -93,6 +97,11 @@ export class WmMapControls implements OnChanges, OnInit {
       this._initializeData();
       this._setDefaultOverlay();
     }, 500);
+  }
+
+  toggleControls(): void {
+    console.log('toggleControls', this.toggle$.value);
+    this.toggle$.next(!this.toggle$.value);
   }
 
   reset(): void {
@@ -138,6 +147,11 @@ export class WmMapControls implements OnChanges, OnInit {
       const visibility = idx === tile.getProperties().id;
       tile.setVisible(visibility);
     });
+    const selected =
+      (this.conf?.tiles || [])
+        .filter(t => t.type === 'button')
+        .find((t: ICONTROLSBUTTON) => t.id === idx) ?? null;
+    this.tileLayerEVT.emit(selected);
   }
 
   /**

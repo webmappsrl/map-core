@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, Input, ViewEncapsulation} from '@ang
 import {BehaviorSubject} from 'rxjs';
 
 @Component({
+  standalone: false,
   selector: 'wm-map-popover',
   template: `
   <ng-container *ngIf="message$|async as message">

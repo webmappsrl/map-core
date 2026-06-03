@@ -22,7 +22,7 @@ import Style from 'ol/style/Style';
 import {BehaviorSubject} from 'rxjs';
 import {filter, take} from 'rxjs/operators';
 import {WmMapBaseDirective} from '.';
-import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer} from '../../src/utils';
+import {clearLayer, coordsToLonLat, createCluster, createHull, createLayer, isArrayContained} from '../../src/utils';
 import {clusterHullStyle, fromHEXToColor} from '../../src/utils/styles';
 import {WmMapComponent} from '../components';
 import {CLUSTER_ZINDEX, FLAG_TRACK_ZINDEX, ICN_PATH} from '../readonly';
@@ -31,6 +31,7 @@ import {WmFeature} from '@wm-types/feature';
 import {Point} from 'geojson';
 const PADDING = [80, 80, 80, 80];
 @Directive({
+  standalone: false,
   selector: '[wmMapPois]',
 })
 export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges {
@@ -395,11 +396,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this._poisClusterLayer?.setVisible(!this._disabled);
   }
 
-  private _isArrayContained(needle: any[], haystack: any[]): boolean {
-    if (needle.length > haystack.length) return false;
-    return needle.every(element => haystack.includes(element));
-  }
-
   /**
    * @description
    * This code is a private method called _renderPois()
@@ -576,7 +572,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
           .filter(f => {
             if (this.wmMapPoisFilters.length > 0) {
               const p = f.getProperties().properties;
-              return this._isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
+              return isArrayContained(this.wmMapPoisFilters, p.taxonomyIdentifiers);
             }
             return true;
           })
@@ -584,8 +580,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
             if (layerIdentifiers.length > 0) {
               const p = f.getProperties().properties;
               const layerIdentifier: string = layerIdentifiers[0].identifier;
-              const isContained = this._isArrayContained([layerIdentifier], p.taxonomyIdentifiers);
-              return this._isArrayContained([layerIdentifier], p.taxonomyIdentifiers);
+              return isArrayContained([layerIdentifier], p.taxonomyIdentifiers);
             }
             return true;
           });

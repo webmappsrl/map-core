@@ -29,6 +29,7 @@ import TileLayer from 'ol/layer/Tile';
   styleUrls: ['btn-tiles.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
+  standalone: false,
 })
 export class BtnTiles implements OnChanges {
   @Input() tileLayers: TileLayer<XYZ>[];

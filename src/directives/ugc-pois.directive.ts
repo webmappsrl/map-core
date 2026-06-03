@@ -36,6 +36,7 @@ const PADDING = [80, 80, 80, 80];
 const TRESHOLD_ENABLE_FIT = 2;
 
 @Directive({
+  standalone: false,
   selector: '[wmMapUgcPois]',
 })
 export class WmUgcPoisDirective extends WmMapBaseDirective implements OnChanges {

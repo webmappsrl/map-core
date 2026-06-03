@@ -1062,7 +1062,7 @@ export const mockMapConf: IMAP = {
   start_end_icons_show: true,
   tiles: [],
   controls: {
-    layer1: [
+    tiles: [
       {
         label: {it: 'layer1'},
         type: 'button',
@@ -1070,8 +1070,6 @@ export const mockMapConf: IMAP = {
         id: 0,
         url: 'https://example.com/layer1/{z}/{x}/{y}.png',
       },
-    ],
-    layer2: [
       {
         label: {it: 'layer2'},
         type: 'button',
@@ -1080,6 +1078,8 @@ export const mockMapConf: IMAP = {
         url: 'https://example.com/layer2/{z}/{x}/{y}.png',
       },
     ],
+    data: [],
+    overlays: [],
   },
 };
 
