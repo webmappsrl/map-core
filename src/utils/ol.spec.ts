@@ -621,3 +621,23 @@ describe('ol', () => {
     }
   });
 });
+
+import { isArrayContained } from './ol';
+
+describe('isArrayContained', () => {
+  it('should return true when needle is empty', () => {
+    expect(isArrayContained([], ['a', 'b'])).toBeTrue();
+  });
+
+  it('should return true when all needle elements are in haystack', () => {
+    expect(isArrayContained(['poi_type_beach'], ['where_toscana', 'poi_type_beach'])).toBeTrue();
+  });
+
+  it('should return false when needle has an element not in haystack', () => {
+    expect(isArrayContained(['poi_type_beach'], ['where_toscana', 'poi_type_lake'])).toBeFalse();
+  });
+
+  it('should return false when needle is longer than haystack', () => {
+    expect(isArrayContained(['a', 'b', 'c'], ['a', 'b'])).toBeFalse();
+  });
+});

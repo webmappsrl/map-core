@@ -31,6 +31,7 @@ import {
   createLayer,
   downloadBase64Img,
   fromHEXToColor,
+  isArrayContained,
   nearestFeatureOfLayer,
   removeFeatureFromLayer,
 } from '../../src/utils';
@@ -54,8 +55,10 @@ export class WmMapTrackRelatedPoisDirective
   private _lastID = null;
   private _onClickSub: Subscription = Subscription.EMPTY;
   private _poiIcons: {[identifier: string]: string} = {};
+  private _allPoiMarkers: PoiMarker[] = [];
   private _poiMarkers: PoiMarker[] = [];
   private _poisLayer: VectorLayer<VectorSource>;
+  private _wmMapPoisFilters: string[] = [];
   private _relatedPois: WmFeature<Point>[] = [];
   private _selectedPoiLayer: VectorLayer<VectorSource>;
   private _selectedPoiMarker: PoiMarker;
@@ -133,6 +136,13 @@ export class WmMapTrackRelatedPoisDirective
         this._wmMapPoisPois.next(vectorSource);
       }
     } catch (e) {}
+  }
+
+  @Input() set wmMapPoisFilters(filters: string[] | null) {
+    const normalized = filters ?? [];
+    if (JSON.stringify(normalized) === JSON.stringify(this._wmMapPoisFilters)) return;
+    this._wmMapPoisFilters = normalized;
+    this._updateFilteredPois();
   }
 
   @Input() set wmMapReletedPoisDisableClusterLayer(disabled: boolean) {
@@ -326,8 +336,34 @@ export class WmMapTrackRelatedPoisDirective
    *
    * @param poiCollection - The collection of POIs to be added as markers.
    */
+  private _updateFilteredPois(): void {
+    if (!this._poisLayer || !this._initPois$.value) return;
+
+    const source = this._poisLayer.getSource() as VectorSource;
+    source.clear();
+
+    const toShow = this._allPoiMarkers.filter(marker => {
+      if (this._wmMapPoisFilters.length === 0) return true;
+      let ids: string[] | null | undefined = marker.poi?.properties?.taxonomyIdentifiers;
+      // Related POIs often lack taxonomyIdentifiers — derive from taxonomy.poi_type.identifier
+      if (!ids || ids.length === 0) {
+        const poiTypeIdentifier = marker.poi?.properties?.taxonomy?.poi_type?.identifier;
+        ids = poiTypeIdentifier ? [`poi_type_${poiTypeIdentifier}`] : null;
+      }
+      if (!ids || ids.length === 0) return true;
+      return isArrayContained(this._wmMapPoisFilters, ids);
+    });
+
+    toShow.forEach(marker => {
+      if (marker.icon != null) {
+        source.addFeature(marker.icon);
+      }
+    });
+  }
+
   private async _addPoisMarkers(poiCollection: WmFeature<Point>[]): Promise<void> {
     this._poisLayer = createLayer(this._poisLayer, CLUSTER_ZINDEX);
+    this._allPoiMarkers = [];
     this.mapCmp.map.addLayer(this._poisLayer);
     for (let i = this._poiMarkers?.length - 1; i >= 0; i--) {
       const ov = this._poiMarkers[i];
@@ -342,7 +378,7 @@ export class WmMapTrackRelatedPoisDirective
           const marker = await this._createPoiMarker(poi);
           if (marker != null && marker.icon != null) {
             this._poiMarkers.push(marker);
-            addFeatureToLayer(this._poisLayer, marker.icon);
+            this._allPoiMarkers.push(marker);
           }
         } catch (e) {
           // swallow marker creation errors to avoid breaking other POIs
@@ -350,6 +386,7 @@ export class WmMapTrackRelatedPoisDirective
       }
     }
     this._initPois$.next(true);
+    this._updateFilteredPois();
   }
 
   /**
@@ -753,6 +790,7 @@ export class WmMapTrackRelatedPoisDirective
       this.mapCmp.map.render();
     }
     this._poiMarkers = [];
+    this._allPoiMarkers = [];
     this.relatedPoiEvt.emit(null);
   }
 
