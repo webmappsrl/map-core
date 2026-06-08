@@ -21,6 +21,7 @@ const mockFitOptions: FitOptions = {
 };
 
 @Component({
+  standalone: false,
   template: `<wm-map
     wmMapBase
     [wmMapConf]="conf"

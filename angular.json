@@ -8,7 +8,7 @@
   "projects": {
     "map-core": {
       "projectType": "library",
-      "root": "map-core",
+      "root": "",
       "sourceRoot": "src",
       "prefix": "lib",
       "architect": {
@@ -31,9 +31,22 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "codeCoverage": true,
-            "main": "src/test.ts",
+            "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "src/karma.conf.js"
+          },
+          "configurations": {
+            "ci": {
+              "progress": false,
+              "watch": false,
+              "include": [
+                "src/utils/styles.spec.ts",
+                "src/utils/popover.spec.ts",
+                "src/utils/httpRequest.spec.ts",
+                "src/utils/img.spec.ts",
+                "src/utils/performance.spec.ts"
+              ]
+            }
           }
         }
       }

@@ -42,14 +42,14 @@ describe('styles', () => {
     expect(styles[0].getStroke() instanceof Stroke).toBe(true);
     expect(styles[0].getStroke().getColor()).toEqual('rgba(255, 255, 255, 0.9)');
     expect(styles[0].getStroke().getWidth()).toEqual(12);
-    expect(styles[0].getZIndex()).toEqual(51);
+    expect(styles[0].getZIndex()).toEqual(501);
     expect(styles[1] instanceof Style).toBe(true);
     expect(styles[1].getStroke() instanceof Stroke).toBe(true);
     expect(styles[1].getStroke().getColor()).toEqual('rgba(255, 177, 0,1)');
     expect(styles[1].getStroke().getWidth()).toEqual(6);
     expect(styles[1].getStroke().getLineDash()).toEqual([]);
     expect(styles[1].getStroke().getLineCap()).toEqual('round');
-    expect(styles[1].getZIndex()).toEqual(52);
+    expect(styles[1].getZIndex()).toEqual(502);
   });
 
   it('getFlowStyle: should return a FlowLine object', () => {
@@ -292,38 +292,60 @@ describe('styles', () => {
     });
   });
 
-  it('buildRefStyle: should return a Style object with a Text object for a given feature with a ref property', () => {
+  it('buildRefStyle: should return a Style array with Text for a LineString with ref property', () => {
+    const mockView = {
+      getResolution: () => 1,
+      calculateExtent: () => [0, -5000, 5000, 5000] as [number, number, number, number],
+    };
+    const mockMap = {
+      getSize: () => [800, 600] as [number, number],
+      getView: () => mockView,
+    };
     const mockContext = {
-      conf: {
-        ref_on_track_show: true,
-      },
+      conf: {ref_on_track_show: true},
       _defaultFeatureColor: '#000000',
     };
-    const feature = new Feature(new Point([0, 0]));
-    feature.setProperties({ref: 'A'});
-    const style = buildRefStyle.call(mockContext, feature);
-    const text = style.getText();
+    const lineString = new LineString([[0, 0], [5000, 0]]);
+    lineString.setProperties({ref: 'A'});
 
-    expect(style).toBeInstanceOf(Style);
-    expect(text).toBeInstanceOf(Text);
-    expect(text.getText()).toEqual('A');
+    const styles = buildRefStyle.call(mockContext, lineString, {
+      map: mockMap,
+      featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+    });
+
+    expect(Array.isArray(styles)).toBe(true);
+    expect(styles.length).toBeGreaterThan(0);
+    expect(styles[0]).toBeInstanceOf(Style);
+    expect(styles[0].getText()).toBeInstanceOf(Text);
+    expect(styles[0].getText().getText()).toEqual('A');
   });
 
-  it('buildRefStyle: should return a Style object with an empty Text object for a feature without a ref property', () => {
+  it('buildRefStyle: should return a Style array with empty Text for a LineString without ref property', () => {
+    const mockView = {
+      getResolution: () => 1,
+      calculateExtent: () => [0, -5000, 5000, 5000] as [number, number, number, number],
+    };
+    const mockMap = {
+      getSize: () => [800, 600] as [number, number],
+      getView: () => mockView,
+    };
     const mockContext = {
-      conf: {
-        ref_on_track_show: true,
-      },
+      conf: {ref_on_track_show: true},
       _defaultFeatureColor: '#000000',
     };
-    const feature = new Feature(new Point([0, 0]));
-    feature.setProperties({});
-    const style = buildRefStyle.call(mockContext, feature);
-    const text = style.getText();
+    const lineString = new LineString([[0, 0], [5000, 0]]);
+    lineString.setProperties({});
 
-    expect(style).toBeInstanceOf(Style);
-    expect(text).toBeInstanceOf(Text);
-    expect(text.getText()).toEqual('');
+    const styles = buildRefStyle.call(mockContext, lineString, {
+      map: mockMap,
+      featureStrokeColor: 'rgba(255, 255, 255, 0.9)',
+    });
+
+    expect(Array.isArray(styles)).toBe(true);
+    expect(styles.length).toBeGreaterThan(0);
+    expect(styles[0]).toBeInstanceOf(Style);
+    expect(styles[0].getText()).toBeInstanceOf(Text);
+    expect(styles[0].getText().getText()).toEqual('');
   });
 
   it('buildStartEndIcons: should return an array of two Style objects for start and end point icons', () => {

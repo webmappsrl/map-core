@@ -48,5 +48,19 @@ Gli attributi di un elemento con più direttive seguono questo ordine:
 **Perché**: la posizione segnala immediatamente se un input è condiviso (prima dei selettori) o dedicato (dopo il selettore della sua direttiva). Un binding condiviso posizionato dentro il blocco di una direttiva specifica è fuorviante.
 
 ## Note ambiente
-- I test Karma non sono eseguibili: errori TS preesistenti in altri spec bloccano l'avvio. Ticket: oc:7989.
+
+### Test Karma (fix: oc:7989)
+
+- **CI (27 test utils):** `CI=true npx ng test map-core --configuration=ci` — gira solo i spec utils che non dipendono da OL Map rendering.
+- **Locale (tutti i test):** `nvm use 22 && npx ng test map-core` — apre Chrome con GPU, tutti i 186 spec disponibili.
+- **Limitazione CI:** i directive/component spec (base, track, pois, position, etc.) creano un vero `OlMap` che crashe Chrome headless `--disable-gpu`. Per eseguirli serve un browser con GPU. Il CI include solo i 27 test utils.
 - Per eseguire i test usare `nvm use 22` prima di `npm test`.
+
+### Fix applicati (oc:7989)
+
+- `angular.json`: sostituito `main: "src/test.ts"` (usa `require.context` webpack 4) con `polyfills: ["zone.js", "zone.js/testing"]` (webpack 5 compatible)
+- `tsconfig.spec.json`: rimosso `"files": ["src/test.ts"]`
+- `src/directives/base.directive.spec.ts`: aggiunto `standalone: false` a `TestComponent` (Angular 17+ default standalone)
+- `src/karma.conf.js`: aggiunto flag Chrome headless per ambiente CI
+- `angular.json` `configurations.ci`: aggiunto `include` con soli spec utils
+- `src/utils/styles.spec.ts`: aggiornati z-index attesi (TRACK_DIRECTIVE_ZINDEX 50→500), riscritti test `buildRefStyle` per firma corrente
