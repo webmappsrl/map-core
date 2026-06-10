@@ -3,7 +3,7 @@ import SelectCluster from 'ol-ext/interaction/SelectCluster';
 import AnimatedCluster from 'ol-ext/layer/AnimatedCluster';
 import Collection from 'ol/Collection';
 import {Coordinate} from 'ol/coordinate';
-import {buffer, Extent} from 'ol/extent';
+import {boundingExtent, buffer, Extent} from 'ol/extent';
 import {FeatureLike} from 'ol/Feature';
 import MVT from 'ol/format/MVT';
 import {Geometry, Point} from 'ol/geom';
@@ -30,7 +30,10 @@ import {
   DEF_XYZ_URL,
 } from '../readonly/constants';
 import {Location} from '../types/location';
-import {loadFeaturesXhr} from './httpRequest';
+import {downloadFile, loadFeaturesXhr, stringToUint8Array} from './httpRequest';
+import {createXYZ} from 'ol/tilegrid';
+import RenderFeature, {toFeature} from 'ol/render/Feature';
+import {LOCATION_RANGE_TILE_ZOOM} from '../readonly/constants';
 import {getTile} from './localForage';
 import {fromHEXToColor, getClusterStyle} from './styles';
 import TileLayer from 'ol/layer/Tile';
@@ -64,9 +67,6 @@ export class CustomTileSource extends XYZ {
 /**
  * @description
  * set all interaction of  map active.
- * [map](https://compodoc.app/guides/getting-started.html)
- * @property {import("/Users/bongiu/Documents/wm-webapp/src/app/shared/map-core/node_modules/ol/Map.js").Map} map Map.
- * @export
  * @param {Map} map
  */
 export function activateInteractions(map: Map): void {
@@ -158,15 +158,19 @@ export function buildTileLayers(
         className: Object.keys(tile)[0],
         properties: {...tile},
       });
-    }) ?? [
-    new TileLayer({
-      preload: Infinity,
-      source: initBaseSource(DEF_XYZ_URL),
-      visible: true,
-      zIndex: 0,
-      className: 'webmapp',
-    }),
-  ];
+    });
+
+  if (tilesMap.length === 0) {
+    return [
+      new TileLayer({
+        preload: Infinity,
+        source: initBaseSource(DEF_XYZ_URL),
+        visible: true,
+        zIndex: 0,
+        className: 'webmapp',
+      }),
+    ];
+  }
 
   return tilesMap;
 }
@@ -231,7 +235,6 @@ export function calculateRotation(first, second): number {
   const secondX = second[0];
   const secondY = second[1];
   const temp = [firstX - secondX, firstY - secondY];
-  //const temp = [secondX - firstX, secondY - firstY];
   return Math.atan2(temp[0], temp[1]);
 }
 
@@ -407,15 +410,15 @@ export function createHull(): any {
     name: 'selectCluster',
     // Feature style when it springs apart
     style: (f: Feature, res: any) => {
-      var cluster = f.get('features');
+      const cluster = f.get('features');
       if (cluster != null) {
         if (cluster.length > 1) {
-          var s = [];
+          const s = [];
           if (convexHull) {
-            var coords = [];
+            const coords = [];
             for (let i = 0; i < cluster.length; i++)
               coords.push(cluster[i].getGeometry().getFirstCoordinate());
-            var chull = convexHull(coords);
+            const chull = convexHull(coords);
             s.push(
               new Style({
                 stroke: new Stroke({color: 'rgba(0,0,192,0.5)', width: 2}),
@@ -478,8 +481,8 @@ export function createIconFeatureFromHtml(html: string, position: Coordinate): F
     ctx.drawImage(img, 0, 0);
     DOMURL.revokeObjectURL(url);
   };
+  img.crossOrigin = 'anonymous';
   img.src = url;
-  img.crossOrigin == 'Anonymous';
   const feature = new Feature({
     geometry: new Point(fromLonLat(position)),
   });
@@ -543,8 +546,8 @@ export function createIconFromHtmlAndGeometry(html: string, position: Coordinate
     ctx.drawImage(img, 0, 0);
     DOMURL.revokeObjectURL(url);
   };
+  img.crossOrigin = 'anonymous';
   img.src = url;
-  img.crossOrigin == 'Anonymous';
 
   const style = new Style({
     geometry: new Point(position),
@@ -741,6 +744,102 @@ export function getTilesByGeometry(geometry, min = 5, max = 16): string[] {
   return getTilesForExtent(extent, min, max);
 }
 
+/**
+ * Carica le feature VectorTile da tile PBF a zoom fisso, senza dipendere
+ * dallo zoom o dai tile già in memoria sulla mappa.
+ *
+ * @param location posizione GPS (EPSG:4326)
+ * @param radiusM raggio di ricerca in metri
+ * @param tileUrlTemplate URL template low layer ({z}/{x}/{y})
+ * @param zoom livello zoom tile (default LOCATION_RANGE_TILE_ZOOM)
+ * @returns feature LineString/MultiLineString deduplicate per id
+ */
+export async function loadVectorTileFeaturesForLocation(
+  location: {longitude: number; latitude: number},
+  radiusM: number,
+  tileUrlTemplate: string,
+  zoom: number = LOCATION_RANGE_TILE_ZOOM,
+): Promise<FeatureLike[]> {
+  if (!tileUrlTemplate || location == null) {
+    return [];
+  }
+
+  const center3857 = fromLonLat([location.longitude, location.latitude]);
+  const searchExtent3857 = buffer(boundingExtent([center3857]), radiusM);
+  const searchExtent4326 = transformExtent(searchExtent3857, 'EPSG:3857', 'EPSG:4326');
+  const tileIds = getTilesForExtent(searchExtent4326, zoom, zoom);
+  const format = new MVT();
+  const tileGrid = createXYZ();
+  const featuresById: Record<number, FeatureLike> = {};
+
+  await Promise.all(
+    tileIds.map(async tileId => {
+      const url = buildTileUrl(tileUrlTemplate, tileId);
+      const tileBuffer = await _loadVectorTileBuffer(url);
+      if (tileBuffer == null) {
+        return;
+      }
+
+      const [z, x, y] = tileId.split('/').map(Number);
+      const extent = tileGrid.getTileCoordExtent([z, x, y]);
+      try {
+        const tileFeatures = format.readFeatures(tileBuffer, {
+          extent,
+          featureProjection: 'EPSG:3857',
+        });
+        for (const feature of tileFeatures) {
+          if (!_isVectorTileTrackFeature(feature)) {
+            continue;
+          }
+          const id = feature.getProperties()?.id ?? feature.get('id');
+          if (id != null && id > -1) {
+            featuresById[id] = feature;
+          }
+        }
+      } catch {
+        // tile corrotto o assente: ignora
+      }
+    }),
+  );
+
+  return Object.values(featuresById);
+}
+
+/**
+ * @param feature feature da tile MVT
+ * @returns true se LineString/MultiLineString con id valido
+ */
+function _isVectorTileTrackFeature(feature: FeatureLike): boolean {
+  try {
+    const normalized = feature instanceof RenderFeature ? toFeature(feature) : feature;
+    const geometryType = normalized.getGeometry()?.getType();
+    if (geometryType !== 'LineString' && geometryType !== 'MultiLineString') {
+      return false;
+    }
+    const id = normalized.getProperties()?.id ?? normalized.get('id');
+    return id != null && id > -1;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Carica il buffer PBF di un tile, con fallback su localStorage (cache offline).
+ *
+ * @param url URL del tile PBF
+ */
+async function _loadVectorTileBuffer(url: string): Promise<ArrayBuffer | null> {
+  try {
+    const cached = localStorage.getItem(url);
+    if (cached != null) {
+      return stringToUint8Array(cached).buffer;
+    }
+  } catch {
+    // localStorage non disponibile
+  }
+  return downloadFile(url);
+}
+
 export function getTilesForExtent(extent: Extent, minZoom: number, maxZoom: number) {
   const tiles = new Set<string>();
 
@@ -840,10 +939,8 @@ export function initVectorTileLayer(
  * console.log(intersection); // Output: [3, 4]
  */
 export function intersectionBetweenArrays(a: any[], b: any[]): any[] {
-  var setA = new Set(a);
-  var setB = new Set(b);
-  var intersection = new Set([...setA].filter(x => setB.has(x)));
-  return Array.from(intersection);
+  const setB = new Set(b);
+  return a.filter(x => setB.has(x));
 }
 
 /**
