@@ -26,5 +26,9 @@ export const BOX_SIZE_VMIN = 65;
 export const TILES_DOWNLOAD_ZOOM_MIN = 10;
 export const GET_TILES_BY_GEOMETRY_MIN_ZOOM = 5;
 export const GET_TILES_BY_GEOMETRY_MAX_ZOOM = 16;
+/** Zoom fisso per query on-demand tracce vicine (indipendente dallo zoom mappa corrente). */
+export const LOCATION_RANGE_TILE_ZOOM = 8;
+/** Raggio in metri entro cui cercare tracce vicine alla posizione GPS. */
+export const LOCATION_RANGE_RADIUS_M = 1500;
 export const RENDER_BUFFER = 50;
 export const MIN_ZOOM_FOR_HOVER = 10;

@@ -26,6 +26,7 @@ import {
   getColorFromLayer,
   initInteractions,
   initVectorTileLayer,
+  loadVectorTileFeaturesForLocation,
   lowTileLoadFn,
   styleFn,
 } from '@map-core/utils';
@@ -37,15 +38,19 @@ import {
   MAP_ZOOM_ON_CLICK_TRESHOLD,
   FEATURES_IN_VIEWPORT_ZOOM_MIN,
   FEATURES_IN_VIEWPORT_ZOOM_MAX,
+  LOCATION_RANGE_RADIUS_M,
   MIN_ZOOM_FOR_HOVER,
 } from '@map-core/readonly/constants';
 import {ZoomFeaturesInViewport} from '@wm-types/config';
+import {Location} from '@wm-types/feature';
+import {FeatureLike} from 'ol/Feature';
 
 @Directive({
   standalone: false,
   selector: '[wmMapLayer]',
 })
 export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges {
+
   private _animatedVectorLayer: VectorLayer<VectorSource> = new VectorLayer({
     source: new VectorSource({
       format: new GeoJSON(),
@@ -127,8 +132,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   @Input() set wmMapLayerZoomFeaturesInViewport(zoom: ZoomFeaturesInViewport) {
-    this._minZoomFeaturesInViewport = zoom.minZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MIN;
-    this._maxZoomFeaturesInViewport = zoom.maxZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MAX;
+    this._minZoomFeaturesInViewport =
+      zoom.minZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MIN;
+    this._maxZoomFeaturesInViewport =
+      zoom.maxZoomFeaturesInViewport ?? FEATURES_IN_VIEWPORT_ZOOM_MAX;
   }
 
   /**
@@ -166,11 +173,28 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           this._moveEndListener = () => this._moveEndSubject$.next();
           this._initResolutionChangeListener();
         } else {
-          this._removeMoveEndListenerIfExists();
+          this._removeMoveEndListenerIfExists(false);
         }
       });
   }
   @Input() wmMapLayerShowFeaturesInViewport: boolean = false;
+
+  /**
+   * Ricalcola le tracce nel viewport e le emette su featuresInViewportEVT.
+   */
+  refreshFeaturesInViewport(): void {
+    this._featuresInViewport();
+  }
+
+  /**
+   * Ricalcola le tracce entro il raggio GPS e le emette su featuresInLocationRangeEVT.
+   * Carica tile PBF a zoom fisso basso: non dipende dallo zoom corrente della mappa.
+   *
+   * @param location posizione GPS corrente
+   */
+  refreshFeaturesInLocationRange(location: Location): void {
+    void this._featuresInLocationRange(location);
+  }
 
   @Output()
   colorSelectedFromLayerEVT: EventEmitter<string> = new EventEmitter<string>();
@@ -184,6 +208,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
   @Output()
   featuresInViewportEVT: EventEmitter<any[]> = new EventEmitter<any[]>();
+
+  @Output()
+  featuresInLocationRangeEVT: EventEmitter<{features: FeatureLike[]; location: Location}> =
+    new EventEmitter();
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -302,7 +330,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
           return directiveRef.mapCmp.map;
         },
         get opacity() {
-          return directiveRef.wmMapLayerOpacity;
+          return directiveRef._opacity;
         },
         get filters() {
           return directiveRef.mapCmp.filters;
@@ -365,7 +393,7 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       zoom: DEF_ZOOM_ON_CLICK,
       duration: 500,
     });
-    this.mapCmp.map.once('moveend', e => {
+    this.mapCmp.map.once('moveend', () => {
       this._updateMap();
     });
   }
@@ -376,12 +404,32 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       const extent = this.mapCmp.map.getView().calculateExtent(this.mapCmp.map.getSize());
       const source = this._vectorTileLayer.getSource();
       source.getFeaturesInExtent(extent).forEach(feature => {
-        if (feature.getGeometry().getType() == 'LineString') {
+        if (feature.getGeometry().getType() === 'LineString') {
           features.push(feature);
         }
       });
     }
     this.featuresInViewportEVT.emit(features);
+  }
+
+  /**
+   * Carica tracce VectorTile a zoom fisso basso e le emette per la pre-selezione layer.
+   *
+   * @param location posizione GPS corrente
+   */
+  private async _featuresInLocationRange(location: Location): Promise<void> {
+    const tileUrl = this._dataLayerUrls?.low;
+    if (tileUrl == null || location == null) {
+      this.featuresInLocationRangeEVT.emit({features: [], location});
+      return;
+    }
+
+    const features = await loadVectorTileFeaturesForLocation(
+      location,
+      LOCATION_RANGE_RADIUS_M,
+      tileUrl,
+    );
+    this.featuresInLocationRangeEVT.emit({features, location});
   }
 
   /**
@@ -432,11 +480,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       ) {
         this.mapCmp.map.on('moveend', this._moveEndListener);
       } else {
-        this._removeMoveEndListenerIfExists();
+        this._removeMoveEndListenerIfExists(false);
       }
     } catch (e) {
-      console.log(e);
-      this.featuresInViewportEVT.emit([]);
+      console.warn(e);
     }
   };
 
@@ -478,12 +525,11 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
     }
   };
 
-  private _removeMoveEndListenerIfExists(): void {
-    const listeners = this.mapCmp.map.getListeners('moveend');
-    if (listeners && listeners.length > 0) {
-      this.mapCmp.map.un('moveend', this._moveEndListener);
+  private _removeMoveEndListenerIfExists(clearFeatures = true): void {
+    this.mapCmp.map.un('moveend', this._moveEndListener);
+    if (clearFeatures) {
+      this.featuresInViewportEVT.emit([]);
     }
-    this.featuresInViewportEVT.emit([]);
   }
   /**
    * @description
@@ -571,5 +617,4 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
 
     this.mapCmp.map.on('pointermove', this._pointerMoveListener);
   }
-
 }
