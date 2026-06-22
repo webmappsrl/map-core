@@ -367,6 +367,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   private _initDirective(): void {
     this._selectedPoiLayer = createLayer(this._selectedPoiLayer, FLAG_TRACK_ZINDEX + 100);
     this._poisClusterLayer = createCluster(this._poisClusterLayer, CLUSTER_ZINDEX);
+    this._poisClusterLayer.setVisible(false);
     const clusterSource: Cluster = this._poisClusterLayer.getSource();
     this._hullClusterLayer = new VectorLayer({
       style: clusterHullStyle,
@@ -392,8 +393,10 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
     this.mapCmp.map.addLayer(this._hullClusterLayer);
     this.mapCmp.map.addLayer(this._selectedPoiLayer);
     this.mapCmp.map.addOverlay(this._popupOverlay);
+    this.mapCmp.map.once('rendercomplete', () => {
+      this._checkZoom(this._poisClusterLayer);
+    });
     this.mapCmp.registerDirective(this._poisClusterLayer['ol_uid'], this);
-    this._poisClusterLayer?.setVisible(!this._disabled);
   }
 
   /**
