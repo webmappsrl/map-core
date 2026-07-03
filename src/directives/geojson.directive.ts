@@ -80,6 +80,7 @@ export class WmMapGeojsonDirective extends WmMapBaseDirective {
         this.mapCmp.map.getView().fit(extent, {
           duration: 0,
           maxZoom: 17,
+          padding: this.wmMapPadding ?? undefined,
           size: this.fit ? sizeFitted : size,
         });
         this._featureCollectionLayer.changed();
