@@ -15,7 +15,15 @@ import {WmMapBaseDirective} from './base.directive';
 import {FEATURE_COLLECTION_ZINDEX} from '../readonly';
 import {Store} from '@ngrx/store';
 import {setHitMapFeatureCollections, setHitMapGeometry} from '../store/map-core.actions';
-import {coordsFromLonLat, CustomTileSource, extentToLonLat} from '@map-core/utils';
+import {
+  coordsFromLonLat,
+  CustomTileSource,
+  extentToLonLat,
+  getHitMapBoundariesFromCache,
+  isValidFeatureCollection,
+  saveHitMapBoundaries,
+  withCacheFallback,
+} from '@map-core/utils';
 @Directive({
   standalone: false,
   selector: '[wmMapHitMapCollection]',
@@ -29,16 +37,21 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     this.mapCmp.isInit$
       .pipe(
         filter(e => e === true && url != null),
-        switchMap(_ => {
-          return this._http.get(url);
-        }),
+        switchMap(_ =>
+          this._http.get<WmFeatureCollection>(url).pipe(
+            withCacheFallback(
+              geojson => saveHitMapBoundaries(url, geojson),
+              () => getHitMapBoundariesFromCache(url),
+              'hit map boundaries',
+              isValidFeatureCollection,
+            ),
+          ),
+        ),
+        filter(geojson => geojson != null),
         take(1),
       )
       .subscribe((geojson: WmFeatureCollection) => {
-        this.mapCmp.map.once('precompose', () => {
-          this._buildGeojson(geojson);
-          this._addTileLayer(); // Aggiunta del nuovo tile sopra il layer esistente
-        });
+        this._renderHitMap(geojson);
       });
   }
 
@@ -93,6 +106,21 @@ export class WmMapHitMapDirective extends WmMapBaseDirective {
     } else {
       this._resetFeaturesStyle();
     }
+  }
+
+  private _renderHitMap(geojson: WmFeatureCollection): void {
+    if (this.mapCmp.map == null) {
+      // Componente distrutto (navigazione via) mentre il fetch/cache-lookup era ancora pendente.
+      return;
+    }
+    this.mapCmp.map.once('precompose', () => {
+      try {
+        this._buildGeojson(geojson);
+        this._addTileLayer(); // Aggiunta del nuovo tile sopra il layer esistente
+      } catch (e) {
+        console.error('Failed to render hit map from geojson', e);
+      }
+    });
   }
 
   private _addTileLayer(): void {
