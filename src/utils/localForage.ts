@@ -315,6 +315,71 @@ export async function removeFeatureCollection(url: string): Promise<void> {
   }
 }
 
+export function isValidFeatureCollection(payload: any): payload is WmFeatureCollection {
+  return payload != null && payload.type === 'FeatureCollection' && Array.isArray(payload.features);
+}
+
+/**
+ * Saves the CARG sheet boundaries GeoJSON for offline fallback, on a dedicated
+ * localForage instance separate from the per-sheet download cache
+ * (featureCollectionLocalForage). Refuses to overwrite a previously valid cache
+ * with a malformed payload (e.g. a 200 response carrying an HTML maintenance page).
+ */
+export async function saveHitMapBoundaries(
+  url: string,
+  geojson: WmFeatureCollection,
+): Promise<void> {
+  if (!isValidFeatureCollection(geojson)) {
+    console.error('Failed to save hit map boundaries: invalid GeoJSON payload', geojson);
+    return;
+  }
+  try {
+    await hitMapBoundariesLocalForage.setItem(url, geojson);
+  } catch (error) {
+    console.error('Failed to save hit map boundaries:', error);
+  }
+}
+
+export async function getHitMapBoundariesFromCache(
+  url: string,
+): Promise<WmFeatureCollection | null> {
+  try {
+    return await hitMapBoundariesLocalForage.getItem<WmFeatureCollection>(url);
+  } catch (error) {
+    console.error('Failed to get hit map boundaries from cache:', error);
+    return null;
+  }
+}
+
+/**
+ * Saves a map control icon blob for offline fallback, on a dedicated
+ * localForage instance separate from tiles/feature-collections/hit map boundaries.
+ */
+export function isValidIconBlob(blob: Blob): boolean {
+  return blob != null && blob.size > 0;
+}
+
+export async function saveIconBlob(url: string, blob: Blob): Promise<void> {
+  if (!isValidIconBlob(blob)) {
+    console.error('Failed to save icon blob: empty or invalid blob', blob);
+    return;
+  }
+  try {
+    await iconBlobsLocalForage.setItem(url, blob);
+  } catch (error) {
+    console.error('Failed to save icon blob:', error);
+  }
+}
+
+export async function getIconBlobFromCache(url: string): Promise<Blob | null> {
+  try {
+    return await iconBlobsLocalForage.getItem<Blob>(url);
+  } catch (error) {
+    console.error('Failed to get icon blob from cache:', error);
+    return null;
+  }
+}
+
 export async function saveHitmapFeature(
   id: string,
   hitMapFeature: WmFeature<MultiPolygon>,
@@ -418,6 +483,8 @@ export async function clearMapCoreData(): Promise<void> {
     featureCollectionHandlerLocalForage.clear(),
     hitMapFeaturesLocalForage.clear(),
     boundingBoxLocalForage.clear(),
+    hitMapBoundariesLocalForage.clear(),
+    iconBlobsLocalForage.clear(),
   ]);
 }
 
@@ -454,4 +521,14 @@ export const hitMapFeaturesLocalForage = localforage.createInstance({
 export const boundingBoxLocalForage = localforage.createInstance({
   name: 'map-core',
   storeName: 'boundingBox',
+});
+
+export const hitMapBoundariesLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'hitmapBoundaries',
+});
+
+export const iconBlobsLocalForage = localforage.createInstance({
+  name: 'map-core',
+  storeName: 'iconBlobs',
 });

@@ -4,14 +4,18 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
   ViewEncapsulation,
 } from '@angular/core';
+import {HttpClient} from '@angular/common/http';
 import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
 import {ICONTROLSBUTTON, ICONTROLSTITLE} from '../../../types/model';
-import {BehaviorSubject} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
+import {distinctUntilChanged, filter, map, switchMap} from 'rxjs/operators';
 import {Store} from '@ngrx/store';
 import {resetTogglePartition, setTogglePartition} from '../../../store/map-core.actions';
+import {getIconBlobFromCache, isValidIconBlob, saveIconBlob, withCacheFallback} from '@map-core/utils';
 
 @Component({
   standalone: false,
@@ -21,7 +25,7 @@ import {resetTogglePartition, setTogglePartition} from '../../../store/map-core.
         <ion-label class="wm-map-button-control-title">{{translationCallback(control.label)}}</ion-label>
     </ng-container>
     <div  class="wm-map-button-control-button" *ngIf="control.type === 'button'" (click)="click(control.id)">
-      <img  class="wm-map-button-control-icon"  [src]="iconUrl" *ngIf="control.icon_url as iconUrl;else sanitazeIcon" [ngClass]="[wmMapButtonControlSelected$.value?'selected':'']">
+      <img  class="wm-map-button-control-icon"  [src]="iconSrc$|async" *ngIf="control.icon_url as iconUrl;else sanitazeIcon" [ngClass]="[wmMapButtonControlSelected$.value?'selected':'']">
       <ng-template #sanitazeIcon>
         <div  class="wm-map-button-control-icon" [innerHtml]="sanitaze(control.icon)" [ngClass]="[wmMapButtonControlSelected$.value?'selected':'']"></div>
       </ng-template>
@@ -43,8 +47,12 @@ import {resetTogglePartition, setTogglePartition} from '../../../store/map-core.
   encapsulation: ViewEncapsulation.None,
   styleUrls: ['button.controls.map.scss'],
 })
-export class WmMapButtonControls {
+export class WmMapButtonControls implements OnDestroy {
   private _control: ICONTROLSTITLE | ICONTROLSBUTTON;
+  private _iconUrl$ = new BehaviorSubject<string | null>(null);
+  private _lastObjectUrl: string | null = null;
+
+  iconSrc$: Observable<string>;
 
   @Input('wmMapButtonControl') set control(value: ICONTROLSTITLE | ICONTROLSBUTTON) {
     if (value.type === 'button' && value.partitionProperties != null) {
@@ -55,6 +63,9 @@ export class WmMapButtonControls {
       this._control = {...value, partitionProperties};
     } else {
       this._control = value;
+    }
+    if (value.type === 'button' && value.icon_url != null) {
+      this._iconUrl$.next(value.icon_url);
     }
   }
 
@@ -81,7 +92,38 @@ export class WmMapButtonControls {
     public sanitizer: DomSanitizer,
     private _cdr: ChangeDetectorRef,
     private _store: Store,
-  ) {}
+    private _http: HttpClient,
+  ) {
+    this.iconSrc$ = this._iconUrl$.pipe(
+      filter(url => url != null),
+      distinctUntilChanged(),
+      switchMap(url =>
+        this._http.get(url, {responseType: 'blob'}).pipe(
+          withCacheFallback(
+            blob => saveIconBlob(url, blob),
+            () => getIconBlobFromCache(url),
+            'control icon',
+            isValidIconBlob,
+          ),
+          map(blob => (blob != null ? this._toObjectUrl(blob) : url)),
+        ),
+      ),
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this._lastObjectUrl) {
+      URL.revokeObjectURL(this._lastObjectUrl);
+    }
+  }
+
+  private _toObjectUrl(blob: Blob): string {
+    if (this._lastObjectUrl) {
+      URL.revokeObjectURL(this._lastObjectUrl);
+    }
+    this._lastObjectUrl = URL.createObjectURL(blob);
+    return this._lastObjectUrl;
+  }
 
   click(id): void {
     this._store.dispatch(resetTogglePartition());

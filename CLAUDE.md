@@ -4,10 +4,21 @@
 
 | Feature | Ticket | Moduli toccati | Note |
 |---|---|---|---|
+| Fallback offline per fogli CARG e icone controlli mappa | oc:8219 | `src/directives/hit-map.directive.ts`, `src/components/controls/button/button.controls.map.ts`, `src/utils/localForage.ts`, `src/utils/cacheFallback.ts` | Cache locale dedicata con fallback quando il fetch remoto fallisce offline; `withCacheFallback` condiviso tra i due; `distinctUntilChanged` evita il re-fetch delle icone ad ogni riconnessione di rete |
 | Filtro POI type esteso ai related POI | oc:7646 | `src/directives/track.related-pois.directive.ts`, `src/directives/pois.directive.ts`, `src/utils/ol.ts` | wmMapPoisFilters ora filtra anche i POI della traccia corrente; fallback su taxonomy.poi_type.identifier se taxonomyIdentifiers assente |
 | EC POI: show_image_on_map | oc:7988 | `src/directives/track.related-pois.directive.ts`, `src/types/model.ts` | Rendering POI su mappa pilotato dal campo `feature_image.show_image_on_map`; fallback legacy per app mobile |
 
 ## Decisioni architetturali
+
+### Fallback offline per fogli CARG e icone controlli mappa (oc:8219)
+- **Solo cache locale, nessun retry su riconnessione**: per scaricare un foglio l'utente deve prima cliccarlo sulla mappa, il che richiede che il layer di hit-test sia già stato costruito con successo — quindi un fetch riuscito (e una cache valida) esiste sempre prima che un download possa esistere. Il fallback da cache copre interamente lo scenario "riapro l'app offline dopo un download", senza bisogno di ascoltare lo stato di rete.
+- **Cache dedicate, non riuso di `saveFeatureCollection`/`getFeatureCollection`**: quelle funzioni condividono keyspace con i download per-foglio di `downloadOverlay()` e hanno un fallback di rete implicito su cache-miss — avrebbero reintrodotto un retry non voluto. Nuove istanze `localForage`: `hitMapBoundariesLocalForage`, `iconBlobsLocalForage`.
+- **Icone dei controlli mappa non passano da `<wm-img>`/`getImg` (wm-core)**: `map-core` non dipende mai da `wm-core` (libreria OL indipendente); inoltre `getImg()` legge da cache popolate solo dal flusso di sync UGC/foto profilo, non dalle icone di config. Nuova cache locale autonoma in `map-core`.
+- **`withCacheFallback` (`src/utils/cacheFallback.ts`)**: operatore RxJS condiviso per il pattern fetch→valida→salva→fallback, usato sia da `hit-map.directive.ts` sia da `button.controls.map.ts` — evita di duplicare la stessa catena switchMap/catchError con validazioni divergenti (una review pre-commit aveva trovato l'icona cachata senza validazione, a differenza della GeoJSON).
+- **`distinctUntilChanged()` obbligatorio su pipeline innescate da un `@Input` setter ricostruito da NgRx**: `conf.reducer.ts` crea nuovi riferimenti oggetto per i control `tiles`/`data`/`overlays` ad ogni `loadConfSuccess`, e l'app dispatcha `loadConf()` ad ogni riconnessione di rete (`home.page.ts`) — senza `distinctUntilChanged`, ogni reconnect rifaceva il fetch di tutte le icone anche se invariate.
+- **Guardia su componente distrutto durante un cache-lookup asincrono pendente**: nessuna directive/componente di questo file ha `ngOnDestroy`/`takeUntil` per disiscrivere subscription pendenti; `WmMapComponent.ngOnDestroy()` imposta `this.map = null` — qualsiasi callback che dereferenzia `this.mapCmp.map` dopo un hop asincrono (es. lettura da `localForage`) deve controllare `!= null` prima di usarlo.
+- **`button.controls.map.spec.ts` in CI headless**: è presentazionale (nessun `OlMap`), aggiunto a `angular.json` → `configurations.ci.include` — a differenza degli altri directive/component spec che montano un vero `OlMap` e restano esclusi dalla CI (limite GPU, vedi "Note ambiente").
+- **Debito noto non affrontato**: fix di `CustomTileSource` per l'inaffidabilità di `navigator.onLine` sui tile raster (problema preesistente, più ampio di questo ticket); rimozione di `loadHitmap$`/`loadHitmapFeatures`/`wmMapHitmapFeatures` in wm-core (codice apparentemente morto, proposto come ticket Task separato).
 
 ### Filtro POI type ai related POI (oc:7646)
 - `_allPoiMarkers` (superset) è separato da `_poiMarkers` (stato corrente del layer): i marker vengono creati una sola volta e filtrati al volo senza ricrearli.
