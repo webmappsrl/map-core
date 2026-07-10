@@ -7,8 +7,15 @@
 | Fallback offline per fogli CARG e icone controlli mappa | oc:8219 | `src/directives/hit-map.directive.ts`, `src/components/controls/button/button.controls.map.ts`, `src/utils/localForage.ts`, `src/utils/cacheFallback.ts` | Cache locale dedicata con fallback quando il fetch remoto fallisce offline; `withCacheFallback` condiviso tra i due; `distinctUntilChanged` evita il re-fetch delle icone ad ogni riconnessione di rete |
 | Filtro POI type esteso ai related POI | oc:7646 | `src/directives/track.related-pois.directive.ts`, `src/directives/pois.directive.ts`, `src/utils/ol.ts` | wmMapPoisFilters ora filtra anche i POI della traccia corrente; fallback su taxonomy.poi_type.identifier se taxonomyIdentifiers assente |
 | EC POI: show_image_on_map | oc:7988 | `src/directives/track.related-pois.directive.ts`, `src/types/model.ts` | Rendering POI su mappa pilotato dal campo `feature_image.show_image_on_map`; fallback legacy per app mobile |
+| Fix pallino/segmento hover grafico altimetrico non si nascondevano sulla mappa | oc:8177 | `src/directives/track.directive.ts` | Bug preesistente scoperto testando oc:8177: `ngOnChanges` saltava la chiamata di pulizia quando `trackElevationChartElements` tornava `null` |
 
 ## Decisioni architetturali
+
+### Fix pallino/segmento hover grafico altimetrico su mappa (oc:8177)
+- `_drawTemporaryLocationFeature(location, track)` già gestiva correttamente la pulizia (`_elevationChartSource.clear()`) quando chiamata con argomenti `undefined` — il bug era che quella chiamata non avveniva mai in quel caso, perché il blocco chiamante in `ngOnChanges` era condizionato da `this.trackElevationChartElements != null`
+- Fix: quando `trackElevationChartElements` diventa `null` a seguito di un cambio (`changes.trackElevationChartElements` presente), `ngOnChanges` chiama esplicitamente `_drawTemporaryLocationFeature(undefined, undefined)` e resetta il popover di quota, invece di saltare l'intero blocco
+- Causa radice condivisa con un bug analogo nel grafico altimetrico stesso (wm-core, `SlopeChartComponent`): il tooltip di Chart.js resta "bloccato attivo" perché `options.events` non include `touchend`/`mouseout` — qui il sintomo si manifestava sulla mappa (marker/segmento mai rimossi), non sul canvas del grafico
+- Dettagli completi in `wm-core/docs/features/8177-distanza-rimanente-posizione-profilo-altimetrico/notes.md`
 
 ### Fallback offline per fogli CARG e icone controlli mappa (oc:8219)
 - **URL tile CARG accoppiato a `overlayXYZ` del download**: l'URL del tile layer in `hit-map.directive.ts:134` (`https://carg.geosciences-ir.it/storage/cargmap/{z}/{x}/{y}.png`) è la fonte di verità per i tile CARG sulla mappa; `overlayXYZ` in `map.page.html:209` dell'app principale deve restare la stessa base URL (senza template `{z}/{x}/{y}.png`) perché `downloadOverlay()` in `localForage.ts:282` scarica `${overlayXYZ}/${tile}.png` — se i due divergono, l'utente vede un tileset e ne scarica un altro
