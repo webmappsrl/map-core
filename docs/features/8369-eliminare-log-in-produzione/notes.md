@@ -4,7 +4,9 @@
 
 ## Deviazioni dal piano
 
-Nessuna deviazione — tutte le modifiche seguono esattamente le tabelle di classificazione di `plan.md`, verificate riga per riga dopo l'esecuzione (31/31 test Karma CI passati).
+Tutte le modifiche seguono esattamente le tabelle di classificazione di `plan.md`, verificate riga per riga dopo l'esecuzione (31/31 test Karma CI passati).
+
+Deviazione post-review (`wm-skills:wm-review-ticket`, confermata dal developer): `src/directives/pois.directive.ts:123` (`console.log('click')`) era stato commentato con marker `// DEBUG:` per rule 4, ma un finder di review l'ha segnalato come rumore puro senza contesto diagnostico — cancellato interamente su richiesta del developer, non solo commentato.
 
 ## Bug trovati
 

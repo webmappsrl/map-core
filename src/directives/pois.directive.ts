@@ -120,7 +120,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
-    // DEBUG: console.log('click');
     this._poisClusterLayer.getFeatures(evt.pixel).then(features => {
       if (features.length > 0) {
         this.mapCmp.map.addInteraction(this._selectCluster);
