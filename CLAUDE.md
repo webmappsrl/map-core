@@ -7,8 +7,14 @@
 | Fallback offline per fogli CARG e icone controlli mappa | oc:8219 | `src/directives/hit-map.directive.ts`, `src/components/controls/button/button.controls.map.ts`, `src/utils/localForage.ts`, `src/utils/cacheFallback.ts` | Cache locale dedicata con fallback quando il fetch remoto fallisce offline; `withCacheFallback` condiviso tra i due; `distinctUntilChanged` evita il re-fetch delle icone ad ogni riconnessione di rete |
 | Filtro POI type esteso ai related POI | oc:7646 | `src/directives/track.related-pois.directive.ts`, `src/directives/pois.directive.ts`, `src/utils/ol.ts` | wmMapPoisFilters ora filtra anche i POI della traccia corrente; fallback su taxonomy.poi_type.identifier se taxonomyIdentifiers assente |
 | EC POI: show_image_on_map | oc:7988 | `src/directives/track.related-pois.directive.ts`, `src/types/model.ts` | Rendering POI su mappa pilotato dal campo `feature_image.show_image_on_map`; fallback legacy per app mobile |
+| Eliminare log in produzione | oc:8369 | `src/components/controls/controls.map.ts`, `src/directives/pois.directive.ts`, `src/utils/httpRequest.ts`, `src/utils/localForage.ts` | Triage manuale `console.*`: rumore cancellato, log diagnostici commentati con `// DEBUG:`, `console.error`/`console.warn` sempre lasciati intatti; `utils/performance.ts` escluso (asserito da `performance.spec.ts`, pur essendo codice morto); ticket non taggava questo submodule ma incluso su richiesta esplicita del developer |
 
 ## Decisioni architetturali
+
+### Eliminare log in produzione (oc:8369)
+- **`utils/performance.ts` è codice morto ma escluso dal triage**: nessuna chiamata attiva a `startTime`/`endTime` nel codice reale (solo riferimenti commentati in `ol.ts`/`httpRequest.ts`), ma `performance.spec.ts` lo spia (`spyOn(console, 'warn')`) — escluso per non rompere il test, impatto pratico nullo
+- **`utils/localForage.ts:417` (`updateStatus()`) commentato, non cancellato**: unico segnale diagnostico per il download offline tile/hitmap, area già documentata come fragile (oc:8219) — stessa decisione presa per l'omonima funzione in wm-core
+- **`utils/httpRequest.ts:108,123` (`console.log(e)`)**: entrambi dentro un `catch`, verificati leggendo il contesto riga per riga — lasciati intatti per la regola generale (qualsiasi metodo dentro un `catch` resta visibile, non solo `error`/`warn`)
 
 ### Fallback offline per fogli CARG e icone controlli mappa (oc:8219)
 - **URL tile CARG accoppiato a `overlayXYZ` del download**: l'URL del tile layer in `hit-map.directive.ts:134` (`https://carg.geosciences-ir.it/storage/cargmap/{z}/{x}/{y}.png`) è la fonte di verità per i tile CARG sulla mappa; `overlayXYZ` in `map.page.html:209` dell'app principale deve restare la stessa base URL (senza template `{z}/{x}/{y}.png`) perché `downloadOverlay()` in `localForage.ts:282` scarica `${overlayXYZ}/${tile}.png` — se i due divergono, l'utente vede un tileset e ne scarica un altro

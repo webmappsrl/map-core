@@ -95,7 +95,7 @@ export function loadFeaturesXhr(
     try {
       cached = cachedStringed != null ? stringToUint8Array(cachedStringed) : null;
       if (cached != null) {
-        // console.log('restored by cache: ', url);
+        // DEBUG: console.log('restored by cache: ', url);
         success(
           format.readFeatures(cached, {
             extent: extent,
