@@ -120,7 +120,7 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
   }
 
   onClick(evt: MapBrowserEvent<UIEvent>): void {
-    console.log('click');
+    // DEBUG: console.log('click');
     this._poisClusterLayer.getFeatures(evt.pixel).then(features => {
       if (features.length > 0) {
         this.mapCmp.map.addInteraction(this._selectCluster);
@@ -439,7 +439,6 @@ export class WmMapPoisDirective extends WmMapBaseDirective implements OnChanges 
       return;
     }
     this._lastId = currentPoi.properties.id;
-    console.log(currentPoi);
     clearLayer(this._selectedPoiLayer);
     if (currentPoi != null) {
       const selectedPoiLayerSource = this._selectedPoiLayer.getSource();

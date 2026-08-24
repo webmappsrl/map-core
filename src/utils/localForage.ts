@@ -414,7 +414,7 @@ export function updateStatus(status: {
   data?: number;
   size?: number;
 }): void {
-  console.log('Status update:', status);
+  // DEBUG: console.log('Status update:', status);
 }
 
 export async function updateTileHandlerLocalForage(tileId, prefix) {

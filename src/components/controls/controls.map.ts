@@ -100,7 +100,7 @@ export class WmMapControls implements OnChanges, OnInit {
   }
 
   toggleControls(): void {
-    console.log('toggleControls', this.toggle$.value);
+    // DEBUG: console.log('toggleControls', this.toggle$.value);
     this.toggle$.next(!this.toggle$.value);
   }
 
