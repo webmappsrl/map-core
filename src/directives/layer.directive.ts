@@ -16,9 +16,13 @@ import GeoJSON from 'ol/format/GeoJSON';
 import RenderFeature, {toFeature} from 'ol/render/Feature';
 
 import {debounceTime, filter, take} from 'rxjs/operators';
-import {Subject} from 'rxjs';
+import {Subject, Subscription} from 'rxjs';
 
-import {WmMapBaseDirective} from '@map-core/directives';
+// NB: import diretto e non dal barrel '@map-core/directives': il barrel
+// ri-esporta custom-tracks.draw.directive → graphhopper-js-api-client (UMD),
+// che rompe l'esecuzione dei test Karma. L'extends qui sotto è un uso a
+// runtime, non elidibile dal bundler come nel caso di map.component.ts.
+import {WmMapBaseDirective} from './base.directive';
 import {
   clearPbfDB,
   convertFeatureToEpsg3857,
@@ -68,6 +72,8 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   private _vectorTileLayer: VectorTileLayer;
   private _moveEndSubject$: Subject<void> = new Subject<void>();
   private _moveEndListener: () => void;
+  private _moveEndListenerRegistered = false;
+  private _featuresInViewportSubscription: Subscription;
   private _hoveredFeatureId: number | null = null;
   private _hoverHandlerInitialized = false;
   private _pointerMoveListener: (e: any) => void;
@@ -167,10 +173,22 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
       )
       .subscribe(() => {
         if (enable) {
-          this._moveEndSubject$.pipe(debounceTime(100)).subscribe(() => {
-            this._featuresInViewport();
-          });
-          this._moveEndListener = () => this._moveEndSubject$.next();
+          this._featuresInViewportSubscription?.unsubscribe();
+          this._featuresInViewportSubscription = this._moveEndSubject$
+            .pipe(debounceTime(100))
+            .subscribe(() => {
+              this._featuresInViewport();
+            });
+          // La closure chiude solo su _moveEndSubject$ (stabile per tutta la vita
+          // della directive): non va mai ricreata. OpenLayers deduplica le
+          // registrazioni per riferimento, quindi mantenere lo stesso riferimento
+          // tra riattivazioni successive evita sia listener orfani sulla mappa
+          // sia il "buco" in cui, tra una riattivazione e la successiva chiamata
+          // reale di _enableFeaturesInViewportCallback() (innescata solo da un
+          // cambio di zoom), nessun listener risulterebbe registrato.
+          if (this._moveEndListener == null) {
+            this._moveEndListener = () => this._moveEndSubject$.next();
+          }
           this._initResolutionChangeListener();
         } else {
           this._removeMoveEndListenerIfExists(false);
@@ -478,7 +496,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         zoom >= this._minZoomFeaturesInViewport &&
         zoom <= this._maxZoomFeaturesInViewport
       ) {
-        this.mapCmp.map.on('moveend', this._moveEndListener);
+        if (this._moveEndListener != null) {
+          this.mapCmp.map.on('moveend', this._moveEndListener);
+          this._moveEndListenerRegistered = true;
+        }
       } else {
         this._removeMoveEndListenerIfExists(false);
       }
@@ -526,7 +547,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   };
 
   private _removeMoveEndListenerIfExists(clearFeatures = true): void {
-    this.mapCmp.map.un('moveend', this._moveEndListener);
+    if (this._moveEndListener != null && this._moveEndListenerRegistered) {
+      this.mapCmp.map.un('moveend', this._moveEndListener);
+      this._moveEndListenerRegistered = false;
+    }
     if (clearFeatures) {
       this.featuresInViewportEVT.emit([]);
     }

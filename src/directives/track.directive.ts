@@ -121,26 +121,34 @@ export class WmMapTrackDirective extends WmMapBaseDirective implements OnChanges
           this._init();
           this._initTrack = true;
         }
-        if (
-          this.track != null &&
-          this.mapCmp.map != null &&
-          this.trackElevationChartElements != null
-        ) {
-          if (this._popoverRef != null) {
-            const altitude = this.trackElevationChartElements?.location?.altitude || undefined;
-            this._popoverRef.instance.message$.next(
-              getFlowPopoverText(
-                altitude,
-                this.wmMapConf.flow_line_quote_orange,
-                this.wmMapConf.flow_line_quote_red,
-              ),
-            );
-          }
+        if (this.track != null && this.mapCmp.map != null) {
+          if (this.trackElevationChartElements != null) {
+            if (this._popoverRef != null) {
+              const altitude = this.trackElevationChartElements?.location?.altitude || undefined;
+              this._popoverRef.instance.message$.next(
+                getFlowPopoverText(
+                  altitude,
+                  this.wmMapConf.flow_line_quote_orange,
+                  this.wmMapConf.flow_line_quote_red,
+                ),
+              );
+            }
 
-          this._drawTemporaryLocationFeature(
-            this.trackElevationChartElements?.location,
-            this.trackElevationChartElements?.track,
-          );
+            this._drawTemporaryLocationFeature(
+              this.trackElevationChartElements?.location,
+              this.trackElevationChartElements?.track,
+            );
+          } else if (changes.trackElevationChartElements) {
+            // L'utente ha smesso di toccare il grafico altimetrico (hover.emit(undefined)):
+            // senza questo ramo, il pallino e il segmento evidenziato restavano visibili sulla
+            // mappa indefinitamente, perché _drawTemporaryLocationFeature() — che li rimuove
+            // correttamente quando chiamata con argomenti undefined — non veniva più invocata
+            // una volta che trackElevationChartElements tornava null (vedi oc:8177).
+            if (this._popoverRef != null) {
+              this._popoverRef.instance.message$.next(null);
+            }
+            this._drawTemporaryLocationFeature(undefined, undefined);
+          }
         }
         if (changes.wmMapTrackColor != null && changes.wmMapTrackColor.firstChange === false) {
           this._trackLayer?.setStyle(getLineStyle(this.wmMapTrackColor));
