@@ -2,6 +2,10 @@
 
 # Notes — Fix crash "Cannot read properties of undefined (reading 'ol_key')" in WmMapLayerDirective
 
+## Verifica manuale (Task 3)
+
+Eseguita su `localhost:4200/map` (dev server già attivo sul branch `RDO_ass_cammini_italia_2026_2`, che referenzia direttamente questa working copy del submodule `map-core` con il fix già applicato). 5 cambi di zoom reali sulla mappa (pulsanti +/-) con la feature "features in viewport" nella sua configurazione di default (disabilitata) — nessun warning `ol_key`, nessun altro errore/warning in console. Non è stata rieseguita la riproduzione "pre-fix" per confronto diretto (avrebbe richiesto un checkout separato del commit precedente e il riavvio del dev server, rischioso con il server già in uso) — lo stato "prima" è comunque documentato dallo screenshot originale allegato al ticket.
+
 ## Deviazioni dal piano
 
 - **Task 2, approccio finale diverso da `plan.md`**: il piano descriveva un pattern remove-then-reassign (`_removeMoveEndListenerIfExists(false)` seguito da una nuova closure ad ogni `enable=true`). La review finale whole-branch ha trovato che questo approccio introduceva una regressione reale (vedi "Bug trovati" sotto). L'implementazione finale non rimuove mai il listener nel branch `enable=true`: crea `_moveEndListener` una sola volta (`if (this._moveEndListener == null) { ... }`) e non lo ricrea più. Motivazione: la closure chiude solo su `_moveEndSubject$` (campo stabile), quindi non c'è nulla da "orfanizzare" se il riferimento non cambia mai — e OpenLayers deduplica le registrazioni `on()` per riferimento (`Target.addEventListener`, verificato nel sorgente reale), quindi tenere lo stesso riferimento è sufficiente a evitare sia il leak che il gap di ri-registrazione. Il test relativo nel piano ("should remove a previously registered moveend listener... before assigning a new one") è stato sostituito con un test che verifica l'esito reale: stesso riferimento di listener stabile su riattivazioni ripetute + un solo listener registrato sulla mappa.
