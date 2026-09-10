@@ -517,6 +517,7 @@ export class WmMapComponent implements OnChanges, AfterViewInit, OnDestroy {
    */
   private _updateMap(): void {
     setTimeout(() => {
+      this.map?.getAllLayers().forEach(layer => layer.changed());
       this.map?.changed();
       this.map?.renderSync();
       this.map?.render();
