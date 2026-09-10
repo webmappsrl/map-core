@@ -292,6 +292,122 @@ describe('styles', () => {
     });
   });
 
+  it('styleFn: should hide a track whose layers do not intersect routeFilteredLayerIds (oc:8414 map filter)', () => {
+    const mockContext = {
+      currentLayer: null,
+      filters: {filterTracks: [], routeFilteredLayerIds: [99]},
+      conf: {
+        minZoom: 1,
+        maxZoom: 20,
+        maxStrokeWidth: 5,
+      },
+      map: {
+        getView: () => ({
+          getZoom: () => 10,
+        }),
+      },
+    };
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [1, 1],
+        [2, 0],
+      ]),
+    );
+    feature.setProperties({layers: JSON.stringify([1])});
+
+    const styles = styleFn.call(mockContext, feature as FeatureLike);
+
+    expect(styles[0].getStroke().getColor()).toEqual('rgba(0,0,0,0)');
+  });
+
+  it('styleFn: should keep a track visible when its layers intersect routeFilteredLayerIds (oc:8414 map filter)', () => {
+    const mockContext = {
+      currentLayer: null,
+      filters: {filterTracks: [], routeFilteredLayerIds: [99]},
+      conf: {
+        minZoom: 1,
+        maxZoom: 20,
+        maxStrokeWidth: 5,
+      },
+      map: {
+        getView: () => ({
+          getZoom: () => 10,
+        }),
+      },
+    };
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [1, 1],
+        [2, 0],
+      ]),
+    );
+    feature.setProperties({layers: JSON.stringify([99])});
+
+    const styles = styleFn.call(mockContext, feature as FeatureLike);
+
+    expect(styles[0].getStroke().getColor()).not.toEqual('rgba(0,0,0,0)');
+  });
+
+  it('styleFn: should keep all tracks visible when routeFilteredLayerIds is null (no active Home filter)', () => {
+    const mockContext = {
+      currentLayer: null,
+      filters: {filterTracks: [], routeFilteredLayerIds: null},
+      conf: {
+        minZoom: 1,
+        maxZoom: 20,
+        maxStrokeWidth: 5,
+      },
+      map: {
+        getView: () => ({
+          getZoom: () => 10,
+        }),
+      },
+    };
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [1, 1],
+        [2, 0],
+      ]),
+    );
+    feature.setProperties({layers: JSON.stringify([1])});
+
+    const styles = styleFn.call(mockContext, feature as FeatureLike);
+
+    expect(styles[0].getStroke().getColor()).not.toEqual('rgba(0,0,0,0)');
+  });
+
+  it('styleFn: should keep the currently open layer\'s tracks visible even when excluded by routeFilteredLayerIds', () => {
+    const mockContext = {
+      currentLayer: {id: '1', style: {color: '#ff0000'}},
+      filters: {filterTracks: [], routeFilteredLayerIds: [99]},
+      conf: {
+        minZoom: 1,
+        maxZoom: 20,
+        maxStrokeWidth: 5,
+      },
+      map: {
+        getView: () => ({
+          getZoom: () => 10,
+        }),
+      },
+    };
+    const feature = new Feature(
+      new LineString([
+        [0, 0],
+        [1, 1],
+        [2, 0],
+      ]),
+    );
+    feature.setProperties({layers: JSON.stringify([1])});
+
+    const styles = styleFn.call(mockContext, feature as FeatureLike);
+
+    expect(styles[0].getStroke().getColor()).not.toEqual('rgba(0,0,0,0)');
+  });
+
   it('buildRefStyle: should return a Style array with Text for a LineString with ref property', () => {
     const mockView = {
       getResolution: () => 1,

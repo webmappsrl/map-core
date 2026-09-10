@@ -791,6 +791,19 @@ export function styleFn(this: any, feature: RenderFeature, routing?: boolean) {
     }
   }
 
+  // Filtro Home (oc:8414, wm-searchbar camminiditalia): nasconde le tracce dei layer esclusi dai
+  // filtri attivi, indipendentemente dagli altri filtri sopra. `null` = nessun filtro attivo.
+  // Non si applica quando un layer specifico è aperto (this.currentLayer): a quel punto i
+  // filtri Home (pensati per la vista d'insieme) non devono nascondere le tappe del layer
+  // corrente, anche se quel layer non fa parte del set filtrato.
+  if (
+    this.currentLayer == null &&
+    this.filters?.routeFilteredLayerIds != null &&
+    !layers.some(id => this.filters.routeFilteredLayerIds.includes(id))
+  ) {
+    strokeStyle = cacheStyle['noColor'];
+  }
+
   const opt: handlingStrokeStyleWidthOptions = {
     strokeStyle,
     minZoom: this.conf.minZoom,
