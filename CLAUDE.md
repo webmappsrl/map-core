@@ -20,6 +20,9 @@ resta nel repo di quel prodotto.
 - **`map-core` non dipende mai da `wm-core`.** È una libreria OpenLayers indipendente: se serve una
   risorsa che in `wm-core` esiste già, qui si reimplementa in autonomia. Il caso reale: le icone dei
   controlli mappa hanno una cache propria invece di passare da `<wm-img>`/`getImg()`.
+- **La base URL dei tile CARG è accoppiata all'`overlayXYZ` del consumer**: cambiarne uno senza
+  l'altro fa vedere all'utente un tileset e scaricarne un altro, e niente lo segnala. La regola
+  simmetrica sta nel `CLAUDE.md` di `webmapp-app`.
 - **Una modifica qui arriva a entrambi i prodotti.** Prima di cambiare il comportamento di una
   direttiva, considera che i consumer la bindano in template che questo repo non vede, e che ognuno
   ha il proprio pin del submodule.
@@ -69,7 +72,8 @@ prima dei test: con la versione di default di Node la suite non parte.
 Stanno in `.claude/rules/`, un file per soggetto, con il frontmatter `paths:` che le carica quando
 si toccano i file corrispondenti: `directives` (import dal barrel, `map.un()`, invalidazione del
 rendering, `distinctUntilChanged`, mappa distrutta, `fit()` e padding), `spec-e-karma` (cosa gira in
-CI e cosa no, spec già rotti) e `template-wm-map` (ordine degli attributi). Ogni rule rimanda alla
+CI e cosa no, spec già rotti) `template-wm-map` (ordine degli attributi) e `hit-map-overlay` (l'accoppiamento dei tile CARG
+col consumer). Ogni rule rimanda alla
 pagina di conoscenza per il perché.
 
 ## Lavori senza una pagina dedicata

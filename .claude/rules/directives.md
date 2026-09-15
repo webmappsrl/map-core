@@ -31,6 +31,9 @@ Il perché sta in [docs/knowledge/listener-e-lifecycle.md](../../docs/knowledge/
   `ngOnDestroy`/`takeUntil`, e `WmMapComponent.ngOnDestroy()` imposta `this.map = null`: ogni
   callback che dereferenzia `this.mapCmp.map` dopo una lettura da `localForage` deve controllare
   `!= null`.
+- **`sizes['108x137']` è hardcoded nel fallback legacy dell'immagine POI**, in due punti: chi lo
+  tocca deve aggiornare **sia** la guardia **sia** l'URL del canvas.
+
 - **`view.fit()` ignora in silenzio il padding della `View`.** Chi chiama `fit()` direttamente deve
   passare `padding: this.wmMapPadding ?? undefined`; gli helper `fitView()`/`fitViewFromLonLat()` lo
   fanno già, ma non sono sostituti drop-in — hanno side-effect su `wmMapDisableFitView` e sui query

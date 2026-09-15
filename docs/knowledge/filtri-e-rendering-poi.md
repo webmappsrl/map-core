@@ -19,5 +19,5 @@
 
 ## Debito noto
 
-- **`sizes['108x137']` è hardcoded** come proxy dell'immagine nel fallback legacy (oc:7988): non toccarlo senza verificare entrambe le righe che lo usano, la guardia e l'URL del canvas.
+- **`sizes['108x137']` è hardcoded** come proxy dell'immagine nel fallback legacy (oc:7988), e compare in due punti: la guardia e l'URL del canvas. L'obbligo di tenerli allineati sta in [.claude/rules/directives.md](../../.claude/rules/directives.md).
 - **`_disableClusterLayer` ignora lo zoom** (oc:8114): bug preesistente, non risolto in quel ciclo.

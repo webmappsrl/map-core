@@ -13,7 +13,13 @@ Due risorse remote hanno una cache locale con fallback: i confini dei fogli CARG
 
 ## L'accoppiamento con il consumer
 
-L'URL dei tile CARG in `hit-map.directive.ts` e l'`overlayXYZ` che il consumer passa al download devono restare la stessa base URL, senza il template `{z}/{x}/{y}.png`: `downloadOverlay()` scarica `${overlayXYZ}/${tile}.png`. Se divergono, l'utente vede un tileset e ne scarica un altro. Questo repo non vede il valore che il consumer passa.
+La stessa origine dei tile è descritta in due punti: la base URL in `hit-map.directive.ts` qui, e
+l'`overlayXYZ` che il consumer passa a `downloadOverlay()`, il quale scarica
+`${overlayXYZ}/${tile}.png`. Due repo, un solo tileset — e questo non vede il valore dell'altro.
+
+L'obbligo che ne discende sta in
+[.claude/rules/hit-map-overlay.md](../../.claude/rules/hit-map-overlay.md), che si carica toccando
+la direttiva.
 
 ## Debito noto
 
