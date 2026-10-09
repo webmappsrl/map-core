@@ -19,14 +19,13 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
   private _feature: Feature<LineString> | null = null;
   private readonly TRACK_COLOR = '#CA1551';
 
-  // Buffer per ottimizzare i re-render: accumula coordinate prima di aggiornare la mappa
-  private _coordinateBuffer: number[][] = [];
-  private _bufferFlushTimeout: ReturnType<typeof setTimeout> | null = null;
-  private readonly _BUFFER_SIZE = 5; // Flush ogni 5 coordinate
-  private readonly _BUFFER_TIMEOUT_MS = 1000; // O ogni secondo
-
   @Input() WmMapTrackRecord = false;
-  @Input() WmMapTrackRecordLocation: Location | null = null;
+  /**
+   * Elenco completo dei punti da disegnare, già decisi dal consumer (in wm-core: i punti tenuti
+   * dalla pulizia GPS, oc:8743). Si passa sempre l'elenco intero, non un punto alla volta: una
+   * stessa emissione può aggiungerne più di uno.
+   */
+  @Input() WmMapTrackRecordLocations: Location[] | null = null;
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -37,13 +36,12 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       this._handleTrackRecordChange(changes.WmMapTrackRecord);
     }
 
-    if (this.WmMapTrackRecord && changes.WmMapTrackRecordLocation?.currentValue) {
-      this._addLocation(changes.WmMapTrackRecordLocation.currentValue);
+    if (this.WmMapTrackRecord && changes.WmMapTrackRecordLocations) {
+      this._setLocations(this.WmMapTrackRecordLocations);
     }
   }
 
   ngOnDestroy(): void {
-    this._clearBuffer();
     this._removeLayer();
   }
 
@@ -56,10 +54,7 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
 
     if (isEnabled && !wasEnabled && this.mapCmp.map) {
       this._initLayer();
-
-      if (this.WmMapTrackRecordLocation) {
-        this._addLocation(this.WmMapTrackRecordLocation);
-      }
+      this._setLocations(this.WmMapTrackRecordLocations);
     } else if (!isEnabled && wasEnabled) {
       this._removeLayer();
     }
@@ -100,9 +95,6 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
    * Rimuove il layer dalla mappa e pulisce i riferimenti deallocando memoria
    */
   private _removeLayer(): void {
-    // Pulisci il buffer e cancella eventuali timeout pendenti
-    this._clearBuffer();
-
     if (this._featureLayer && this.mapCmp.map) {
       // Rimuovi il layer dalla mappa prima di deallocare
       this.mapCmp.map.removeLayer(this._featureLayer);
@@ -134,21 +126,10 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
   }
 
   /**
-   * Pulisce il buffer delle coordinate e cancella il timeout
+   * Ridisegna la linea con l'elenco ricevuto: un solo `setCoordinates`, quindi un solo re-render,
+   * per emissione.
    */
-  private _clearBuffer(): void {
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
-      this._bufferFlushTimeout = null;
-    }
-    this._coordinateBuffer = [];
-  }
-
-  /**
-   * Aggiunge una location alla traccia ottimizzando memoria e re-render.
-   * Usa un buffer per accumulare coordinate e ridurre le chiamate a changed().
-   */
-  private _addLocation(location: Location): void {
+  private _setLocations(locations: Location[] | null): void {
     if (!this.WmMapTrackRecord) {
       return;
     }
@@ -163,81 +144,10 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       return;
     }
 
-    if (!this._isValidLocation(location)) {
-      return;
-    }
-
-    const newCoord = fromLonLat([location.longitude, location.latitude]);
-
-    // Controlla duplicati con l'ultima coordinata (buffer o geometry)
-    const lastBuffered =
-      this._coordinateBuffer.length > 0
-        ? this._coordinateBuffer[this._coordinateBuffer.length - 1]
-        : null;
-
-    if (lastBuffered) {
-      // Confronta con l'ultimo nel buffer
-      if (newCoord[0] === lastBuffered[0] && newCoord[1] === lastBuffered[1]) {
-        return; // Duplicato, ignora
-      }
-    } else {
-      // Buffer vuoto, confronta con l'ultima nella geometry
-      const coords = geometry.getCoordinates();
-      const lastCoord = coords.length > 0 ? coords[coords.length - 1] : null;
-      if (lastCoord && newCoord[0] === lastCoord[0] && newCoord[1] === lastCoord[1]) {
-        return; // Duplicato, ignora
-      }
-    }
-
-    // Aggiungi al buffer
-    this._coordinateBuffer.push(newCoord);
-
-    // Flush se il buffer è pieno
-    if (this._coordinateBuffer.length >= this._BUFFER_SIZE) {
-      this._flushBuffer(geometry);
-    } else {
-      // Imposta timeout per flush automatico (per non perdere punti se l'utente si ferma)
-      this._scheduleBufferFlush(geometry);
-    }
-  }
-
-  /**
-   * Pianifica un flush del buffer dopo un timeout
-   */
-  private _scheduleBufferFlush(geometry: LineString): void {
-    // Cancella timeout esistente
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
-    }
-
-    this._bufferFlushTimeout = setTimeout(() => {
-      this._flushBuffer(geometry);
-    }, this._BUFFER_TIMEOUT_MS);
-  }
-
-  /**
-   * Svuota il buffer aggiungendo tutte le coordinate alla geometry.
-   * Riduce i re-render facendo un'unica chiamata a changed() per N coordinate.
-   */
-  private _flushBuffer(geometry: LineString): void {
-    if (this._coordinateBuffer.length === 0) {
-      return;
-    }
-
-    // Cancella il timeout se presente
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
-      this._bufferFlushTimeout = null;
-    }
-
-    // Aggiungi tutte le coordinate del buffer in una volta
-    for (const coord of this._coordinateBuffer) {
-      geometry.appendCoordinate(coord);
-    }
-    this._coordinateBuffer = []; // Reset buffer
-
-    // Una sola chiamata a changed() per tutto il batch
-    geometry.changed();
+    const coordinates = (locations ?? [])
+      .filter(location => this._isValidLocation(location))
+      .map(location => fromLonLat([location.longitude, location.latitude]));
+    geometry.setCoordinates(coordinates);
   }
 
   /**
