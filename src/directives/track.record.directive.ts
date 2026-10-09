@@ -17,6 +17,8 @@ import {RENDER_BUFFER, TRACK_RECORD_ZINDEX} from '@map-core/readonly';
 export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _featureLayer: VectorLayer<VectorSource> | null = null;
   private _feature: Feature<LineString> | null = null;
+  // Ultimo elenco disegnato: se il nuovo ne è il prolungamento si aggiungono solo i punti nuovi
+  private _drawnLocations: Location[] = [];
   private readonly TRACK_COLOR = '#CA1551';
 
   @Input() WmMapTrackRecord = false;
@@ -123,11 +125,14 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
     // Reset riferimenti
     this._featureLayer = null;
     this._feature = null;
+    this._drawnLocations = [];
   }
 
   /**
-   * Ridisegna la linea con l'elenco ricevuto: un solo `setCoordinates`, quindi un solo re-render,
-   * per emissione.
+   * Aggiorna la linea con l'elenco ricevuto, con un solo re-render per emissione. Di norma l'elenco
+   * è il prolungamento di quello già disegnato: si proiettano e si aggiungono solo i punti nuovi.
+   * Se cambia prima della coda (ripresa dopo un crash, pulizia rifatta con altri parametri, nuova
+   * registrazione) si ridisegna tutto con `setCoordinates`.
    */
   private _setLocations(locations: Location[] | null): void {
     if (!this.WmMapTrackRecord) {
@@ -144,10 +149,59 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       return;
     }
 
-    const coordinates = (locations ?? [])
-      .filter(location => this._isValidLocation(location))
-      .map(location => fromLonLat([location.longitude, location.latitude]));
-    geometry.setCoordinates(coordinates);
+    const next = locations ?? [];
+    const flat = geometry.getFlatCoordinates();
+    if (flat && this._isContinuation(next)) {
+      // Si allunga l'array delle coordinate e si notifica una volta sola: appendCoordinate
+      // chiamerebbe changed(), quindi un re-render, a ogni punto
+      const before = flat.length;
+      for (let i = this._drawnLocations.length; i < next.length; i++) {
+        if (this._isValidLocation(next[i])) {
+          flat.push(...this._toCoordinate(next[i]));
+        }
+      }
+      if (flat.length > before) {
+        geometry.changed();
+      }
+    } else {
+      geometry.setCoordinates(
+        next.filter(location => this._isValidLocation(location)).map(l => this._toCoordinate(l)),
+      );
+    }
+    this._drawnLocations = next;
+  }
+
+  /**
+   * Il nuovo elenco contiene, nelle stesse posizioni, tutti i punti già disegnati. Si confrontano i
+   * riferimenti: il consumer allunga l'elenco con `concat`, quindi i punti già decisi restano gli
+   * stessi oggetti; un confronto per riferimento non alloca e non riproietta nulla. Con niente di
+   * disegnato (`_drawnLocations` vuoto anche quando il layer viene ricreato) la linea è vuota e
+   * tutto l'elenco è coda.
+   *
+   * @param next il nuovo elenco
+   * @returns true se basta aggiungere la coda
+   */
+  private _isContinuation(next: Location[]): boolean {
+    const drawn = this._drawnLocations;
+    if (next.length < drawn.length) {
+      return false;
+    }
+    for (let i = 0; i < drawn.length; i++) {
+      if (next[i] !== drawn[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Coordinate della mappa di una location.
+   *
+   * @param location la location
+   * @returns la coordinata proiettata
+   */
+  private _toCoordinate(location: Location): number[] {
+    return fromLonLat([location.longitude, location.latitude]);
   }
 
   /**
