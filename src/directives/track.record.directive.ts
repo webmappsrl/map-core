@@ -17,16 +17,17 @@ import {RENDER_BUFFER, TRACK_RECORD_ZINDEX} from '@map-core/readonly';
 export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnChanges, OnDestroy {
   private _featureLayer: VectorLayer<VectorSource> | null = null;
   private _feature: Feature<LineString> | null = null;
+  // Ultimo elenco disegnato: se il nuovo ne è il prolungamento si aggiungono solo i punti nuovi
+  private _drawnLocations: Location[] = [];
   private readonly TRACK_COLOR = '#CA1551';
 
-  // Buffer per ottimizzare i re-render: accumula coordinate prima di aggiornare la mappa
-  private _coordinateBuffer: number[][] = [];
-  private _bufferFlushTimeout: ReturnType<typeof setTimeout> | null = null;
-  private readonly _BUFFER_SIZE = 5; // Flush ogni 5 coordinate
-  private readonly _BUFFER_TIMEOUT_MS = 1000; // O ogni secondo
-
   @Input() WmMapTrackRecord = false;
-  @Input() WmMapTrackRecordLocation: Location | null = null;
+  /**
+   * Elenco completo dei punti da disegnare, già decisi dal consumer (in wm-core: i punti tenuti
+   * dalla pulizia GPS, oc:8743). Si passa sempre l'elenco intero, non un punto alla volta: una
+   * stessa emissione può aggiungerne più di uno.
+   */
+  @Input() WmMapTrackRecordLocations: Location[] | null = null;
 
   constructor(@Host() mapCmp: WmMapComponent) {
     super(mapCmp);
@@ -37,13 +38,12 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       this._handleTrackRecordChange(changes.WmMapTrackRecord);
     }
 
-    if (this.WmMapTrackRecord && changes.WmMapTrackRecordLocation?.currentValue) {
-      this._addLocation(changes.WmMapTrackRecordLocation.currentValue);
+    if (this.WmMapTrackRecord && changes.WmMapTrackRecordLocations) {
+      this._setLocations(this.WmMapTrackRecordLocations);
     }
   }
 
   ngOnDestroy(): void {
-    this._clearBuffer();
     this._removeLayer();
   }
 
@@ -56,10 +56,7 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
 
     if (isEnabled && !wasEnabled && this.mapCmp.map) {
       this._initLayer();
-
-      if (this.WmMapTrackRecordLocation) {
-        this._addLocation(this.WmMapTrackRecordLocation);
-      }
+      this._setLocations(this.WmMapTrackRecordLocations);
     } else if (!isEnabled && wasEnabled) {
       this._removeLayer();
     }
@@ -100,9 +97,6 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
    * Rimuove il layer dalla mappa e pulisce i riferimenti deallocando memoria
    */
   private _removeLayer(): void {
-    // Pulisci il buffer e cancella eventuali timeout pendenti
-    this._clearBuffer();
-
     if (this._featureLayer && this.mapCmp.map) {
       // Rimuovi il layer dalla mappa prima di deallocare
       this.mapCmp.map.removeLayer(this._featureLayer);
@@ -131,24 +125,16 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
     // Reset riferimenti
     this._featureLayer = null;
     this._feature = null;
+    this._drawnLocations = [];
   }
 
   /**
-   * Pulisce il buffer delle coordinate e cancella il timeout
+   * Aggiorna la linea con l'elenco ricevuto, con un solo re-render per emissione. Di norma l'elenco
+   * è il prolungamento di quello già disegnato: si proiettano e si aggiungono solo i punti nuovi.
+   * Se cambia prima della coda (ripresa dopo un crash, pulizia rifatta con altri parametri, nuova
+   * registrazione) si ridisegna tutto con `setCoordinates`.
    */
-  private _clearBuffer(): void {
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
-      this._bufferFlushTimeout = null;
-    }
-    this._coordinateBuffer = [];
-  }
-
-  /**
-   * Aggiunge una location alla traccia ottimizzando memoria e re-render.
-   * Usa un buffer per accumulare coordinate e ridurre le chiamate a changed().
-   */
-  private _addLocation(location: Location): void {
+  private _setLocations(locations: Location[] | null): void {
     if (!this.WmMapTrackRecord) {
       return;
     }
@@ -163,81 +149,59 @@ export class WmMapTrackRecordDirective extends WmMapBaseDirective implements OnC
       return;
     }
 
-    if (!this._isValidLocation(location)) {
-      return;
-    }
-
-    const newCoord = fromLonLat([location.longitude, location.latitude]);
-
-    // Controlla duplicati con l'ultima coordinata (buffer o geometry)
-    const lastBuffered =
-      this._coordinateBuffer.length > 0
-        ? this._coordinateBuffer[this._coordinateBuffer.length - 1]
-        : null;
-
-    if (lastBuffered) {
-      // Confronta con l'ultimo nel buffer
-      if (newCoord[0] === lastBuffered[0] && newCoord[1] === lastBuffered[1]) {
-        return; // Duplicato, ignora
+    const next = locations ?? [];
+    const flat = geometry.getFlatCoordinates();
+    if (flat && this._isContinuation(next)) {
+      // Si allunga l'array delle coordinate e si notifica una volta sola: appendCoordinate
+      // chiamerebbe changed(), quindi un re-render, a ogni punto
+      const before = flat.length;
+      for (let i = this._drawnLocations.length; i < next.length; i++) {
+        if (this._isValidLocation(next[i])) {
+          flat.push(...this._toCoordinate(next[i]));
+        }
+      }
+      if (flat.length > before) {
+        geometry.changed();
       }
     } else {
-      // Buffer vuoto, confronta con l'ultima nella geometry
-      const coords = geometry.getCoordinates();
-      const lastCoord = coords.length > 0 ? coords[coords.length - 1] : null;
-      if (lastCoord && newCoord[0] === lastCoord[0] && newCoord[1] === lastCoord[1]) {
-        return; // Duplicato, ignora
-      }
+      geometry.setCoordinates(
+        next.filter(location => this._isValidLocation(location)).map(l => this._toCoordinate(l)),
+      );
     }
-
-    // Aggiungi al buffer
-    this._coordinateBuffer.push(newCoord);
-
-    // Flush se il buffer è pieno
-    if (this._coordinateBuffer.length >= this._BUFFER_SIZE) {
-      this._flushBuffer(geometry);
-    } else {
-      // Imposta timeout per flush automatico (per non perdere punti se l'utente si ferma)
-      this._scheduleBufferFlush(geometry);
-    }
+    this._drawnLocations = next;
   }
 
   /**
-   * Pianifica un flush del buffer dopo un timeout
+   * Il nuovo elenco contiene, nelle stesse posizioni, tutti i punti già disegnati. Si confrontano i
+   * riferimenti: il consumer allunga l'elenco con `concat`, quindi i punti già decisi restano gli
+   * stessi oggetti; un confronto per riferimento non alloca e non riproietta nulla. Con niente di
+   * disegnato (`_drawnLocations` vuoto anche quando il layer viene ricreato) la linea è vuota e
+   * tutto l'elenco è coda.
+   *
+   * @param next il nuovo elenco
+   * @returns true se basta aggiungere la coda
    */
-  private _scheduleBufferFlush(geometry: LineString): void {
-    // Cancella timeout esistente
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
+  private _isContinuation(next: Location[]): boolean {
+    const drawn = this._drawnLocations;
+    if (next.length < drawn.length) {
+      return false;
     }
-
-    this._bufferFlushTimeout = setTimeout(() => {
-      this._flushBuffer(geometry);
-    }, this._BUFFER_TIMEOUT_MS);
+    for (let i = 0; i < drawn.length; i++) {
+      if (next[i] !== drawn[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
-   * Svuota il buffer aggiungendo tutte le coordinate alla geometry.
-   * Riduce i re-render facendo un'unica chiamata a changed() per N coordinate.
+   * Coordinate della mappa di una location.
+   *
+   * @param location la location
+   * @returns la coordinata proiettata
    */
-  private _flushBuffer(geometry: LineString): void {
-    if (this._coordinateBuffer.length === 0) {
-      return;
-    }
-
-    // Cancella il timeout se presente
-    if (this._bufferFlushTimeout) {
-      clearTimeout(this._bufferFlushTimeout);
-      this._bufferFlushTimeout = null;
-    }
-
-    // Aggiungi tutte le coordinate del buffer in una volta
-    for (const coord of this._coordinateBuffer) {
-      geometry.appendCoordinate(coord);
-    }
-    this._coordinateBuffer = []; // Reset buffer
-
-    // Una sola chiamata a changed() per tutto il batch
-    geometry.changed();
+  private _toCoordinate(location: Location): number[] {
+    return fromLonLat([location.longitude, location.latitude]);
   }
 
   /**

@@ -7,6 +7,12 @@ wm-map {
     flex-grow: 1;
     height: 100%;
     position: relative;
+    // I gesti sulla mappa li gestisce OpenLayers: con `touch-action: auto` la WebView di Android
+    // se li prende come scroll o zoom nativo e manda `pointercancel`, e pinch e trascinamento
+    // vanno a scatti. OpenLayers 7.1 non imposta questo valore da sé
+    .ol-viewport {
+      touch-action: none;
+    }
     > .bottom-right {
       position: absolute;
       right: calc(16px + constant(safe-area-inset-right));
