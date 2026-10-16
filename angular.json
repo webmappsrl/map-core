@@ -45,7 +45,8 @@
                 "src/utils/httpRequest.spec.ts",
                 "src/utils/img.spec.ts",
                 "src/utils/performance.spec.ts",
-                "src/components/controls/button/button.controls.map.spec.ts"
+                "src/components/controls/button/button.controls.map.spec.ts",
+                "src/directives/position.zoom.spec.ts"
               ]
             }
           }

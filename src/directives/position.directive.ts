@@ -39,6 +39,10 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
   private _featureAccuracy = new Feature();
   private _featureLocation = new Feature();
   private _focus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  /** Zoom sulla posizione in corso: l'inseguimento acceso nel frattempo aspetta che finisca. */
+  private _zoomingIn = false;
+  /** Avvio dell'inseguimento rimandato alla fine dello zoom sulla posizione. */
+  private _afterZoomIn: (() => void) | null = null;
   private _iconLocation = new Icon({
     src: '/map-core/assets/location-icon.png',
     scale: 0.4,
@@ -163,9 +167,19 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
             image: this._iconLocationArrow,
           }),
         );
-        this.mapCmp.map.getView().setZoom(this.mapCmp.map.getView().getZoom() + 1);
-        this._setPositionByLocation(this._currentLocation);
+        const follow = () => {
+          this.mapCmp.map.getView().setZoom(this.mapCmp.map.getView().getZoom() + 1);
+          this._setPositionByLocation(this._currentLocation);
+        };
+        // Con «Inizia il cammino» la registrazione accende l'inseguimento nello stesso momento in
+        // cui si apre il pannello: il setZoom interromperebbe lo zoom sulla posizione appena partito
+        if (this._zoomingIn) {
+          this._afterZoomIn = follow;
+        } else {
+          follow();
+        }
       } else {
+        this._afterZoomIn = null;
         this._layerLocation.setStyle(
           new Style({
             image: this._iconLocation,
@@ -203,12 +217,25 @@ export class WmMapPositionDirective extends WmMapBaseDirective implements OnDest
     }
   }
 
+  /**
+   * Zoom animato sulla posizione. A fine animazione, anche se interrotta, parte l'inseguimento
+   * eventualmente acceso nel frattempo.
+   *
+   * @param location posizione corrente
+   */
   private _zoomInPosition(location: Location): void {
     const point = this._updateGeometry(location);
     if (point != null) {
+      this._zoomingIn = true;
       this._fitView(point, {
         maxZoom: this.wmMapConf.maxZoom - 1,
         duration: 500,
+        callback: () => {
+          this._zoomingIn = false;
+          const follow = this._afterZoomIn;
+          this._afterZoomIn = null;
+          follow?.();
+        },
       });
     }
   }
