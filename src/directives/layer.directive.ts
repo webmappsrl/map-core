@@ -164,6 +164,13 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
   }
 
   @Input() track;
+  /**
+   * Traduzione del `ref` disegnato sulle tracce (oc:9044). È lo stesso binding
+   * `wmMapTranslationCallback` che `<wm-map>` passa già alle altre direttive: il consumer non
+   * aggiunge nulla. Senza consumer resta `value => value` e il `ref` si vede com'è.
+   * Nessun setter: al cambio dell'input `ngOnChanges` chiama già `_updateMap()`.
+   */
+  @Input('wmMapTranslationCallback') translationCallback: (value: any) => string = value => value;
   @Input() wmMapInputTyped: string;
   @Input() set wmMapLayerEnableFeaturesInViewport(enable: boolean) {
     this.mapCmp.isInit$
@@ -362,6 +369,10 @@ export class WmMapLayerDirective extends WmMapBaseDirective implements OnChanges
         },
         get hoveredFeatureId() {
           return directiveRef._hoveredFeatureId;
+        },
+        // Letta da buildRefStyle per tradurre il ref (oc:9044).
+        get translationCallback() {
+          return directiveRef.translationCallback;
         },
       };
 
