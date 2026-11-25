@@ -81,3 +81,4 @@ pagina di conoscenza per il perché.
 | Lavoro | Ticket | In breve |
 |---|---|---|
 | Rifacimento del setup Karma | oc:7989 | `polyfills` al posto di `src/test.ts`, flag Chrome per la CI, `include` dei soli spec che non montano una mappa. Cosa gira dove sta nei Comandi e in `.claude/rules/spec-e-karma.md`; il dettaglio del cambio in `docs/features/7989-fix-karma-test-config/` |
+| `ref` delle tracce tradotto | oc:9044 | `buildRefStyle` disegna `translationCallback(ref)`: `WmMapLayerDirective` riceve il binding condiviso `wmMapTranslationCallback` di `<wm-map>` (default `value => value`) e lo espone nel contesto di stile; mai chiamata con `ref` vuoto, una volta per traccia. `docs/features/9044-app-in-inglese-etichette-tappa-n-sulla-mappa-non-traducibili/` |
