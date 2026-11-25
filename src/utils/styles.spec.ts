@@ -464,6 +464,63 @@ describe('styles', () => {
     expect(styles[0].getText().getText()).toEqual('');
   });
 
+  describe('buildRefStyle con wmMapTranslationCallback (oc:9044)', () => {
+    const refMockMap = {
+      getSize: () => [800, 600] as [number, number],
+      getView: () => ({
+        getResolution: () => 1,
+        calculateExtent: () => [0, -5000, 5000, 5000] as [number, number, number, number],
+      }),
+    };
+    const translateStage = (value: any) => (value === 'Tappa 1' ? 'Stage 1' : value);
+
+    // Applica buildRefStyle a una traccia lunga 5000 m: il testo si ripete su più punti.
+    const refTexts = (context: any, properties: any): string[] => {
+      const line = new LineString([[0, 0], [5000, 0]]);
+      line.setProperties(properties);
+      return buildRefStyle
+        .call(context, line, {map: refMockMap, featureStrokeColor: 'rgba(255, 255, 255, 0.9)'})
+        .map((s: Style) => s.getText().getText() as string);
+    };
+
+    it('buildRefStyle: should translate ref with translationCallback', () => {
+      const texts = refTexts(
+        {conf: {ref_on_track_show: true}, translationCallback: translateStage},
+        {ref: 'Tappa 1'},
+      );
+      expect(texts.length).toBeGreaterThan(0);
+      texts.forEach(text => expect(text).toEqual('Stage 1'));
+    });
+
+    it('buildRefStyle: should keep ref when translationCallback is missing', () => {
+      const texts = refTexts({conf: {ref_on_track_show: true}}, {ref: 'Tappa 1'});
+      expect(texts.length).toBeGreaterThan(0);
+      texts.forEach(text => expect(text).toEqual('Tappa 1'));
+    });
+
+    it('buildRefStyle: should not call translationCallback for empty ref', () => {
+      const translationCallback = jasmine.createSpy('translationCallback').and.callFake(translateStage);
+      const context = {conf: {ref_on_track_show: true}, translationCallback};
+      refTexts(context, {ref: ''}).forEach(text => expect(text).toEqual(''));
+      refTexts(context, {}).forEach(text => expect(text).toEqual(''));
+      expect(translationCallback).not.toHaveBeenCalled();
+    });
+
+    it('buildRefStyle: should call translationCallback once per feature', () => {
+      const translationCallback = jasmine.createSpy('translationCallback').and.callFake(translateStage);
+      const texts = refTexts({conf: {ref_on_track_show: true}, translationCallback}, {ref: 'Tappa 1'});
+      expect(texts.length).toBeGreaterThan(1);
+      expect(translationCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it('buildRefStyle: should return empty text when ref_on_track_show is false', () => {
+      const translationCallback = jasmine.createSpy('translationCallback').and.callFake(translateStage);
+      const texts = refTexts({conf: {ref_on_track_show: false}, translationCallback}, {ref: 'Tappa 1'});
+      texts.forEach(text => expect(text).toEqual(''));
+      expect(translationCallback).not.toHaveBeenCalled();
+    });
+  });
+
   it('buildStartEndIcons: should return an array of two Style objects for start and end point icons', () => {
     const geometry = new LineString([
       [0, 0],

@@ -156,6 +156,11 @@ export function buildArrowStyle(
  *
  * Note that this function is bound to a `this` context, so the calling object should be of the correct type.
  *
+ * Se il contesto espone `translationCallback` (la `wmMapTranslationCallback` di `<wm-map>`, oc:9044),
+ * il testo è `translationCallback(ref)`: con l'app in inglese «Tappa 1» diventa «Stage 1» se il
+ * dizionario dell'app ha quella chiave. La callback si chiama una sola volta per traccia e mai con
+ * un `ref` vuoto.
+ *
  * @param feature - The feature object to generate a reference point style for.
  * @returns A new Style object for the reference point.
  *
@@ -204,6 +209,12 @@ export function buildRefStyle(
     midPoints: true,
     extent: extent,
   });
+  // Un ref numerico nei tile si disegnava anche prima: lo si porta a stringa invece di scartarlo.
+  const ref = properties.ref != null ? `${properties.ref}` : '';
+  let refText = '';
+  if (this.conf.ref_on_track_show && ref !== '') {
+    refText = this.translationCallback ? this.translationCallback(ref) : ref;
+  }
   splitPoints.forEach(point => {
     if (Math.abs(point[2]) > Math.PI / 2) point[2] += Math.PI;
     styles.push(
@@ -214,7 +225,7 @@ export function buildRefStyle(
           placement: 'point',
           rotateWithView: false, //true,
           rotation: 0, //point[2],
-          text: properties.ref != null && this.conf.ref_on_track_show ? properties.ref : '',
+          text: refText,
           overflow: false,
           // textBaseline: "bottom",
           fill: new Fill({
